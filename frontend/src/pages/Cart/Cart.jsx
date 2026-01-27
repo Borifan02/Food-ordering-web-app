@@ -33,13 +33,15 @@ const Cart = () => {
         paymentMethod: "Cash",
       };
 
-      await apiClient.post("/orders", orderData);
+      console.log("Order data:", orderData);
+      const response = await apiClient.post("/orders", orderData);
+      console.log("Order response:", response.data);
       alert("Order placed successfully!");
       clearCart();
       navigate("/orders");
     } catch (error) {
-      console.error(error);
-      alert("Failed to place order.");
+      console.error("Order error:", error.response?.data || error.message);
+      alert(`Failed to place order: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }

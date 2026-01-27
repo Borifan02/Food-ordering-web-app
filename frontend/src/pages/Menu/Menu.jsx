@@ -155,13 +155,15 @@ const Menu = () => {
               <div className="card-image">
                 <img
                   src={
-                    item.image
+                    item.image?.startsWith('http') 
+                      ? item.image
+                      : item.image
                       ? `http://localhost:5000${item.image}`
-                      : "https://via.placeholder.com/300?text=No+Image"
+                      : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300"
                   }
                   alt={item.name}
                   onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/300?text=No+Image";
+                    e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300";
                   }}
                 />
                 <div className="card-overlay">

@@ -190,3 +190,40 @@ hr {
 .rate-btn:hover {
     background-color: #e0a800; /* Darker gold on hover */
 }
+
+/* Status Controls */
+.status-controls {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: var(--radius);
+  border: 2px dashed #ddd;
+}
+
+.status-controls h4 {
+  margin-bottom: 1rem;
+  color: var(--dark-color);
+  font-size: 1rem;
+}
+
+.status-btn {
+  padding: 8px 16px;
+  margin: 0 8px 8px 0;
+  border: 2px solid var(--gray);
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.status-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.status-btn.current {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}

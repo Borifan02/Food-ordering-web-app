@@ -7,6 +7,7 @@ import OrderHistory from "./pages/Orders/OrderHistory";
 import OrderTracking from "./pages/Orders/OrderTracking";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import DeliveryDashboard from "./pages/Delivery/DeliveryDashboard";
+import About from "./pages/About/About";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
 import "./App.css";
@@ -26,6 +27,7 @@ function App() {
           <Route path="/orders/:id" element={<OrderTracking />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/delivery" element={<DeliveryDashboard />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </div>
       <Footer />

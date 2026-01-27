@@ -63,6 +63,27 @@ const OrderTracking = () => {
         ))}
       </div>
 
+      {/* Status Update Buttons for Testing */}
+      <div className="status-controls">
+        <h4>Update Status (Testing)</h4>
+        {statusSteps.map((status) => (
+          <button
+            key={status}
+            className={`status-btn ${order.status === status ? 'current' : ''}`}
+            onClick={async () => {
+              try {
+                await apiClient.put(`/orders/${order._id}/status`, { status });
+                setOrder({...order, status});
+              } catch (error) {
+                console.error('Failed to update status:', error);
+              }
+            }}
+          >
+            {status.replace(/([A-Z])/g, " $1").trim()}
+          </button>
+        ))}
+      </div>
+
       {/* Order Items Summary */}
       <div className="order-summary">
         <h3>Items</h3>

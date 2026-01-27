@@ -20,7 +20,7 @@ const Footer = () => {
             <li><a href="/menu">Menu</a></li>
             <li><a href="/orders">Orders</a></li>
             <li><a href="/cart">Cart</a></li>
-            <li><a href="#about">About Us</a></li>
+            <li><a href="/about">About Us</a></li>
           </ul>
         </div>
         
@@ -32,7 +32,7 @@ const Footer = () => {
           </div>
           <div className="contact-item">
             <span>📞</span>
-            <p>+25196584287</p>
+            <p>+251965844287</p>
           </div>
           <div className="contact-item">
             <span>✉️</span>
