@@ -4,7 +4,10 @@ import { ItemModel } from "../models/menuItem.model.js";
 export const createOrder = async (req, res) => {
     try {
         const { items, deliveryAddress, paymentMethod } = req.body;
-        const userId = req.user.id; // From JWT middleware
+        const userId = req.user.id; // JWT uses 'id' field
+        
+        console.log("Creating order for user:", userId);
+        console.log("Order data:", { items, deliveryAddress, paymentMethod });
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items in order" });
@@ -15,7 +18,10 @@ export const createOrder = async (req, res) => {
         // We iterate through items sent by user to check prices in DB
         for (let item of items) {
             const dbItem = await ItemModel.findById(item.menuItemId);
-            if (!dbItem) return res.status(404).json({ message: `Item not found: ${item.name}` });
+            if (!dbItem) {
+                console.log(`Item not found in DB: ${item.menuItemId} - ${item.name}`);
+                return res.status(404).json({ message: `Item not found: ${item.name}` });
+            }
             totalAmount += dbItem.price * item.quantity;
         }
 
@@ -36,8 +42,8 @@ export const createOrder = async (req, res) => {
 
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Order creation error:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
 
@@ -47,7 +53,8 @@ export const createOrder = async (req, res) => {
 
 export const getUserOrders = async (req, res) => {
     try {
-        const orders = await OrderModel.find({ userId: req.user.id }).sort({ createdAt: -1 }); // from latest to oldest
+        const userId = req.user._id || req.user.id;
+        const orders = await OrderModel.find({ userId }).sort({ createdAt: -1 }); // from latest to oldest
         if (!orders) return res.status(404).json({ message: "No orders found" });
         res.status(200).json(orders);
     } catch (error) {
@@ -61,8 +68,9 @@ export const getOrderById = async (req, res) => {
         const order = await OrderModel.findById(req.params.id).populate("items.menuItemId");
         if (!order) return res.status(404).json({ message: "Order not found" });
 
+        const userId = req.user._id || req.user.id;
         // Security: Ensure the user requesting is the one who made the order (or is Admin)
-        if (req.user.role !== "admin" && req.user.role !== "Chief" && order.userId.toString() !== req.user.id) {
+        if (req.user.role !== "admin" && req.user.role !== "Chief" && order.userId.toString() !== userId) {
             return res.status(403).json({ message: "Access denied" });
         }
 
