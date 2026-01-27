@@ -84,13 +84,25 @@ export const getOrderById = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const order = await OrderModel.findByIdAndUpdate(
+        const order = await OrderModel.findById(req.params.id);
+        
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        
+        // Allow user to update their own order or admin to update any order
+        const userId = req.user.id;
+        if (req.user.role !== "admin" && order.userId.toString() !== userId) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        
+        const updatedOrder = await OrderModel.findByIdAndUpdate(
             req.params.id,
             { status },
             { new: true }
         );
 
-        res.status(200).json(order);
+        res.status(200).json(updatedOrder);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
