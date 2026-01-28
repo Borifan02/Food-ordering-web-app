@@ -3,6 +3,7 @@ import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import apiClient from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import StripePayment from "../../components/StripePayment/PaymentForm";
 import "./Cart.css";
 
 const Cart = () => {
@@ -13,12 +14,16 @@ const Cart = () => {
 
   const [address, setAddress] = useState(user?.address || "");
   const [loading, setLoading] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!user) return navigate("/login");
     if (cart.length === 0) return alert("Cart is empty!");
     if (!address) return alert("Please provide a delivery address.");
+    setShowPayment(true);
+  };
 
+  const handlePaymentSuccess = async (paymentIntent) => {
     setLoading(true);
     try {
       const orderData = {
@@ -30,14 +35,14 @@ const Cart = () => {
         })),
         totalAmount: getCartTotal(),
         deliveryAddress: address,
-        paymentMethod: "Cash",
+        paymentMethod: "Card",
+        paymentIntentId: paymentIntent.id
       };
 
-      console.log("Order data:", orderData);
-      const response = await apiClient.post("/orders", orderData);
-      console.log("Order response:", response.data);
-      alert("Order placed successfully!");
+      await apiClient.post("/orders", orderData);
+      alert("Order placed successfully with card payment!");
       clearCart();
+      setShowPayment(false);
       navigate("/orders");
     } catch (error) {
       console.error("Order error:", error.response?.data || error.message);
@@ -112,10 +117,23 @@ const Cart = () => {
             onClick={handleCheckout}
             disabled={loading}
           >
-            {loading ? "Processing..." : "Place Order (Cash)"}
+            {loading ? "Processing..." : "Proceed to Payment"}
           </button>
         </div>
       </div>
+      
+      {showPayment && (
+        <div className="payment-modal">
+          <div className="payment-overlay" onClick={() => setShowPayment(false)}></div>
+          <div className="payment-content">
+            <StripePayment
+              amount={getCartTotal()}
+              onSuccess={handlePaymentSuccess}
+              onCancel={() => setShowPayment(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

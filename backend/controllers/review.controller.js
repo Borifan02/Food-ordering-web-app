@@ -6,18 +6,18 @@ export const addReview = async (req, res) => {
     try {
         const { orderId, menuItemId, rating, comment } = req.body;
         const userId = req.user.id;
+        
+        console.log("Review data:", { orderId, menuItemId, rating, comment, userId });
 
         const order = await OrderModel.findOne({ 
             _id: orderId, 
-            userId: userId, 
-            status: "delivered",
+            userId: userId,
             "items.menuItemId": menuItemId
         });
 
         if (!order) {
-            return res.status(400).json({ message: "You can only review items from delivered orders." });
+            return res.status(400).json({ message: "Order not found or you don't have permission to review this item." });
         }
-
 
         const existingReview = await reviewModel.findOne({ userId, orderId, menuItemId });
         if (existingReview) {
@@ -36,6 +36,7 @@ export const addReview = async (req, res) => {
         res.status(201).json({ message: "Review added successfully" });
 
     } catch (error) {
+        console.error("Review error:", error);
         res.status(500).json({ message: error.message });
     }
 };

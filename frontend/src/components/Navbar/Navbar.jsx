@@ -5,7 +5,7 @@ import { CartContext } from "../../context/CartContext";
 import "./Navbar.css";
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, loading } = useContext(AuthContext);
   const { cart } = useContext(CartContext);
   const navigate = useNavigate();
 
@@ -16,7 +16,10 @@ const Navbar = () => {
 
   const location = useLocation();
 
-  if (!user || ["/login", "/register"].includes(location.pathname)) return null;
+  // Always show navbar except on login/register pages
+  if (["/login", "/register"].includes(location.pathname)) {
+    return null;
+  }
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 

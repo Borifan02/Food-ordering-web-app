@@ -18,15 +18,18 @@ const Menu = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('Fetching menu data...');
         const [menuRes, catRes] = await Promise.all([
           apiClient.get("/menu"),
           apiClient.get("/categories"),
         ]);
+        console.log('Menu response:', menuRes.data);
+        console.log('Categories response:', catRes.data);
         setItems(menuRes.data);
         setFilteredItems(menuRes.data);
         setCategories(catRes.data);
       } catch (error) {
-        console.error(error);
+        console.error('Fetch error:', error);
       } finally {
         setLoading(false);
       }

@@ -11,13 +11,14 @@ const ReviewModal = ({ orderId, menuItem, onClose }) => {
     try {
       await apiClient.post("/reviews", {
         orderId,
-        menuItemId: menuItem.menuItemId._id, // Depends on how populated
+        menuItemId: menuItem.menuItemId || menuItem._id,
         rating,
         comment,
       });
       alert("Review submitted!");
       onClose();
     } catch (error) {
+      console.error("Review error:", error.response?.data);
       alert(error.response?.data?.message || "Error submitting review");
     }
   };

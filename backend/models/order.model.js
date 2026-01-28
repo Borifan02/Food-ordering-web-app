@@ -21,6 +21,10 @@ export const orderSchema = Schema({
     type: String,
     required: true,
   },
+  estimatedDeliveryTime: {
+    type: Date,
+    default: () => new Date(Date.now() + 45 * 60 * 1000) // 45 minutes from now
+  },
   payment: {
     method: { type: String, enum: ["Cash", "Card"], default: "Cash" },
     status: {

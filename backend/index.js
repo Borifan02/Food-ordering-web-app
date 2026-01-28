@@ -3,6 +3,10 @@ import "dotenv/config";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import dbConnection from "./models/db.connection.js";
 
 // Import Routes
@@ -13,20 +17,59 @@ import reviewRoutes from "./routes/review.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import deliveryRoutes from "./routes/delivery.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
 
 // Recreate __filename and __dirname in ES Modules.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Security Middleware
+app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later."
+});
+app.use(limiter);
+
 // Middleware
-app.use(express.json());
-app.use(cors());
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // // Make the "uploads" folder publicly accessible.
+app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true
+}));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Database
 dbConnection();
+
+// Socket.IO for real-time updates
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+  
+  socket.on('join-order', (orderId) => {
+    socket.join(`order-${orderId}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+// Make io available to routes
+app.set('io', io);
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -36,10 +79,12 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/delivery", deliveryRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 export default app;

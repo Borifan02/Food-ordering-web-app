@@ -35,10 +35,19 @@ export const createOrder = async (req, res) => {
                 method: paymentMethod || "Cash",
                 status: "Pending"
             },
-            status: "pending" 
+            status: "pending",
+            estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000) // 45 minutes
         });
 
         await newOrder.save();
+        
+        // Real-time notification
+        const io = req.app.get('io');
+        io.emit('new-order', {
+            orderId: newOrder._id,
+            totalAmount,
+            items: items.length
+        });
 
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id });
     } catch (error) {
@@ -101,6 +110,14 @@ export const updateOrderStatus = async (req, res) => {
             { status },
             { new: true }
         );
+        
+        // Real-time status update
+        const io = req.app.get('io');
+        io.to(`order-${req.params.id}`).emit('status-update', {
+            orderId: req.params.id,
+            status,
+            timestamp: new Date()
+        });
 
         res.status(200).json(updatedOrder);
     } catch (error) {
