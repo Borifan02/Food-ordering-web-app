@@ -11,7 +11,7 @@ const TestCardInfo = () => {
         </div>
         <div className="card-field">
           <label>Expiry Date:</label>
-          <span>12/25</span>
+          <span>12/26</span>
         </div>
         <div className="card-field">
           <label>CVC:</label>

@@ -1,9 +1,28 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripeClient = null;
+
+const getStripeClient = () => {
+  if (stripeClient) return stripeClient;
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return null;
+  }
+
+  stripeClient = new Stripe(stripeSecret);
+  return stripeClient;
+};
 
 export const createPaymentIntent = async (req, res) => {
   try {
+    const stripe = getStripeClient();
+    if (!stripe) {
+      return res.status(503).json({
+        message: "Payments are not configured on the server. Add STRIPE_SECRET_KEY to backend/.env."
+      });
+    }
+
     const { amount, currency = 'usd' } = req.body;
     
     console.log('Payment request:', { amount, currency });
@@ -53,6 +72,13 @@ export const createPaymentIntent = async (req, res) => {
 
 export const confirmPayment = async (req, res) => {
   try {
+    const stripe = getStripeClient();
+    if (!stripe) {
+      return res.status(503).json({
+        message: "Payments are not configured on the server. Add STRIPE_SECRET_KEY to backend/.env."
+      });
+    }
+
     const { paymentIntentId } = req.body;
     
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);

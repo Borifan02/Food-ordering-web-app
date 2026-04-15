@@ -1,8 +1,16 @@
 import express from "express";
-import "dotenv/config";
+import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+
+// Recreate __filename and __dirname in ES Modules.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load env variables with an absolute path to backend/.env
+dotenv.config({ path: path.join(__dirname, '.env') });
+
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { createServer } from "http";
@@ -28,10 +36,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
-// Recreate __filename and __dirname in ES Modules.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Security Middleware
 app.use(helmet());
