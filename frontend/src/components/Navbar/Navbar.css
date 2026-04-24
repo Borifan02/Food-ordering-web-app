@@ -32,6 +32,16 @@
   gap: 2rem;
 }
 
+.nav-role {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .nav-link {
   font-weight: 500;
   color: var(--dark-color);

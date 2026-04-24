@@ -16,6 +16,8 @@ import "./App.css";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
+  const role = (user?.role || "").trim().toLowerCase();
+  const normalizedAllowedRoles = allowedRoles?.map((value) => value.trim().toLowerCase());
 
   if (loading) {
     return <div className="app-content">Loading...</div>;
@@ -25,7 +27,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(role)) {
     return <Navigate to="/menu" replace />;
   }
 

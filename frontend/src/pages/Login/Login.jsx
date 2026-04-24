@@ -14,9 +14,10 @@ const Login = () => {
     setError(""); // Clear previous errors
     const result = await login(formData.email, formData.password);
     if (result.success) {
-      if (result.user.role === "admin") {
+      const role = (result.user.role || "").trim().toLowerCase();
+      if (role === "admin") {
         navigate("/admin");
-      } else if (result.user.role === "deliveryMan") {
+      } else if (role === "deliveryman") {
         navigate("/delivery");
       } else {
         navigate("/menu");

@@ -66,7 +66,7 @@ const AdminDashboard = () => {
   const [deliverySearch, setDeliverySearch] = useState("");
   const [deliveryPage, setDeliveryPage] = useState(1);
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user?.role || "").trim().toLowerCase() === "admin";
 
   const assetBaseUrl = useMemo(() => {
     const configured = import.meta.env.VITE_API_URL || "http://localhost:5000/api";

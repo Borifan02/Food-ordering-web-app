@@ -13,7 +13,7 @@ const DeliveryDashboard = () => {
 
     useEffect(() => {
         if (user) {
-            if (user.role !== "deliveryMan") {
+            if ((user.role || "").trim().toLowerCase() !== "deliveryman") {
                 navigate("/menu");
             } else {
                 fetchPendingOrders();

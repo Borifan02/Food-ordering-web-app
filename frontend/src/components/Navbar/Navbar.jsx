@@ -14,6 +14,8 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const role = (user?.role || "").trim().toLowerCase();
+
   const location = useLocation();
 
   // Always show navbar except on login/register pages
@@ -30,17 +32,22 @@ const Navbar = () => {
           Foodie<span className="dot">.</span>
         </Link>
         <div className="nav-links">
-          {user?.role === "admin" && (
+          {user && (
+            <span className="nav-role" title={`Signed in as ${user.role}`}>
+              {user.role}
+            </span>
+          )}
+          {role === "admin" && (
             <Link to="/admin" className="nav-link">
               Admin Dashboard
             </Link>
           )}
-          {user?.role === "deliveryMan" && (
+          {role === "deliveryman" && (
             <Link to="/delivery" className="nav-link">
               Delivery Dashboard
             </Link>
           )}
-          {user?.role === "user" && (
+          {role === "user" && (
             <>
               <Link to="/menu" className="nav-link">
                 Menu
