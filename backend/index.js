@@ -30,9 +30,10 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 
 const app = express();
 const server = createServer(app);
+const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -51,7 +52,7 @@ app.use(limiter);
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
