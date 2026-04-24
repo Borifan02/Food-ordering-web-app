@@ -1,6 +1,7 @@
 import { OrderModel } from "../models/order.model.js";
 import { ItemModel } from "../models/menuItem.model.js";
 import { userModel } from "../models/user.model.js";
+import logger from "../utils/logger.js";
 
 export const getDashboardStats = async (req, res) => {
   try {
@@ -80,7 +81,7 @@ export const getDashboardStats = async (req, res) => {
       statusDistribution
     });
   } catch (error) {
-    console.error("Analytics error:", error);
+    logger.error("Analytics error:", error);
     res.status(500).json({ message: error.message });
   }
 };

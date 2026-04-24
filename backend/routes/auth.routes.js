@@ -1,7 +1,7 @@
 import express from "express";
 import { register, login } from "../controllers/auth.controller.js";
 import { userModel } from "../models/user.model.js"; 
-import { verifyToken } from "../middleware/authMiddleware.js";
+import { verifyToken, verifyAdmin } from "../middleware/authMiddleware.js";
 import { getProfile } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -16,7 +16,7 @@ router.get("/profile", verifyToken, getProfile);
 
 // Admin Routes
 // user promoted to admin
-router.put("/make-admin", async (req, res) => {
+router.put("/make-admin", verifyAdmin, async (req, res) => {
     try {
         const { email } = req.body;
         const user = await userModel.findOneAndUpdate(

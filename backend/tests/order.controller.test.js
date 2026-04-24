@@ -22,7 +22,12 @@ describe('Order Controller', () => {
     let req, res;
 
     beforeEach(() => {
-        req = { body: {}, params: {}, user: { id: 'userId', role: 'user' } };
+        req = {
+            body: {},
+            params: {},
+            user: { id: 'userId', role: 'user' },
+            app: { get: jest.fn() }
+        };
         res = {
             status: jest.fn().mockReturnThis(),
             json: jest.fn(),
@@ -120,7 +125,10 @@ describe('Order Controller', () => {
         it('should update order status', async () => {
             req.params.id = 'orderId';
             req.body.status = 'delivered';
+            req.user.role = 'admin';
             const mockOrder = { _id: 'orderId', status: 'delivered' };
+
+            OrderModel.findById.mockResolvedValue({ _id: 'orderId', userId: 'userId' });
 
             OrderModel.findByIdAndUpdate.mockResolvedValue(mockOrder);
 

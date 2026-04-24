@@ -2,6 +2,7 @@ import "dotenv/config";
 import { categoryModel } from "./models/category.model.js";
 import { ItemModel } from "./models/menuItem.model.js";
 import dbConnection from "./models/db.connection.js";
+import logger from "./utils/logger.js";
 
 const seedData = async () => {
   try {
@@ -75,10 +76,10 @@ const seedData = async () => {
     
     await ItemModel.insertMany(menuItems);
     
-    console.log("Sample data seeded successfully!");
+    logger.info("Sample data seeded successfully!");
     process.exit(0);
   } catch (error) {
-    console.error("Error seeding data:", error);
+    logger.error("Error seeding data:", error);
     process.exit(1);
   }
 };

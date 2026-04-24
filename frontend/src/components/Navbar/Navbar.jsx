@@ -30,16 +30,30 @@ const Navbar = () => {
           Foodie<span className="dot">.</span>
         </Link>
         <div className="nav-links">
-          <Link to="/menu" className="nav-link">
-            Menu
-          </Link>
-          <Link to="/orders" className="nav-link">
-            Orders
-          </Link>
-          <Link to="/cart" className="nav-link cart-link">
-            Cart
-            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-          </Link>
+          {user?.role === "admin" && (
+            <Link to="/admin" className="nav-link">
+              Admin Dashboard
+            </Link>
+          )}
+          {user?.role === "deliveryMan" && (
+            <Link to="/delivery" className="nav-link">
+              Delivery Dashboard
+            </Link>
+          )}
+          {user?.role === "user" && (
+            <>
+              <Link to="/menu" className="nav-link">
+                Menu
+              </Link>
+              <Link to="/orders" className="nav-link">
+                Orders
+              </Link>
+              <Link to="/cart" className="nav-link cart-link">
+                Cart
+                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+              </Link>
+            </>
+          )}
           <button onClick={handleLogout} className="logout-btn">
             Logout
           </button>

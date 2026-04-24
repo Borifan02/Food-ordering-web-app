@@ -130,8 +130,46 @@ export const markAsDelivered = async (req, res) => {
 // Get all delivery men
 export const getAllDeliveryMen = async (req, res) => {
   try {
-    const men = await DeliveryManModel.find();
+    const men = await DeliveryManModel.find().select("-password -confirmPassword");
     res.status(200).json(men);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update delivery man account (Admin only)
+export const updateDeliveryMan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone, email, status } = req.body;
+
+    const updated = await DeliveryManModel.findByIdAndUpdate(
+      id,
+      { name, phone, email, status },
+      { new: true, runValidators: true }
+    ).select("-password -confirmPassword");
+
+    if (!updated) {
+      return res.status(404).json({ message: "Delivery man not found" });
+    }
+
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete delivery man account (Admin only)
+export const deleteDeliveryMan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await DeliveryManModel.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Delivery man not found" });
+    }
+
+    res.status(200).json({ message: "Delivery man deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import logger from "../utils/logger.js";
 
 let stripeClient = null;
 
@@ -24,8 +25,6 @@ export const createPaymentIntent = async (req, res) => {
     }
 
     const { amount, currency = 'usd' } = req.body;
-    
-    console.log('Payment request:', { amount, currency });
     
     // Validate amount
     if (!amount) {
@@ -55,14 +54,12 @@ export const createPaymentIntent = async (req, res) => {
       }
     });
 
-    console.log('Payment intent created:', paymentIntent.id);
-
     res.status(200).json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id
     });
   } catch (error) {
-    console.error("Payment intent error:", error);
+    logger.error("Payment intent error:", error);
     res.status(500).json({ 
       message: "Payment processing failed",
       error: error.message 
@@ -96,7 +93,7 @@ export const confirmPayment = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Payment confirmation error:", error);
+    logger.error("Payment confirmation error:", error);
     res.status(500).json({ message: "Payment confirmation failed" });
   }
 };

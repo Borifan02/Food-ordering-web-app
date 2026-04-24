@@ -48,7 +48,7 @@ describe('Review Controller', () => {
             await addReview(req, res);
 
             expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: "You can only review items from delivered orders." });
+            expect(res.json).toHaveBeenCalledWith({ message: "Order not found or you don't have permission to review this item." });
         });
 
         it('should return 400 if already reviewed', async () => {

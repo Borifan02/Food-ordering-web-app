@@ -305,3 +305,67 @@
 .submit-btn:hover {
     background-color: #21867a;
 }
+
+.action-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.table-action {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.table-action.save {
+    background: #2a9d8f;
+    border-color: #2a9d8f;
+    color: #fff;
+}
+
+.table-action.danger {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: #fff;
+}
+
+.table-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.admin-search {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 0 14px 0;
+    padding: 10px 12px;
+    border: 1px solid #d6dbe1;
+    border-radius: 6px;
+}
+
+.table-pagination {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.table-pagination button {
+    padding: 6px 12px;
+    border: 1px solid #d6dbe1;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.table-pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

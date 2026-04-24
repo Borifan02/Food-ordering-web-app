@@ -1,5 +1,16 @@
 import express from "express";
-import { createDeliveryMan, getAllDeliveryMen, assignDelivery, completeDelivery, getPendingOrders, acceptOrder, markAsDelivered, getMyActiveOrder } from "../controllers/delivery.controller.js";
+import {
+	createDeliveryMan,
+	getAllDeliveryMen,
+	assignDelivery,
+	completeDelivery,
+	getPendingOrders,
+	acceptOrder,
+	markAsDelivered,
+	getMyActiveOrder,
+	updateDeliveryMan,
+	deleteDeliveryMan,
+} from "../controllers/delivery.controller.js";
 import { verifyAdmin, verifyDeliveryMan } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -7,6 +18,8 @@ const router = express.Router();
 // Admin only routes
 router.post("/add", verifyAdmin, createDeliveryMan);
 router.get("/", verifyAdmin, getAllDeliveryMen);
+router.put("/:id", verifyAdmin, updateDeliveryMan);
+router.delete("/:id", verifyAdmin, deleteDeliveryMan);
 router.post("/assign/:orderId", verifyAdmin, assignDelivery);
 router.post("/complete/:orderId", verifyAdmin, completeDelivery);
 

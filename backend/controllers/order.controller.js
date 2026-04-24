@@ -1,13 +1,11 @@
 import { OrderModel } from "../models/order.model.js";
 import { ItemModel } from "../models/menuItem.model.js";
+import logger from "../utils/logger.js";
 
 export const createOrder = async (req, res) => {
     try {
         const { items, deliveryAddress, paymentMethod } = req.body;
         const userId = req.user.id; // JWT uses 'id' field
-        
-        console.log("Creating order for user:", userId);
-        console.log("Order data:", { items, deliveryAddress, paymentMethod });
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items in order" });
@@ -19,7 +17,6 @@ export const createOrder = async (req, res) => {
         for (let item of items) {
             const dbItem = await ItemModel.findById(item.menuItemId);
             if (!dbItem) {
-                console.log(`Item not found in DB: ${item.menuItemId} - ${item.name}`);
                 return res.status(404).json({ message: `Item not found: ${item.name}` });
             }
             totalAmount += dbItem.price * item.quantity;
@@ -41,17 +38,19 @@ export const createOrder = async (req, res) => {
 
         await newOrder.save();
         
-        // Real-time notification
-        const io = req.app.get('io');
-        io.emit('new-order', {
-            orderId: newOrder._id,
-            totalAmount,
-            items: items.length
-        });
+        // Emit real-time notification when Socket.IO is available.
+        const io = req.app?.get?.('io');
+        if (io) {
+            io.emit('new-order', {
+                orderId: newOrder._id,
+                totalAmount,
+                items: items.length
+            });
+        }
 
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id });
     } catch (error) {
-        console.error("Order creation error:", error);
+        logger.error("Order creation error:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
@@ -111,13 +110,15 @@ export const updateOrderStatus = async (req, res) => {
             { new: true }
         );
         
-        // Real-time status update
-        const io = req.app.get('io');
-        io.to(`order-${req.params.id}`).emit('status-update', {
-            orderId: req.params.id,
-            status,
-            timestamp: new Date()
-        });
+        // Emit status updates when Socket.IO is available.
+        const io = req.app?.get?.('io');
+        if (io) {
+            io.to(`order-${req.params.id}`).emit('status-update', {
+                orderId: req.params.id,
+                status,
+                timestamp: new Date()
+            });
+        }
 
         res.status(200).json(updatedOrder);
     } catch (error) {

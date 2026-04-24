@@ -41,3 +41,62 @@ export const getMenuItems = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Get all menu items for admin (including unavailable)
+export const getAllMenuItems = async (req, res) => {
+    try {
+        const items = await ItemModel.find().populate("categoryId").sort({ createdAt: -1 });
+        res.status(200).json(items);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Update menu item (Admin only)
+export const updateMenuItem = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, categoryId, isAvailable } = req.body;
+
+        const existingItem = await ItemModel.findById(id);
+        if (!existingItem) {
+            return res.status(404).json({ message: "Menu item not found" });
+        }
+
+        const updates = {
+            name: name ?? existingItem.name,
+            description: description ?? existingItem.description,
+            price: price ?? existingItem.price,
+            categoryId: categoryId ?? existingItem.categoryId,
+        };
+
+        if (typeof isAvailable !== "undefined") {
+            updates.isAvailable = isAvailable;
+        }
+
+        if (req.file) {
+            updates.image = `/uploads/${req.file.filename}`;
+        }
+
+        const updatedItem = await ItemModel.findByIdAndUpdate(id, updates, { new: true }).populate("categoryId");
+        res.status(200).json(updatedItem);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Delete menu item (Admin only)
+export const deleteMenuItem = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await ItemModel.findByIdAndDelete(id);
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Menu item not found" });
+        }
+
+        res.status(200).json({ message: "Menu item deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

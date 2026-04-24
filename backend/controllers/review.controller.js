@@ -1,13 +1,12 @@
 import { reviewModel } from "../models/review.model.js";
 import { OrderModel } from "../models/order.model.js";
+import logger from "../utils/logger.js";
 
 // Add a review
 export const addReview = async (req, res) => {
     try {
         const { orderId, menuItemId, rating, comment } = req.body;
         const userId = req.user.id;
-        
-        console.log("Review data:", { orderId, menuItemId, rating, comment, userId });
 
         const order = await OrderModel.findOne({ 
             _id: orderId, 
@@ -36,7 +35,7 @@ export const addReview = async (req, res) => {
         res.status(201).json({ message: "Review added successfully" });
 
     } catch (error) {
-        console.error("Review error:", error);
+        logger.error("Review error:", error);
         res.status(500).json({ message: error.message });
     }
 };

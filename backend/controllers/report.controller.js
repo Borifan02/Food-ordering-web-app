@@ -1,5 +1,6 @@
 import { OrderModel } from "../models/order.model.js";
 import PDFDocument from "pdfkit";
+import logger from "../utils/logger.js";
 
 export const getDashboardStats = async (req, res) => {
     try {
@@ -127,7 +128,7 @@ export const exportDashboardStatsPDF = async (req, res) => {
         doc.end();
 
     } catch (error) {
-        console.error("PDF Export Error:", error);
+        logger.error("PDF Export Error:", error);
         res.status(500).json({ message: "Failed to generate PDF report" });
     }
 };
