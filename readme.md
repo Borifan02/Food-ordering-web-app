@@ -73,6 +73,45 @@ A full-stack web application for ordering food, designed to streamline the proce
     *   **Frontend**: http://localhost:5173 (typically)
     *   **Backend**: http://localhost:5000
 
+## 🚀 Deployment
+
+This project is designed to be deployed with the frontend on Vercel and the backend on Render.
+
+### Frontend on Vercel
+
+1. Create a new Vercel project and import this repository.
+2. Set the project root directory to `frontend`.
+3. Use these build settings:
+    - Build command: `npm run build`
+    - Output directory: `dist`
+4. Add this environment variable in Vercel:
+    - `VITE_API_URL` = your Render backend URL, for example `https://your-backend.onrender.com/api`
+5. Deploy the project.
+
+### Backend on Render
+
+1. Create a new Render Web Service and connect the same repository.
+2. Set the root directory to `backend`.
+3. Use these settings:
+    - Build command: `npm install`
+    - Start command: `npm start`
+4. Add these environment variables in Render:
+    - `NODE_ENV=production`
+    - Do not hardcode `PORT`; Render provides it automatically at runtime
+    - `MONGO_URL` = your MongoDB Atlas connection string
+    - `JWT_SECRET` = your JWT secret
+    - `JWT_EXPIRE` = `30d`
+    - `STRIPE_PUBLISHABLE_KEY` = your Stripe publishable key
+    - `STRIPE_SECRET_KEY` = your Stripe secret key
+    - `CLIENT_URL` = your Vercel frontend URL, for example `https://your-project.vercel.app`
+5. Deploy the backend.
+
+### Important Notes
+
+- Do not keep `CLIENT_URL` pointed at localhost in production.
+- The frontend must use the Render backend URL through `VITE_API_URL`; it should not call `/api` in production unless Vercel is also proxying that route.
+- The backend already accepts both the deployed frontend URL and local development origin through CORS.
+
 ## 📂 Project Structure
 
 ```
