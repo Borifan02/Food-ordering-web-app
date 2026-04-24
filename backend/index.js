@@ -88,7 +88,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
