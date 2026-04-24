@@ -76,6 +76,18 @@ io.on('connection', (socket) => {
 // Make io available to routes
 app.set('io', io);
 
+// Basic routes for uptime checks and quick browser verification on Render.
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Food Ordering API is running",
+    docs: "/api/health"
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/menu", menuRoutes);
