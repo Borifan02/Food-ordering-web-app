@@ -60,3 +60,4 @@ export const ensureDemoAccounts = async () => {
     logger.warn(`Demo accounts initialization check skipped: ${err.message}`);
   }
 };
+
