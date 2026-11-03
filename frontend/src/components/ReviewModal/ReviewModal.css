@@ -1,41 +1,170 @@
 .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
 }
 
-.modal-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    width: 300px;
-    text-align: center;
+.review-modal-box {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 480px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  animation: scaleUp 0.25s ease;
+}
+
+.review-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-modal-header h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.review-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.review-dish-name {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 6px 0 16px;
 }
 
 .star-rating {
-    font-size: 2rem;
-    color: #ddd;
-    cursor: pointer;
-    margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
-.star.filled {
-    color: #ffc107;
+.star-rating .star {
+  font-size: 2.4rem;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+  user-select: none;
 }
 
-textarea {
-    width: 100%;
-    height: 80px;
-    margin-bottom: 15px;
-    padding: 8px;
+.star-rating .star:hover {
+  transform: scale(1.2);
 }
 
-.modal-actions button {
-    margin: 0 5px;
-    padding: 8px 15px;
-    cursor: pointer;
+.star-rating .star.filled {
+  color: #f59e0b;
+}
+
+.rating-desc-label {
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #d97706;
+  margin-bottom: 16px;
+}
+
+.review-tags-box {
+  margin-bottom: 16px;
+}
+
+.review-tags-box label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.review-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.review-tag-chip {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.review-tag-chip:hover {
+  background: #e2e8f0;
+}
+
+.review-tag-chip.selected {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.review-modal-box textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-bottom: 18px;
+}
+
+.review-modal-box textarea:focus {
+  border-color: #ff4757;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancel,
+.btn-submit {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn-submit {
+  background: #ff4757;
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #ee3847;
 }

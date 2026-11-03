@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
 const Footer = () => {
@@ -6,37 +7,37 @@ const Footer = () => {
       <div className="footer-container">
         <div className="footer-section">
           <h3>Foodie<span className="dot">.</span></h3>
-          <p>Delicious food delivered to your doorstep. Fresh ingredients, amazing flavors, and exceptional service.</p>
+          <p>Delicious handcrafted food delivered to your doorstep. Fresh ingredients, amazing flavors, and lightning-fast service.</p>
           <div className="social-links">
-            <a href="#" aria-label="Facebook">📘</a>
-            <a href="#" aria-label="Instagram">📷</a>
-            <a href="#" aria-label="Twitter">🐦</a>
+            <span role="img" aria-label="Facebook">📘</span>
+            <span role="img" aria-label="Instagram">📷</span>
+            <span role="img" aria-label="Twitter">🐦</span>
           </div>
         </div>
         
         <div className="footer-section">
           <h4>Quick Links</h4>
           <ul>
-            <li><a href="/menu">Menu</a></li>
-            <li><a href="/orders">Orders</a></li>
-            <li><a href="/cart">Cart</a></li>
-            <li><a href="/about">About Us</a></li>
+            <li><Link to="/menu">Explore Menu</Link></li>
+            <li><Link to="/orders">Order History</Link></li>
+            <li><Link to="/cart">My Cart</Link></li>
+            <li><Link to="/about">About Us</Link></li>
           </ul>
         </div>
         
         <div className="footer-section">
-          <h4>Contact Info</h4>
+          <h4>Contact & Support</h4>
           <div className="contact-item">
             <span>📍</span>
-            <p>123 Food Street, Addis Ababa City, FC 12345</p>
+            <p>123 Food Street, Downtown, FC 12345</p>
           </div>
           <div className="contact-item">
             <span>📞</span>
-            <p>+251965844287</p>
+            <p>+1 (555) 019-2834</p>
           </div>
           <div className="contact-item">
             <span>✉️</span>
-            <p>dabasaborifan@gmail.com</p>
+            <p>support@foodieapp.com</p>
           </div>
         </div>
         
@@ -47,13 +48,13 @@ const Footer = () => {
             <p><strong>Sat - Sun:</strong> 10:00 AM - 12:00 AM</p>
           </div>
           <div className="delivery-info">
-            <p>🚚 Free delivery on orders over $25</p>
+            <p>🚚 Free delivery on all orders over $25</p>
           </div>
         </div>
       </div>
       
       <div className="footer-bottom">
-        <p>&copy; 2024 Foodie. All rights reserved. | Privacy Policy | Terms of Service</p>
+        <p>&copy; {new Date().getFullYear()} Foodie App. All rights reserved. • Production Ready</p>
       </div>
     </footer>
   );

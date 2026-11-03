@@ -1,15 +1,17 @@
 {
   "name": "food_ordering_app",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Production-Ready Full-Stack Food Ordering Platform with Real-Time Tracking",
+  "main": "backend/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cd backend && npm test",
+    "build": "cd frontend && npm run build",
+    "seed": "cd backend && npm run seed",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
     "vercel-build": "cd backend && npm install && cd ../frontend && npm install && npm run build"
   },
-  "keywords": [],
+  "keywords": ["food-ordering", "react", "express", "socketio", "stripe", "mongodb"],
   "author": "",
   "license": "ISC",
   "type": "module",

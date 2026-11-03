@@ -1,50 +1,64 @@
 import { Schema, Types, model } from "mongoose";
 
-
-
-export const userSchema = Schema({
+export const userSchema = Schema(
+  {
     firstName: {
-        type: String,
-        required: true,
-        min: 3
+      type: String,
+      required: true,
+      minlength: 3,
     },
     lastName: {
-        type: String,
-        required: true,
-        min: 3
+      type: String,
+      required: true,
+      minlength: 3,
     },
     email: {
-        type: String,
-        required: true,
-        unique: true,
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
     password: {
-        type: String,
-        required: true,
-        min: 6,
-        max: 20
-
+      type: String,
+      required: true,
+      minlength: 6,
     },
     confirmPassword: {
-        type: String,
-        required: true,
-        min: 6,
-        max: 20
+      type: String,
+      required: false,
     },
     role: {
-        type: String,
-        enum: ["user", "admin", 'deliveryMan'],
-        default: "user"
+      type: String,
+      enum: ["user", "admin", "deliveryMan"],
+      default: "user",
     },
     phone: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     address: {
-        type: String,
+      type: String,
+      default: "",
     },
+    favorites: [
+      {
+        type: Types.ObjectId,
+        ref: "menuItem",
+      },
+    ],
+    savedAddresses: [
+      {
+        label: { type: String, default: "Home" },
+        address: { type: String, required: true },
+      },
+    ],
+    avatar: {
+      type: String,
+      default: "",
+    },
+  },
+  { timestamps: true }
+);
 
-
-}, { timestamps: true })
-
-export const userModel = model('user', userSchema)
+export const userModel = model("user", userSchema);

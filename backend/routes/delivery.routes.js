@@ -8,6 +8,7 @@ import {
 	acceptOrder,
 	markAsDelivered,
 	getMyActiveOrder,
+	getMyDeliveryHistory,
 	updateDeliveryMan,
 	deleteDeliveryMan,
 } from "../controllers/delivery.controller.js";
@@ -23,9 +24,10 @@ router.delete("/:id", verifyAdmin, deleteDeliveryMan);
 router.post("/assign/:orderId", verifyAdmin, assignDelivery);
 router.post("/complete/:orderId", verifyAdmin, completeDelivery);
 
-// Delivery man routes
+// Delivery Man protected routes
 router.get("/pending-orders", verifyDeliveryMan, getPendingOrders);
 router.get("/my-active-order", verifyDeliveryMan, getMyActiveOrder);
+router.get("/history", verifyDeliveryMan, getMyDeliveryHistory);
 router.post("/accept/:orderId", verifyDeliveryMan, acceptOrder);
 router.post("/mark-delivered/:orderId", verifyDeliveryMan, markAsDelivered);
 

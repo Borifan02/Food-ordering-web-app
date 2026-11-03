@@ -1,162 +1,177 @@
-# Food Ordering App
+# Foodie — Production-Ready Full-Stack Food Ordering Platform 🍽️
 
-A full-stack web application for ordering food, designed to streamline the process for Customers, Administrators, and Delivery Personnel.
+A full-stack, real-time web application for food ordering, designed for **Customers**, **Administrators**, and **Delivery Personnel**. Built with React 19, Node.js, Express, MongoDB, Socket.IO, and Stripe.
 
-## 🚀 Features
+---
 
-### 👤 User (Customer)
-*   **Authentication**: Secure Sign Up and Login.
-*   **Browse Menu**: View available food items and filter by categories.
-*   **Cart Management**: Add items to the shopping cart and review them before checkout.
-*   **Order Placement**: Place orders seamlessly.
-*   **Order Tracking**: Track order status in real-time (Pending -> Preparing -> On the Way -> Delivered).
-*   **Reviews**: Leave reviews for food items.
+## ⚡ Quick Demo Accounts (1-Click Login)
 
-### 🛠 Admin
-*   **Dashboard**: Comprehensive overview of the system status.
-*   **Menu Management**: Add, edit, and delete menu items.
-*   **Category Management**: Organize food items into categories.
-*   **Order Management**: View all orders and their statuses.
-*   **Reports**: Generate and export sales reports as PDF files.
-*   **Delivery Management**: Create and manage delivery personnel accounts.
+The application features built-in 1-click demo login buttons directly on the Navbar & Login page:
 
-### 🚚 Deliveryman
-*   **Dashboard**: Dedicated interface for delivery tasks.
-*   **Order Assignment**: View orders ready for delivery ("Preparing").
-*   **Status Updates**: Accept orders (changing status to "On the Way") and mark them as "Delivered" upon completion.
+| Role | Email | Password | Capabilities |
+| :--- | :--- | :--- | :--- |
+| **👑 Admin** | `admin@foodie.com` | `admin123` | KPI analytics, order management, menu CRUD, category CRUD, fleet dispatch, PDF report |
+| **🍔 Customer** | `user@foodie.com` | `user123` | Browse menu, cart, promo coupons, live order tracking map, reviews, reorder, receipts |
+| **🚚 Delivery Driver** | `delivery@foodie.com` | `delivery123` | Online/break status, accept orders, customer call shortcut, complete deliveries, earnings |
+
+---
+
+## 🚀 Key Features
+
+### 👤 Customer (User)
+* **Interactive Menu**: Live instant search with debounce, category carousel with count badges, dietary filter pills (🌱 Vegetarian, 🔥 Spicy, ⭐ Chef's Special, 🏷️ Under $12), and sorting (Price, Rating, Alphabetical).
+* **Card Quantity Stepper**: Adjust quantities `[-] qty [+]` directly on food cards without opening the cart.
+* **Wishlist / Favorites**: 1-click heart button to save favorite dishes.
+* **Dish Quick View Modal**: High-res photo, nutrition facts (calories, prep time), customer reviews with star ratings, and quantity selector.
+* **Cart & Checkout**:
+  * **Free Delivery Progress**: Interactive progress bar indicating amount remaining to unlock free delivery ($25 threshold).
+  * **Promo Coupons**: Built-in support for promo codes (`WELCOME10` for 10% off, `TASTY20` for 20% off, `FREESHIP` for free delivery).
+  * **Payment Choice**: Choose between **Cash on Delivery (COD)** (1-click instant placement) and **Card (Stripe)**.
+  * **Delivery & Cooking Instructions**: Add special requests like "Extra napkins" or "Ring doorbell".
+  * **Celebratory Confetti**: High-performance canvas confetti burst upon order completion.
+* **Real-Time Live Order Tracking**:
+  * **Simulated Interactive Delivery Route Map**: Animated canvas showing restaurant, moving scooter icon along the route, and customer destination pin with pulsating ripple effect.
+  * **Live Status Stepper**: Order Placed ➔ Kitchen Preparing ➔ Out for Delivery ➔ Delivered (via WebSockets with polling fallback).
+  * **Estimated Delivery Timer**: Live countdown estimate.
+  * **Assigned Driver Card**: Driver photo, vehicle type, star rating, and direct phone link.
+  * **Order Cancellation**: Customer can cancel their order with reason while status is "pending".
+  * **Post-Delivery Reviews**: Rate food with 1-5 stars, select tag pills ("Hot & Fresh", "Super Fast", "Delicious"), and write reviews.
+* **Order History & Receipts**:
+  * Filter orders by status (All, Active, Completed, Cancelled).
+  * **1-Click Reorder**: Instantly loads past order items into cart.
+  * **Printable Invoice Receipt Modal**: Formatted restaurant receipt with print button.
+
+### 🛠️ Administrator
+* **Live KPI Dashboard**: Total revenue, total orders, pending orders requiring kitchen attention, and active fleet size with trend indicators.
+* **Order Management**:
+  * Filter orders by status (All, Pending, Preparing, On The Way, Delivered, Cancelled).
+  * Progression dropdown with real-time Socket.IO broadcasts to customer and delivery partner screens.
+  * **Driver Assignment Modal**: Dispatch to a specific delivery partner or use system auto-assignment.
+* **Menu Management**:
+  * In-line instant availability toggle (`isAvailable`) directly on table rows.
+  * Add dish modal with image upload, prep time, calories, and categories.
+  * Inline editing and delete confirmations.
+* **Category Management**: Create, edit, toggle active status, and upload category thumbnails.
+* **Fleet Management**: View drivers, vehicle types, ratings, and add new delivery accounts.
+* **Sales Reports & PDF Export**: Instant official PDF report generation via PDFKit.
+
+### 🚚 Delivery Driver
+* **Driver Availability Toggle**: Switch between "🟢 Available for Orders" and "☕ On Break / Offline".
+* **Driver Metrics Bar**: Daily completed deliveries, earned delivery fees, vehicle type, and driver rating.
+* **Orders Ready for Pickup**: Real-time list of orders prepared by the kitchen with customer drop-off address and item breakdown.
+* **Active Delivery Management**:
+  * Customer drop-off address and special delivery notes.
+  * 1-click customer phone call shortcut.
+  * Action button to confirm successful delivery.
+* **Delivery History**: Complete history of past completed deliveries and fees earned.
+
+---
 
 ## 💻 Tech Stack
 
 ### Frontend
-*   **React**: UI library for building interactive interfaces.
-*   **Vite**: Fast build tool and development server.
-*   **React Router DOM**: For client-side routing.
-*   **Axios**: For making HTTP requests to the backend.
-*   **CSS**: Custom styling for a unique look and feel.
+* **React 19** with **Vite 7**
+* **React Router DOM 7**
+* **Socket.io Client** for real-time live events
+* **Stripe React / Stripe.js** for card payments
+* **Axios** with JWT request interceptors
+* **Custom Toast & Modal Notification System** (Zero browser `alert()` dependency)
+* **Custom Canvas Confetti & Route Simulation Engine**
 
 ### Backend
-*   **Node.js & Express**: Robust runtime and framework for the API.
-*   **MongoDB & Mongoose**: NoSQL database and ODM for data modeling.
-*   **JWT (JSON Web Tokens)**: Secure authentication and authorization.
-*   **Bcryptjs**: Password hashing for security.
-*   **Multer**: Handling file uploads (e.g., food images).
-*   **PDFKit**: Generating PDF reports for admins.
+* **Node.js & Express 5**
+* **Socket.IO** for real-time bidirectional communication
+* **MongoDB & Mongoose 9**
+* **JWT (JSON Web Tokens)** & **Bcryptjs**
+* **Helmet** with Cross-Origin Resource Policy & **Express Rate Limit**
+* **Multer** for food image uploads
+* **PDFKit** for PDF sales report generation
+* **Jest & Supertest** for automated controller tests
 
-## ⚙️ Installation & Setup
+---
 
-1.  **Clone the repository**
-    ```bash
-    git clone <repository-url>
-    cd Web_Programming_Project
-    ```
+## ⚙️ Installation & Local Setup
 
-2.  **Install Dependencies**
-    Run the following command from the root directory to install dependencies for both frontend and backend:
-    ```bash
-    npm run install-all
-    ```
-
-3.  **Environment Configuration**
-    Create a `.env` file in the `backend` directory with the following variables:
-    ```env
-    PORT=5000
-    Mongo_URL=your_mongodb_connection_string
-    JWT_SECRET=your_jwt_secret_key
-    ```
-
-4.  **Run the Application**
-    Start both the frontend and backend servers concurrently:
-    ```bash
-    npm run dev
-    ```
-
-    *   **Frontend**: http://localhost:5173 (typically)
-    *   **Backend**: http://localhost:5000
-
-## 🚀 Deployment
-
-This project is designed to be deployed with the frontend on Vercel and the backend on Render.
-
-### Frontend on Vercel
-
-1. Create a new Vercel project and import this repository.
-2. Set the project root directory to `frontend`.
-3. Use these build settings:
-    - Build command: `npm run build`
-    - Output directory: `dist`
-4. Add this environment variable in Vercel:
-    - `VITE_API_URL` = your Render backend URL, for example `https://your-backend.onrender.com/api`
-5. Deploy the project.
-
-### Backend on Render
-
-1. Create a new Render Web Service and connect the same repository.
-2. Set the root directory to `backend`.
-3. Use these settings:
-    - Build command: `npm install`
-    - Start command: `npm start`
-4. Add these environment variables in Render:
-    - `NODE_ENV=production`
-    - Do not hardcode `PORT`; Render provides it automatically at runtime
-    - `MONGO_URL` = your MongoDB Atlas connection string
-    - `JWT_SECRET` = your JWT secret
-    - `JWT_EXPIRE` = `30d`
-    - `STRIPE_PUBLISHABLE_KEY` = your Stripe publishable key
-    - `STRIPE_SECRET_KEY` = your Stripe secret key
-    - `CLIENT_URL` = your Vercel frontend URL, for example `https://your-project.vercel.app`
-5. Deploy the backend.
-
-### Important Notes
-
-- Do not keep `CLIENT_URL` pointed at localhost in production.
-- The frontend must use the Render backend URL through `VITE_API_URL`; it should not call `/api` in production unless Vercel is also proxying that route.
-- The backend already accepts both the deployed frontend URL and local development origin through CORS.
-
-## 📂 Project Structure
-
+### 1. Clone the repository
+```bash
+git clone <repository-url>
+cd Food-ordering-web-app
 ```
-├── backend/                # Node.js/Express Backend
-│   ├── controllers/        # Request handlers
-│   ├── models/             # Mongoose schemas
-│   ├── routes/             # API endpoints
-│   ├── middleware/         # Auth & other middleware
-│   ├── tests/              # Unit tests
-│   └── ...
-├── frontend/               # React Frontend
-│   ├── src/
-│   │   ├── pages/          # Application views (Admin, Delivery, etc.)
-│   │   ├── components/     # Reusable UI components
-│   │   ├── context/        # State management
-│   │   └── ...
-└── package.json            # Root configuration & scripts
+
+### 2. Install all dependencies
+```bash
+npm run install-all
 ```
+
+### 3. Environment Variables
+
+Create `.env` inside `backend/`:
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URL=your_mongodb_connection_string
+JWT_SECRET=super_secret_jwt_key_foodie_app_production_2026
+JWT_EXPIRE=30d
+STRIPE_PUBLISHABLE_KEY=pk_test_placeholder
+STRIPE_SECRET_KEY=sk_test_placeholder
+CLIENT_URL=http://localhost:5173
+```
+
+Create `.env` inside `frontend/`:
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_placeholder
+```
+
+### 4. Seed the Database
+Seed sample categories, rich dishes with high-res photos, coupons, and demo accounts:
+```bash
+npm run seed
+```
+
+### 5. Run Development Servers
+```bash
+npm run dev
+```
+* **Frontend**: `http://localhost:5173`
+* **Backend**: `http://localhost:5000`
+
+---
 
 ## 🧪 Testing
 
-The backend includes comprehensive unit tests for all controllers using **Jest** and **Supertest**.
-
-### Running Tests
-
+The backend includes a comprehensive test suite across all controllers:
 ```bash
-cd backend
 npm test
 ```
+* **39 passing unit tests** across 6 test suites
+* Tested controllers:
+  * `auth.controller.js` — registration, login, profile retrieval
+  * `delivery.controller.js` — driver creation, assignment, deliveries
+  * `order.controller.js` — order placement, calculations, statuses
+  * `menu.controller.js` — item creation, rating aggregations
+  * `review.controller.js` — customer reviews & feedback
+  * `report.controller.js` — dashboard stats & PDF generation
 
-### Test Coverage
+---
 
-- **39 passing tests** across 6 test suites
-- **Controllers tested**:
-  - `auth.controller.js` - Authentication (register, login, getProfile)
-  - `delivery.controller.js` - Delivery management
-  - `menu.controller.js` - Menu item operations
-  - `order.controller.js` - Order processing
-  - `review.controller.js` - Review management
-  - `report.controller.js` - Dashboard statistics and PDF generation
+## 🚀 Production Deployment
 
-### Test Features
+### Frontend (e.g. Vercel)
+* **Root Directory**: `frontend`
+* **Build Command**: `npm run build`
+* **Output Directory**: `dist`
+* **Environment Variables**:
+  * `VITE_API_URL` = `https://your-backend.onrender.com/api`
+  * `VITE_SOCKET_URL` = `https://your-backend.onrender.com`
 
-- ✅ ES Module support with `jest.unstable_mockModule`
-- ✅ Mocked database models for isolated testing
-- ✅ Success and error case coverage
-- ✅ Edge case validation
-
+### Backend (e.g. Render)
+* **Root Directory**: `backend`
+* **Build Command**: `npm install`
+* **Start Command**: `npm start`
+* **Environment Variables**:
+  * `NODE_ENV=production`
+  * `MONGO_URL` = your MongoDB Atlas connection string
+  * `JWT_SECRET` = your secure JWT secret
+  * `CLIENT_URL` = `https://your-frontend.vercel.app`

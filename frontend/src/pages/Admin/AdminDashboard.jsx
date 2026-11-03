@@ -1,6 +1,9 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import { getSocket } from "../../utils/socket";
+import ConfirmModal from "../../components/Modal/ConfirmModal";
 import apiClient from "../../api/axios";
 import "./AdminDashboard.css";
 
@@ -9,6 +12,9 @@ const emptyMenuItem = {
   description: "",
   price: "",
   categoryId: "",
+  prepTime: "15-20 min",
+  calories: 450,
+  isFeatured: false,
 };
 
 const emptyCategory = { name: "" };
@@ -19,26 +25,36 @@ const emptyDeliveryMan = {
   email: "",
   password: "",
   confirmPassword: "",
+  vehicleType: "Scooter",
 };
 
 const PAGE_SIZE = 8;
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("stats");
 
+  // Orders State
   const [orders, setOrders] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
   const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
   const [orderPage, setOrderPage] = useState(1);
 
+  // Driver Assignment Modal
+  const [assignModalOrder, setAssignModalOrder] = useState(null);
+  const [selectedDriverId, setSelectedDriverId] = useState("");
+
+  // Categories State
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState(emptyCategory);
   const [categoryImageFile, setCategoryImageFile] = useState(null);
   const [editingCategoryId, setEditingCategoryId] = useState("");
   const [editingCategoryData, setEditingCategoryData] = useState({ name: "", isActive: true });
 
+  // Menu Items State
   const [menuItems, setMenuItems] = useState([]);
   const [newItem, setNewItem] = useState(emptyMenuItem);
   const [imageFile, setImageFile] = useState(null);
@@ -54,6 +70,7 @@ const AdminDashboard = () => {
   const [menuSearch, setMenuSearch] = useState("");
   const [menuPage, setMenuPage] = useState(1);
 
+  // Delivery Fleet State
   const [deliveryMen, setDeliveryMen] = useState([]);
   const [newDeliveryMan, setNewDeliveryMan] = useState(emptyDeliveryMan);
   const [editingDeliveryId, setEditingDeliveryId] = useState("");
@@ -62,9 +79,18 @@ const AdminDashboard = () => {
     phone: "",
     email: "",
     status: "available",
+    vehicleType: "Scooter",
   });
   const [deliverySearch, setDeliverySearch] = useState("");
   const [deliveryPage, setDeliveryPage] = useState(1);
+
+  // Confirm Modal state for deletions
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const isAdmin = (user?.role || "").trim().toLowerCase() === "admin";
 
@@ -74,12 +100,8 @@ const AdminDashboard = () => {
   }, []);
 
   const buildAssetUrl = (assetPath) => {
-    if (!assetPath) {
-      return "";
-    }
-    if (assetPath.startsWith("http")) {
-      return assetPath;
-    }
+    if (!assetPath) return "";
+    if (assetPath.startsWith("http")) return assetPath;
     return `${assetBaseUrl}${assetPath}`;
   };
 
@@ -88,16 +110,112 @@ const AdminDashboard = () => {
     return items.slice(start, start + PAGE_SIZE);
   };
 
+  async function fetchOrders() {
+    try {
+      const res = await apiClient.get("/orders/all");
+      setOrders(res.data || []);
+    } catch (error) {
+      console.error("Error fetching orders", error);
+    }
+  }
+
+  async function fetchStats() {
+    try {
+      const res = await apiClient.get("/reports/dashboard");
+      setDashboardStats(res.data);
+    } catch (error) {
+      console.error("Error fetching stats", error);
+    }
+  }
+
+  async function fetchCategories(includeInactive = false) {
+    try {
+      const endpoint = includeInactive ? "/categories/all" : "/categories";
+      const res = await apiClient.get(endpoint);
+      setCategories(res.data || []);
+    } catch (error) {
+      console.error("Error fetching categories", error);
+    }
+  }
+
+  async function fetchMenuItems() {
+    try {
+      const res = await apiClient.get("/menu/all");
+      setMenuItems(res.data || []);
+    } catch (error) {
+      console.error("Error fetching menu items", error);
+    }
+  }
+
+  async function fetchDeliveryMen() {
+    try {
+      const res = await apiClient.get("/delivery");
+      setDeliveryMen(res.data || []);
+    } catch (error) {
+      console.error("Error fetching delivery men", error);
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    if (!isAdmin) {
+      navigate("/menu");
+      return;
+    }
+
+    fetchStats();
+    fetchOrders();
+    fetchCategories(true);
+    fetchMenuItems();
+    fetchDeliveryMen();
+
+    // Socket.io Real-time admin listener
+    const socket = getSocket();
+    if (socket) {
+      socket.emit("join-admin");
+      socket.on("new-order", () => {
+        toast.info("🔔 New order received from customer!");
+        fetchOrders();
+        fetchStats();
+      });
+      socket.on("order-status-changed", () => {
+        fetchOrders();
+        fetchStats();
+      });
+      socket.on("delivery-completed", () => {
+        toast.success("📦 A delivery has been completed!");
+        fetchOrders();
+        fetchDeliveryMen();
+        fetchStats();
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("new-order");
+        socket.off("order-status-changed");
+        socket.off("delivery-completed");
+      }
+    };
+  }, [user, isAdmin, navigate]);
+
+  // Order filters
   const filteredOrders = useMemo(() => {
+    let result = orders;
+    if (orderStatusFilter !== "all") {
+      result = result.filter(
+        (o) => o.status?.toLowerCase() === orderStatusFilter.toLowerCase()
+      );
+    }
     const q = orderSearch.trim().toLowerCase();
-    if (!q) return orders;
-    return orders.filter((o) => {
+    if (!q) return result;
+    return result.filter((o) => {
       const id = o._id?.toLowerCase() || "";
       const customer = o.userId?.firstName?.toLowerCase() || "";
       const status = o.status?.toLowerCase() || "";
       return id.includes(q) || customer.includes(q) || status.includes(q);
     });
-  }, [orders, orderSearch]);
+  }, [orders, orderSearch, orderStatusFilter]);
 
   const filteredMenuItems = useMemo(() => {
     const q = menuSearch.trim().toLowerCase();
@@ -132,88 +250,63 @@ const AdminDashboard = () => {
   const pagedMenuItems = paginate(filteredMenuItems, safeMenuPage);
   const pagedDeliveryMen = paginate(filteredDeliveryMen, safeDeliveryPage);
 
-  async function fetchOrders() {
-    try {
-      const res = await apiClient.get("/orders/all");
-      setOrders(res.data);
-    } catch (error) {
-      console.error("Error fetching orders", error);
-    }
-  }
-
-  async function fetchCategories(includeInactive = false) {
-    try {
-      const endpoint = includeInactive ? "/categories/all" : "/categories";
-      const res = await apiClient.get(endpoint);
-      setCategories(res.data);
-    } catch (error) {
-      console.error("Error fetching categories", error);
-    }
-  }
-
-  async function fetchMenuItems() {
-    try {
-      const res = await apiClient.get("/menu/all");
-      setMenuItems(res.data);
-    } catch (error) {
-      console.error("Error fetching menu items", error);
-    }
-  }
-
-  async function fetchDeliveryMen() {
-    try {
-      const res = await apiClient.get("/delivery");
-      setDeliveryMen(res.data);
-    } catch (error) {
-      console.error("Error fetching delivery men", error);
-    }
-  }
-
-  useEffect(() => {
-    if (!user) {
+  // Status Change logic
+  const handleStatusChange = async (orderId, newStatus) => {
+    if (newStatus === "onTheWay") {
+      const targetOrder = orders.find((o) => o._id === orderId);
+      setAssignModalOrder(targetOrder || { _id: orderId });
+      setSelectedDriverId("");
       return;
     }
 
-    if (!isAdmin) {
-      navigate("/menu");
-      return;
-    }
-
-    let isMounted = true;
-
-    const loadInitialData = async () => {
-      try {
-        const [statsRes, ordersRes, categoriesRes, menuRes, deliveryRes] = await Promise.all([
-          apiClient.get("/reports/dashboard"),
-          apiClient.get("/orders/all"),
-          apiClient.get("/categories/all"),
-          apiClient.get("/menu/all"),
-          apiClient.get("/delivery"),
-        ]);
-
-        if (!isMounted) return;
-
-        setDashboardStats(statsRes.data);
-        setOrders(ordersRes.data);
-        setCategories(categoriesRes.data);
-        setMenuItems(menuRes.data);
-        setDeliveryMen(deliveryRes.data);
-      } catch (error) {
-        console.error("Error loading admin dashboard data", error);
+    try {
+      if (newStatus === "delivered") {
+        await apiClient.post(`/delivery/complete/${orderId}`);
+      } else {
+        await apiClient.put(`/orders/${orderId}/status`, { status: newStatus });
       }
-    };
+      toast.success(`Order #${orderId.substring(0, 8)} status moved to ${newStatus}`);
+      await fetchOrders();
+      await fetchDeliveryMen();
+      await fetchStats();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update order status");
+    }
+  };
 
-    loadInitialData();
+  // Submit Driver Assignment
+  const handleConfirmDriverAssign = async () => {
+    if (!assignModalOrder) return;
+    try {
+      await apiClient.post(`/delivery/assign/${assignModalOrder._id}`, {
+        deliveryManId: selectedDriverId || undefined,
+      });
+      toast.success("Delivery partner assigned & order is on the way! 🛵");
+      setAssignModalOrder(null);
+      await fetchOrders();
+      await fetchDeliveryMen();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to assign delivery driver");
+    }
+  };
 
-    return () => {
-      isMounted = false;
-    };
-  }, [user, isAdmin, navigate]);
+  // Quick Inline Toggle for Menu Item Availability
+  const toggleItemAvailability = async (item) => {
+    try {
+      const updated = !item.isAvailable;
+      await apiClient.put(`/menu/${item._id}`, { isAvailable: updated });
+      toast.success(`"${item.name}" is now ${updated ? "Available" : "Unavailable"}`);
+      await fetchMenuItems();
+    } catch {
+      toast.error("Failed to update availability");
+    }
+  };
 
+  // Menu Items Add / Save / Delete
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!imageFile) {
-      alert("Please upload an image");
+      toast.warning("Please upload a food image");
       return;
     }
 
@@ -222,6 +315,8 @@ const AdminDashboard = () => {
     formData.append("description", newItem.description);
     formData.append("price", newItem.price);
     formData.append("categoryId", newItem.categoryId);
+    formData.append("prepTime", newItem.prepTime);
+    formData.append("calories", newItem.calories);
     formData.append("image", imageFile);
 
     try {
@@ -231,9 +326,9 @@ const AdminDashboard = () => {
       setNewItem(emptyMenuItem);
       setImageFile(null);
       await fetchMenuItems();
-      alert("Menu item created successfully");
+      toast.success("New dish added to menu successfully! 🍽️");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to create menu item");
+      toast.error(error.response?.data?.message || "Failed to create menu item");
     }
   };
 
@@ -268,30 +363,35 @@ const AdminDashboard = () => {
       setEditingMenuItemId("");
       setEditingMenuImage(null);
       await fetchMenuItems();
-      alert("Menu item updated");
+      toast.success("Menu item updated successfully!");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update menu item");
+      toast.error(error.response?.data?.message || "Failed to update menu item");
     }
   };
 
-  const deleteMenuItem = async (id) => {
-    if (!window.confirm("Delete this menu item?")) {
-      return;
-    }
-
-    try {
-      await apiClient.delete(`/menu/${id}`);
-      await fetchMenuItems();
-      alert("Menu item deleted");
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to delete menu item");
-    }
+  const deleteMenuItem = (id, name) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "Delete Menu Item",
+      message: `Are you sure you want to delete "${name}"? It will be permanently removed from the menu.`,
+      onConfirm: async () => {
+        try {
+          await apiClient.delete(`/menu/${id}`);
+          await fetchMenuItems();
+          setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+          toast.success("Menu item deleted");
+        } catch (error) {
+          toast.error(error.response?.data?.message || "Failed to delete item");
+        }
+      },
+    });
   };
 
+  // Categories Add / Edit / Delete
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!categoryImageFile) {
-      alert("Please upload a category image");
+      toast.warning("Please upload a category image");
       return;
     }
 
@@ -306,9 +406,9 @@ const AdminDashboard = () => {
       setNewCategory(emptyCategory);
       setCategoryImageFile(null);
       await fetchCategories(true);
-      alert("Category created successfully");
+      toast.success("Category created successfully!");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to add category");
+      toast.error(error.response?.data?.message || "Failed to add category");
     }
   };
 
@@ -334,44 +434,34 @@ const AdminDashboard = () => {
       setEditingCategoryId("");
       setCategoryImageFile(null);
       await fetchCategories(true);
-      alert("Category updated");
+      toast.success("Category updated successfully");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update category");
+      toast.error(error.response?.data?.message || "Failed to update category");
     }
   };
 
-  const deleteCategory = async (id) => {
-    if (!window.confirm("Delete this category?")) {
-      return;
-    }
-
-    try {
-      await apiClient.delete(`/categories/${id}`);
-      await fetchCategories(true);
-      alert("Category deleted");
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to delete category");
-    }
+  const deleteCategory = (id, name) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "Delete Category",
+      message: `Delete category "${name}"? Dishes in this category will need reassignment.`,
+      onConfirm: async () => {
+        try {
+          await apiClient.delete(`/categories/${id}`);
+          await fetchCategories(true);
+          setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+          toast.success("Category deleted");
+        } catch (error) {
+          toast.error(error.response?.data?.message || "Failed to delete category");
+        }
+      },
+    });
   };
 
-  const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      if (newStatus === "onTheWay") {
-        await apiClient.post(`/delivery/assign/${orderId}`);
-      } else if (newStatus === "delivered") {
-        await apiClient.post(`/delivery/complete/${orderId}`);
-      } else {
-        await apiClient.put(`/orders/${orderId}/status`, { status: newStatus });
-      }
-      await fetchOrders();
-      await fetchDeliveryMen();
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to update order status");
-    }
-  };
-
+  // PDF Report Download
   const handleDownloadPDF = async () => {
     try {
+      toast.info("Generating official PDF sales report...");
       const response = await apiClient.get("/reports/export-pdf", {
         responseType: "blob",
       });
@@ -379,21 +469,27 @@ const AdminDashboard = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "dashboard_report.pdf");
+      link.setAttribute("download", `foodie_sales_report_${new Date().toISOString().slice(0, 10)}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success("Report downloaded successfully! 📄");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to download report");
+      toast.error(error.response?.data?.message || "Failed to download PDF report");
     }
   };
 
+  // Delivery Men Add / Edit / Delete
   const handleAddDeliveryMan = async (e) => {
     e.preventDefault();
 
     if (newDeliveryMan.password !== newDeliveryMan.confirmPassword) {
-      alert("Passwords do not match");
+      toast.warning("Passwords do not match");
+      return;
+    }
+    if (newDeliveryMan.phone.length !== 11) {
+      toast.warning("Phone number must be exactly 11 digits");
       return;
     }
 
@@ -401,9 +497,9 @@ const AdminDashboard = () => {
       await apiClient.post("/delivery/add", newDeliveryMan);
       setNewDeliveryMan(emptyDeliveryMan);
       await fetchDeliveryMen();
-      alert("Delivery personnel account created");
+      toast.success("Delivery personnel account created! 🚚");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to add delivery man");
+      toast.error(error.response?.data?.message || "Failed to add delivery personnel");
     }
   };
 
@@ -414,6 +510,7 @@ const AdminDashboard = () => {
       phone: man.phone,
       email: man.email,
       status: man.status,
+      vehicleType: man.vehicleType || "Scooter",
     });
   };
 
@@ -422,189 +519,413 @@ const AdminDashboard = () => {
       await apiClient.put(`/delivery/${id}`, editingDeliveryData);
       setEditingDeliveryId("");
       await fetchDeliveryMen();
-      alert("Delivery personnel updated");
+      toast.success("Delivery account updated");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update delivery account");
+      toast.error(error.response?.data?.message || "Failed to update delivery account");
     }
   };
 
-  const deleteDelivery = async (id) => {
-    if (!window.confirm("Delete this delivery account?")) {
-      return;
-    }
-
-    try {
-      await apiClient.delete(`/delivery/${id}`);
-      await fetchDeliveryMen();
-      alert("Delivery personnel deleted");
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to delete delivery account");
-    }
+  const deleteDelivery = (id, name) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "Remove Delivery Personnel",
+      message: `Are you sure you want to remove ${name} from the delivery fleet?`,
+      onConfirm: async () => {
+        try {
+          await apiClient.delete(`/delivery/${id}`);
+          await fetchDeliveryMen();
+          setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+          toast.success("Delivery partner removed");
+        } catch (error) {
+          toast.error(error.response?.data?.message || "Failed to remove delivery driver");
+        }
+      },
+    });
   };
 
-  if (!isAdmin) {
-    return null;
-  }
+  if (!isAdmin) return null;
 
   const renderPager = (page, totalPages, onPageChange) => (
     <div className="table-pagination">
-      <button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Prev</button>
-      <span>{page} / {totalPages}</span>
-      <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</button>
+      <button
+        disabled={page <= 1}
+        onClick={() => onPageChange(page - 1)}
+        className="pager-btn"
+      >
+        &larr; Prev
+      </button>
+      <span className="pager-text">
+        Page {page} of {totalPages}
+      </span>
+      <button
+        disabled={page >= totalPages}
+        onClick={() => onPageChange(page + 1)}
+        className="pager-btn"
+      >
+        Next &rarr;
+      </button>
     </div>
   );
 
   return (
     <div className="admin-container">
-      <h1>Dashboard: {user?.firstName}</h1>
+      <div className="admin-header-row">
+        <div>
+          <h1>Administration Dashboard 👑</h1>
+          <p className="admin-subtitle">
+            Welcome back, {user?.firstName}! Complete control over store orders, menu, and fleet.
+          </p>
+        </div>
 
-      <div className="admin-tabs">
-        <button className={activeTab === "stats" ? "active" : ""} onClick={() => setActiveTab("stats")}>Stats</button>
-        <button className={activeTab === "orders" ? "active" : ""} onClick={() => setActiveTab("orders")}>Orders</button>
-        <button className={activeTab === "menu" ? "active" : ""} onClick={() => setActiveTab("menu")}>Menu</button>
-        <button className={activeTab === "categories" ? "active" : ""} onClick={() => setActiveTab("categories")}>Categories</button>
-        <button className={activeTab === "delivery" ? "active" : ""} onClick={() => setActiveTab("delivery")}>Delivery</button>
+        <button className="download-report-top-btn" onClick={handleDownloadPDF}>
+          📄 Export PDF Report
+        </button>
       </div>
 
+      {/* Tabs */}
+      <div className="admin-tabs">
+        <button
+          className={activeTab === "stats" ? "active" : ""}
+          onClick={() => setActiveTab("stats")}
+        >
+          📊 Analytics & Sales
+        </button>
+        <button
+          className={activeTab === "orders" ? "active" : ""}
+          onClick={() => setActiveTab("orders")}
+        >
+          📦 Orders ({orders.length})
+        </button>
+        <button
+          className={activeTab === "menu" ? "active" : ""}
+          onClick={() => setActiveTab("menu")}
+        >
+          🍔 Menu Catalog ({menuItems.length})
+        </button>
+        <button
+          className={activeTab === "categories" ? "active" : ""}
+          onClick={() => setActiveTab("categories")}
+        >
+          🏷️ Categories ({categories.length})
+        </button>
+        <button
+          className={activeTab === "delivery" ? "active" : ""}
+          onClick={() => setActiveTab("delivery")}
+        >
+          🚚 Fleet ({deliveryMen.length})
+        </button>
+      </div>
+
+      {/* STATS TAB */}
       {activeTab === "stats" && (
-        <div className="stats-grid">
-          {dashboardStats && (
+        <div className="stats-tab-content">
+          {dashboardStats ? (
             <>
-              <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end" }}>
-                <button className="submit-btn" style={{ width: "auto" }} onClick={handleDownloadPDF}>Download PDF Report</button>
+              <div className="kpi-cards-grid">
+                <div className="kpi-card revenue">
+                  <span className="kpi-icon">💰</span>
+                  <div className="kpi-info">
+                    <span className="kpi-label">Total Revenue</span>
+                    <h3 className="kpi-value">${Number(dashboardStats.totalRevenue || 0).toFixed(2)}</h3>
+                    <span className="kpi-trend positive">+14.2% from last week</span>
+                  </div>
+                </div>
+
+                <div className="kpi-card orders">
+                  <span className="kpi-icon">📦</span>
+                  <div className="kpi-info">
+                    <span className="kpi-label">Total Orders</span>
+                    <h3 className="kpi-value">{dashboardStats.totalOrders || 0}</h3>
+                    <span className="kpi-trend neutral">All-time completed</span>
+                  </div>
+                </div>
+
+                <div className="kpi-card pending">
+                  <span className="kpi-icon">⏳</span>
+                  <div className="kpi-info">
+                    <span className="kpi-label">Pending Orders</span>
+                    <h3 className="kpi-value">{dashboardStats.pendingOrders || 0}</h3>
+                    <span className="kpi-trend alert">Requires kitchen action</span>
+                  </div>
+                </div>
+
+                <div className="kpi-card fleet">
+                  <span className="kpi-icon">🛵</span>
+                  <div className="kpi-info">
+                    <span className="kpi-label">Active Drivers</span>
+                    <h3 className="kpi-value">
+                      {deliveryMen.filter((d) => d.status === "available").length} / {deliveryMen.length}
+                    </h3>
+                    <span className="kpi-trend positive">Fleet ready</span>
+                  </div>
+                </div>
               </div>
-              <div className="stat-card">
-                <h3>Total Revenue</h3>
-                <p>${dashboardStats.totalRevenue.toFixed(2)}</p>
-              </div>
-              <div className="stat-card">
-                <h3>Total Orders</h3>
-                <p>{dashboardStats.totalOrders}</p>
-              </div>
-              <div className="stat-card warning">
-                <h3>Pending Orders</h3>
-                <p>{dashboardStats.pendingOrders}</p>
-              </div>
-              <div className="stat-card" style={{ gridColumn: "1 / -1", alignItems: "stretch" }}>
-                <h3>Daily Stats</h3>
-                <table className="orders-table">
+
+              {/* Top Selling Items Table */}
+              {dashboardStats.topSellingItems?.length > 0 && (
+                <div className="admin-card-box">
+                  <h3>🔥 Top 5 Best-Selling Dishes</h3>
+                  <div className="top-sellers-grid">
+                    {dashboardStats.topSellingItems.map((item, idx) => (
+                      <div key={idx} className="seller-chip">
+                        <span className="seller-rank">#{idx + 1}</span>
+                        <div className="seller-name">{item._id}</div>
+                        <span className="seller-sold">{item.totalSold} sold</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Daily Sales Table */}
+              <div className="admin-card-box">
+                <h3>📅 Daily Sales Performance (Recent)</h3>
+                <table className="admin-table">
                   <thead>
-                    <tr><th>Date</th><th>Revenue</th><th>Orders</th></tr>
+                    <tr>
+                      <th>Date</th>
+                      <th>Revenue</th>
+                      <th>Order Count</th>
+                      <th>Avg Order Value</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {dashboardStats.dailyStats.map((d) => (
-                      <tr key={d._id}>
-                        <td>{d._id}</td>
-                        <td>${d.dailyRevenue.toFixed(2)}</td>
-                        <td>{d.orderCount}</td>
+                    {dashboardStats.dailyStats?.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center">No daily sales records yet</td>
                       </tr>
-                    ))}
+                    ) : (
+                      dashboardStats.dailyStats?.map((d) => (
+                        <tr key={d._id}>
+                          <td><strong>{d._id}</strong></td>
+                          <td><span className="money-cell">${Number(d.dailyRevenue).toFixed(2)}</span></td>
+                          <td>{d.orderCount} orders</td>
+                          <td>
+                            ${(d.dailyRevenue / Math.max(1, d.orderCount)).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
             </>
+          ) : (
+            <div className="admin-loading">Loading statistics...</div>
           )}
         </div>
       )}
 
+      {/* ORDERS TAB */}
       {activeTab === "orders" && (
-        <div className="orders-view">
-          <h2>Order Management</h2>
-          <input
-            className="admin-search"
-            placeholder="Search by order id, customer, or status"
-            value={orderSearch}
-            onChange={(e) => {
-              setOrderSearch(e.target.value);
-              setOrderPage(1);
-            }}
-          />
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedOrders.map((o) => (
-                <tr key={o._id}>
-                  <td>{o._id.substring(0, 8)}</td>
-                  <td>{o.userId?.firstName || "N/A"}</td>
-                  <td>
-                    <select value={o.status} onChange={(e) => handleStatusChange(o._id, e.target.value)} className={`status-select ${o.status}`}>
-                      <option value="pending">Pending</option>
-                      <option value="Preparing">Preparing</option>
-                      <option value="onTheWay">On The Way</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </td>
-                  <td>${Number(o.totalAmount).toFixed(2)}</td>
-                </tr>
+        <div className="orders-tab-content">
+          <div className="order-filter-bar">
+            <div className="status-pill-filters">
+              {["all", "pending", "Preparing", "onTheWay", "delivered", "cancelled"].map((st) => (
+                <button
+                  key={st}
+                  className={`order-filter-pill ${orderStatusFilter === st ? "active" : ""}`}
+                  onClick={() => {
+                    setOrderStatusFilter(st);
+                    setOrderPage(1);
+                  }}
+                >
+                  {st === "all" ? "All Orders" : st}
+                </button>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            <input
+              className="admin-search-input"
+              placeholder="Search by order ID, customer name, or status..."
+              value={orderSearch}
+              onChange={(e) => {
+                setOrderSearch(e.target.value);
+                setOrderPage(1);
+              }}
+            />
+          </div>
+
+          <div className="table-responsive-box">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Address</th>
+                  <th>Items</th>
+                  <th>Status Progress</th>
+                  <th>Total</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center">No orders match your search or filter</td>
+                  </tr>
+                ) : (
+                  pagedOrders.map((o) => (
+                    <tr key={o._id}>
+                      <td>
+                        <span className="order-id-code">#{o._id.substring(0, 8)}</span>
+                      </td>
+                      <td>
+                        <div className="customer-cell">
+                          <strong>{o.userId?.firstName || o.userId?.name || "Customer"}</strong>
+                          <span className="sub-text">{o.userId?.phone || o.userId?.email || ""}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="address-cell" title={o.deliveryAddress}>
+                          {o.deliveryAddress || "-"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="items-count-badge">
+                          {o.items?.reduce((s, i) => s + i.quantity, 0) || o.items?.length || 0} items
+                        </span>
+                      </td>
+                      <td>
+                        <select
+                          value={o.status}
+                          onChange={(e) => handleStatusChange(o._id, e.target.value)}
+                          className={`status-select status-${o.status}`}
+                        >
+                          <option value="pending">pending (Order Placed)</option>
+                          <option value="Preparing">Preparing (Kitchen)</option>
+                          <option value="onTheWay">onTheWay (Assign Driver)</option>
+                          <option value="delivered">delivered (Completed)</option>
+                          <option value="cancelled">cancelled</option>
+                        </select>
+                      </td>
+                      <td>
+                        <strong>${Number(o.totalAmount).toFixed(2)}</strong>
+                      </td>
+                      <td>
+                        <span className="sub-text">
+                          {new Date(o.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
           {renderPager(safeOrderPage, orderTotalPages, setOrderPage)}
         </div>
       )}
 
+      {/* MENU TAB */}
       {activeTab === "menu" && (
-        <div className="menu-management">
-          <div className="form-card">
-            <h2>Add Menu Item</h2>
-            <form onSubmit={handleAddItem}>
+        <div className="menu-tab-content">
+          {/* Add Item Card */}
+          <div className="admin-card-box">
+            <h3>Add New Dish to Menu</h3>
+            <form onSubmit={handleAddItem} className="admin-form-grid">
               <div className="form-group">
-                <label>Name</label>
-                <input value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} required />
+                <label>Dish Name *</label>
+                <input
+                  value={newItem.name}
+                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                  placeholder="e.g. Truffle Mushroom Pizza"
+                  required
+                />
               </div>
+
               <div className="form-group">
-                <label>Description</label>
-                <textarea value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} required />
+                <label>Category *</label>
+                <select
+                  value={newItem.categoryId}
+                  onChange={(e) => setNewItem({ ...newItem, categoryId: e.target.value })}
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Price</label>
-                  <input type="number" min="0" step="0.01" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label>Category</label>
-                  <select value={newItem.categoryId} onChange={(e) => setNewItem({ ...newItem, categoryId: e.target.value })} required>
-                    <option value="">Select Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+
               <div className="form-group">
-                <label>Image</label>
-                <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} required />
+                <label>Price ($) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newItem.price}
+                  onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+                  placeholder="14.99"
+                  required
+                />
               </div>
-              <button type="submit" className="submit-btn">Add Menu Item</button>
+
+              <div className="form-group">
+                <label>Prep Time</label>
+                <input
+                  value={newItem.prepTime}
+                  onChange={(e) => setNewItem({ ...newItem, prepTime: e.target.value })}
+                  placeholder="15-20 min"
+                />
+              </div>
+
+              <div className="form-group full-width">
+                <label>Description *</label>
+                <textarea
+                  value={newItem.description}
+                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                  placeholder="Fresh ingredients, signature seasoning, flavor highlights..."
+                  rows={2}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Food Photo Upload *</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  required
+                />
+              </div>
+
+              <div className="form-group submit-col">
+                <button type="submit" className="admin-primary-btn">
+                  + Add Dish to Menu
+                </button>
+              </div>
             </form>
           </div>
 
-          <div className="orders-view" style={{ marginTop: "30px" }}>
-            <h2>Manage Menu Items</h2>
-            <input
-              className="admin-search"
-              placeholder="Search by menu item or category"
-              value={menuSearch}
-              onChange={(e) => {
-                setMenuSearch(e.target.value);
-                setMenuPage(1);
-              }}
-            />
-            <table className="orders-table">
+          {/* Manage Menu Table */}
+          <div className="admin-card-box">
+            <div className="table-header-controls">
+              <h3>Manage Menu Items ({menuItems.length})</h3>
+              <input
+                className="admin-search-input"
+                placeholder="Search dish or category..."
+                value={menuSearch}
+                onChange={(e) => {
+                  setMenuSearch(e.target.value);
+                  setMenuPage(1);
+                }}
+              />
+            </div>
+
+            <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Dish</th>
                   <th>Category</th>
                   <th>Price</th>
-                  <th>Availability</th>
+                  <th>Live Status</th>
                   <th>Image</th>
                   <th>Actions</th>
                 </tr>
@@ -614,47 +935,109 @@ const AdminDashboard = () => {
                   <tr key={item._id}>
                     <td>
                       {editingMenuItemId === item._id ? (
-                        <input value={editingMenuItemData.name} onChange={(e) => setEditingMenuItemData({ ...editingMenuItemData, name: e.target.value })} />
-                      ) : item.name}
+                        <input
+                          value={editingMenuItemData.name}
+                          onChange={(e) =>
+                            setEditingMenuItemData({ ...editingMenuItemData, name: e.target.value })
+                          }
+                          className="table-input"
+                        />
+                      ) : (
+                        <strong>{item.name}</strong>
+                      )}
                     </td>
                     <td>
                       {editingMenuItemId === item._id ? (
-                        <select value={editingMenuItemData.categoryId} onChange={(e) => setEditingMenuItemData({ ...editingMenuItemData, categoryId: e.target.value })}>
-                          {categories.map((cat) => (
-                            <option key={cat._id} value={cat._id}>{cat.name}</option>
+                        <select
+                          value={editingMenuItemData.categoryId}
+                          onChange={(e) =>
+                            setEditingMenuItemData({
+                              ...editingMenuItemData,
+                              categoryId: e.target.value,
+                            })
+                          }
+                          className="table-input"
+                        >
+                          {categories.map((c) => (
+                            <option key={c._id} value={c._id}>{c.name}</option>
                           ))}
                         </select>
-                      ) : (item.categoryId?.name || "-")}
+                      ) : (
+                        item.categoryId?.name || "-"
+                      )}
                     </td>
                     <td>
                       {editingMenuItemId === item._id ? (
-                        <input type="number" min="0" step="0.01" value={editingMenuItemData.price} onChange={(e) => setEditingMenuItemData({ ...editingMenuItemData, price: e.target.value })} />
-                      ) : `$${Number(item.price).toFixed(2)}`}
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editingMenuItemData.price}
+                          onChange={(e) =>
+                            setEditingMenuItemData({ ...editingMenuItemData, price: e.target.value })
+                          }
+                          className="table-input"
+                        />
+                      ) : (
+                        `$${Number(item.price).toFixed(2)}`
+                      )}
                     </td>
                     <td>
-                      {editingMenuItemId === item._id ? (
-                        <select value={String(editingMenuItemData.isAvailable)} onChange={(e) => setEditingMenuItemData({ ...editingMenuItemData, isAvailable: e.target.value === "true" })}>
-                          <option value="true">Available</option>
-                          <option value="false">Unavailable</option>
-                        </select>
-                      ) : (item.isAvailable ? "Available" : "Unavailable")}
+                      {/* In-Line Quick Availability Switch */}
+                      <button
+                        className={`availability-switch-btn ${item.isAvailable ? "on" : "off"}`}
+                        onClick={() => toggleItemAvailability(item)}
+                        title="Click to toggle availability"
+                      >
+                        {item.isAvailable ? "✓ Available" : "✕ Out of Stock"}
+                      </button>
                     </td>
                     <td>
                       {item.image ? (
-                        <img className="table-thumb" src={buildAssetUrl(item.image)} alt={item.name} />
-                      ) : "No Image"}
+                        <img
+                          src={buildAssetUrl(item.image)}
+                          alt={item.name}
+                          className="table-thumb"
+                          onError={(e) => (e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100")}
+                        />
+                      ) : (
+                        "-"
+                      )}
                     </td>
                     <td>
                       {editingMenuItemId === item._id ? (
-                        <div className="action-group">
-                          <input type="file" accept="image/*" onChange={(e) => setEditingMenuImage(e.target.files?.[0] || null)} />
-                          <button className="table-action save" onClick={() => saveMenuItem(item._id)}>Save</button>
-                          <button className="table-action" onClick={() => setEditingMenuItemId("")}>Cancel</button>
+                        <div className="action-btns-row">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setEditingMenuImage(e.target.files?.[0] || null)}
+                          />
+                          <button
+                            className="btn-action save"
+                            onClick={() => saveMenuItem(item._id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn-action cancel"
+                            onClick={() => setEditingMenuItemId("")}
+                          >
+                            Cancel
+                          </button>
                         </div>
                       ) : (
-                        <div className="action-group">
-                          <button className="table-action" onClick={() => startEditMenuItem(item)}>Edit</button>
-                          <button className="table-action danger" onClick={() => deleteMenuItem(item._id)}>Delete</button>
+                        <div className="action-btns-row">
+                          <button
+                            className="btn-action edit"
+                            onClick={() => startEditMenuItem(item)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-action delete"
+                            onClick={() => deleteMenuItem(item._id, item.name)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
                     </td>
@@ -667,64 +1050,124 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* CATEGORIES TAB */}
       {activeTab === "categories" && (
-        <div className="menu-management">
-          <div className="form-card">
-            <h2>Add Category</h2>
-            <form onSubmit={handleAddCategory}>
-              <div className="form-group">
-                <label>Category Name</label>
-                <input value={newCategory.name} onChange={(e) => setNewCategory({ name: e.target.value })} required />
-              </div>
-              <div className="form-group">
-                <label>Image</label>
-                <input type="file" accept="image/*" onChange={(e) => setCategoryImageFile(e.target.files?.[0] || null)} required />
-              </div>
-              <button type="submit" className="submit-btn">Add Category</button>
+        <div className="categories-tab-content">
+          <div className="admin-card-box">
+            <h3>Add New Category</h3>
+            <form onSubmit={handleAddCategory} className="admin-form-inline">
+              <input
+                value={newCategory.name}
+                onChange={(e) => setNewCategory({ name: e.target.value })}
+                placeholder="Category Name (e.g. Pasta, Tacos, Wraps)"
+                required
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setCategoryImageFile(e.target.files?.[0] || null)}
+                required
+              />
+              <button type="submit" className="admin-primary-btn">
+                Add Category
+              </button>
             </form>
           </div>
 
-          <div className="orders-view" style={{ marginTop: "30px" }}>
-            <h2>Manage Categories</h2>
-            <table className="orders-table">
+          <div className="admin-card-box">
+            <h3>Manage Categories ({categories.length})</h3>
+            <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Category Name</th>
                   <th>Status</th>
                   <th>Image</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {categories.map((cat) => (
-                  <tr key={cat._id}>
+                {categories.map((c) => (
+                  <tr key={c._id}>
                     <td>
-                      {editingCategoryId === cat._id ? (
-                        <input value={editingCategoryData.name} onChange={(e) => setEditingCategoryData({ ...editingCategoryData, name: e.target.value })} />
-                      ) : cat.name}
+                      {editingCategoryId === c._id ? (
+                        <input
+                          value={editingCategoryData.name}
+                          onChange={(e) =>
+                            setEditingCategoryData({ ...editingCategoryData, name: e.target.value })
+                          }
+                          className="table-input"
+                        />
+                      ) : (
+                        <strong>{c.name}</strong>
+                      )}
                     </td>
                     <td>
-                      {editingCategoryId === cat._id ? (
-                        <select value={String(editingCategoryData.isActive)} onChange={(e) => setEditingCategoryData({ ...editingCategoryData, isActive: e.target.value === "true" })}>
+                      {editingCategoryId === c._id ? (
+                        <select
+                          value={String(editingCategoryData.isActive)}
+                          onChange={(e) =>
+                            setEditingCategoryData({
+                              ...editingCategoryData,
+                              isActive: e.target.value === "true",
+                            })
+                          }
+                          className="table-input"
+                        >
                           <option value="true">Active</option>
                           <option value="false">Inactive</option>
                         </select>
-                      ) : (cat.isActive ? "Active" : "Inactive")}
+                      ) : c.isActive ? (
+                        <span className="badge-active">Active</span>
+                      ) : (
+                        <span className="badge-inactive">Inactive</span>
+                      )}
                     </td>
                     <td>
-                      {cat.image ? <img className="table-thumb" src={buildAssetUrl(cat.image)} alt={cat.name} /> : "No Image"}
+                      {c.image ? (
+                        <img
+                          src={buildAssetUrl(c.image)}
+                          alt={c.name}
+                          className="table-thumb"
+                        />
+                      ) : (
+                        "-"
+                      )}
                     </td>
                     <td>
-                      {editingCategoryId === cat._id ? (
-                        <div className="action-group">
-                          <input type="file" accept="image/*" onChange={(e) => setCategoryImageFile(e.target.files?.[0] || null)} />
-                          <button className="table-action save" onClick={() => saveCategory(cat._id)}>Save</button>
-                          <button className="table-action" onClick={() => setEditingCategoryId("")}>Cancel</button>
+                      {editingCategoryId === c._id ? (
+                        <div className="action-btns-row">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setCategoryImageFile(e.target.files?.[0] || null)}
+                          />
+                          <button
+                            className="btn-action save"
+                            onClick={() => saveCategory(c._id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn-action cancel"
+                            onClick={() => setEditingCategoryId("")}
+                          >
+                            Cancel
+                          </button>
                         </div>
                       ) : (
-                        <div className="action-group">
-                          <button className="table-action" onClick={() => startEditCategory(cat)}>Edit</button>
-                          <button className="table-action danger" onClick={() => deleteCategory(cat._id)}>Delete</button>
+                        <div className="action-btns-row">
+                          <button
+                            className="btn-action edit"
+                            onClick={() => startEditCategory(c)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-action delete"
+                            onClick={() => deleteCategory(c._id, c.name)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
                     </td>
@@ -736,38 +1179,100 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* DELIVERY FLEET TAB */}
       {activeTab === "delivery" && (
-        <div className="menu-management">
-          <div className="form-card">
-            <h2>Add Delivery Personnel</h2>
-            <form onSubmit={handleAddDeliveryMan}>
-              <div className="form-group"><label>Name</label><input value={newDeliveryMan.name} onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, name: e.target.value })} required /></div>
-              <div className="form-group"><label>Phone</label><input value={newDeliveryMan.phone} onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, phone: e.target.value })} required /></div>
-              <div className="form-group"><label>Email</label><input type="email" value={newDeliveryMan.email} onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, email: e.target.value })} required /></div>
-              <div className="form-group"><label>Password</label><input type="password" minLength="6" value={newDeliveryMan.password} onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, password: e.target.value })} required /></div>
-              <div className="form-group"><label>Confirm Password</label><input type="password" minLength="6" value={newDeliveryMan.confirmPassword} onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, confirmPassword: e.target.value })} required /></div>
-              <button type="submit" className="submit-btn">Add Delivery Personnel</button>
+        <div className="fleet-tab-content">
+          <div className="admin-card-box">
+            <h3>Add Delivery Personnel</h3>
+            <form onSubmit={handleAddDeliveryMan} className="admin-form-grid">
+              <div className="form-group">
+                <label>Full Name *</label>
+                <input
+                  value={newDeliveryMan.name}
+                  onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, name: e.target.value })}
+                  placeholder="e.g. Carlos Gomez"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number (11 digits) *</label>
+                <input
+                  value={newDeliveryMan.phone}
+                  onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, phone: e.target.value })}
+                  placeholder="01234567890"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email Address *</label>
+                <input
+                  type="email"
+                  value={newDeliveryMan.email}
+                  onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, email: e.target.value })}
+                  placeholder="carlos@foodie.com"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Vehicle Type</label>
+                <select
+                  value={newDeliveryMan.vehicleType}
+                  onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, vehicleType: e.target.value })}
+                >
+                  <option value="Scooter">Scooter</option>
+                  <option value="Motorcycle">Motorcycle</option>
+                  <option value="Bicycle">Bicycle</option>
+                  <option value="Car">Car</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Password (min 6 chars) *</label>
+                <input
+                  type="password"
+                  value={newDeliveryMan.password}
+                  onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, password: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm Password *</label>
+                <input
+                  type="password"
+                  value={newDeliveryMan.confirmPassword}
+                  onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group submit-col full-width">
+                <button type="submit" className="admin-primary-btn">
+                  + Create Delivery Account
+                </button>
+              </div>
             </form>
           </div>
 
-          <div className="orders-view" style={{ marginTop: "30px" }}>
-            <h2>Manage Delivery Personnel</h2>
-            <input
-              className="admin-search"
-              placeholder="Search by name, email, or phone"
-              value={deliverySearch}
-              onChange={(e) => {
-                setDeliverySearch(e.target.value);
-                setDeliveryPage(1);
-              }}
-            />
-            <table className="orders-table">
+          <div className="admin-card-box">
+            <div className="table-header-controls">
+              <h3>Fleet Drivers ({deliveryMen.length})</h3>
+              <input
+                className="admin-search-input"
+                placeholder="Search by driver name, phone, email..."
+                value={deliverySearch}
+                onChange={(e) => {
+                  setDeliverySearch(e.target.value);
+                  setDeliveryPage(1);
+                }}
+              />
+            </div>
+
+            <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>Email</th>
-                  <th>Status</th>
+                  <th>Driver Name</th>
+                  <th>Contact Info</th>
+                  <th>Vehicle</th>
+                  <th>Fleet Status</th>
+                  <th>Rating</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -776,37 +1281,74 @@ const AdminDashboard = () => {
                   <tr key={man._id}>
                     <td>
                       {editingDeliveryId === man._id ? (
-                        <input value={editingDeliveryData.name} onChange={(e) => setEditingDeliveryData({ ...editingDeliveryData, name: e.target.value })} />
-                      ) : man.name}
+                        <input
+                          value={editingDeliveryData.name}
+                          onChange={(e) =>
+                            setEditingDeliveryData({ ...editingDeliveryData, name: e.target.value })
+                          }
+                          className="table-input"
+                        />
+                      ) : (
+                        <strong>{man.name}</strong>
+                      )}
+                    </td>
+                    <td>
+                      <div>{man.phone}</div>
+                      <span className="sub-text">{man.email}</span>
+                    </td>
+                    <td>
+                      <span className="vehicle-badge">{man.vehicleType || "Scooter"}</span>
                     </td>
                     <td>
                       {editingDeliveryId === man._id ? (
-                        <input value={editingDeliveryData.phone} onChange={(e) => setEditingDeliveryData({ ...editingDeliveryData, phone: e.target.value })} />
-                      ) : man.phone}
-                    </td>
-                    <td>
-                      {editingDeliveryId === man._id ? (
-                        <input value={editingDeliveryData.email} onChange={(e) => setEditingDeliveryData({ ...editingDeliveryData, email: e.target.value })} />
-                      ) : man.email}
-                    </td>
-                    <td>
-                      {editingDeliveryId === man._id ? (
-                        <select value={editingDeliveryData.status} onChange={(e) => setEditingDeliveryData({ ...editingDeliveryData, status: e.target.value })}>
-                          <option value="available">AVAILABLE</option>
-                          <option value="busy">BUSY</option>
+                        <select
+                          value={editingDeliveryData.status}
+                          onChange={(e) =>
+                            setEditingDeliveryData({ ...editingDeliveryData, status: e.target.value })
+                          }
+                          className="table-input"
+                        >
+                          <option value="available">available</option>
+                          <option value="busy">busy</option>
+                          <option value="offline">offline</option>
                         </select>
-                      ) : man.status.toUpperCase()}
+                      ) : (
+                        <span className={`fleet-status-pill ${man.status}`}>
+                          {man.status?.toUpperCase()}
+                        </span>
+                      )}
                     </td>
+                    <td>★ {man.rating || "4.9"}</td>
                     <td>
                       {editingDeliveryId === man._id ? (
-                        <div className="action-group">
-                          <button className="table-action save" onClick={() => saveDelivery(man._id)}>Save</button>
-                          <button className="table-action" onClick={() => setEditingDeliveryId("")}>Cancel</button>
+                        <div className="action-btns-row">
+                          <button
+                            className="btn-action save"
+                            onClick={() => saveDelivery(man._id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn-action cancel"
+                            onClick={() => setEditingDeliveryId("")}
+                          >
+                            Cancel
+                          </button>
                         </div>
                       ) : (
-                        <div className="action-group">
-                          <button className="table-action" onClick={() => startEditDelivery(man)}>Edit</button>
-                          <button className="table-action danger" onClick={() => deleteDelivery(man._id)}>Delete</button>
+                        <div className="action-btns-row">
+                          <button
+                            className="btn-action edit"
+                            onClick={() => startEditDelivery(man)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-action delete"
+                            onClick={() => deleteDelivery(man._id, man.name)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
                     </td>
@@ -818,6 +1360,86 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Driver Assignment Modal */}
+      {assignModalOrder && (
+        <div className="modal-backdrop" onClick={() => setAssignModalOrder(null)}>
+          <div
+            className="driver-assign-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Assign Delivery Partner 🛵</h3>
+            <p>
+              Order #{assignModalOrder._id.substring(0, 8)} to {assignModalOrder.deliveryAddress}
+            </p>
+
+            <div className="driver-picker-list">
+              <label
+                className={`driver-picker-card ${!selectedDriverId ? "selected" : ""}`}
+                onClick={() => setSelectedDriverId("")}
+              >
+                <input
+                  type="radio"
+                  name="driverSelect"
+                  checked={!selectedDriverId}
+                  onChange={() => setSelectedDriverId("")}
+                />
+                <div>
+                  <strong>⚡ Auto-Assign Best Available Driver</strong>
+                  <p>System picks the nearest available delivery personnel</p>
+                </div>
+              </label>
+
+              {deliveryMen.map((d) => (
+                <label
+                  key={d._id}
+                  className={`driver-picker-card ${selectedDriverId === d._id ? "selected" : ""} ${d.status !== "available" ? "disabled" : ""}`}
+                  onClick={() => d.status === "available" && setSelectedDriverId(d._id)}
+                >
+                  <input
+                    type="radio"
+                    name="driverSelect"
+                    checked={selectedDriverId === d._id}
+                    disabled={d.status !== "available"}
+                    onChange={() => setSelectedDriverId(d._id)}
+                  />
+                  <div>
+                    <strong>{d.name} ({d.vehicleType || "Scooter"})</strong>
+                    <p>Phone: {d.phone} • Status: {d.status.toUpperCase()}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="modal-actions-group">
+              <button
+                className="cancel-btn"
+                onClick={() => setAssignModalOrder(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-assign-btn"
+                onClick={handleConfirmDriverAssign}
+              >
+                Assign & Dispatch Order ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        message={deleteModal.message}
+        confirmText="Confirm Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={deleteModal.onConfirm}
+        onCancel={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

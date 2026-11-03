@@ -42,13 +42,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithDemo = async (roleType) => {
+    let email = "user@foodie.com";
+    let password = "user123";
+
+    if (roleType === "admin") {
+      email = "admin@foodie.com";
+      password = "admin123";
+    } else if (roleType === "delivery" || roleType === "deliveryMan") {
+      email = "delivery@foodie.com";
+      password = "delivery123";
+    }
+
+    return await login(email, password);
+  };
+
+  const updateUser = (updatedData) => {
+    setUser((prev) => ({ ...prev, ...updatedData }));
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        loginWithDemo,
+        updateUser,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

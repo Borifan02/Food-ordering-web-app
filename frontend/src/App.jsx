@@ -20,7 +20,14 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const normalizedAllowedRoles = allowedRoles?.map((value) => value.trim().toLowerCase());
 
   if (loading) {
-    return <div className="app-content">Loading...</div>;
+    return (
+      <div className="app-content" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "8px" }}>🍽️</div>
+          <div style={{ fontWeight: 600, color: "#64748b" }}>Loading session...</div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -28,6 +35,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(role)) {
+    if (role === "admin") return <Navigate to="/admin" replace />;
+    if (role === "deliveryman") return <Navigate to="/delivery" replace />;
     return <Navigate to="/menu" replace />;
   }
 
@@ -35,22 +44,29 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 function App() {
+  const { user } = useContext(AuthContext);
+  const role = (user?.role || "").trim().toLowerCase();
+
   return (
     <div className="app">
       <Navbar />
       <div className="app-content">
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route
-            path="/menu"
+            path="/"
             element={
-              <ProtectedRoute>
-                <Menu />
-              </ProtectedRoute>
+              role === "admin" ? (
+                <Navigate to="/admin" replace />
+              ) : role === "deliveryman" ? (
+                <Navigate to="/delivery" replace />
+              ) : (
+                <Navigate to="/menu" replace />
+              )
             }
           />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/menu" element={<Menu />} />
           <Route
             path="/cart"
             element={
@@ -70,7 +86,7 @@ function App() {
           <Route
             path="/orders/:id"
             element={
-              <ProtectedRoute allowedRoles={["user"]}>
+              <ProtectedRoute allowedRoles={["user", "admin"]}>
                 <OrderTracking />
               </ProtectedRoute>
             }
