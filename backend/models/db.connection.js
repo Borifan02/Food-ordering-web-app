@@ -19,7 +19,9 @@ const dbConnection = async () => {
             return;
         }
 
-        await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri, {
+            dbName: process.env.DB_NAME || "food_ordering_db"
+        });
         logger.info("Connected to MongoDB successfully");
 
         // Automatically ensure demo accounts exist for hassle-free 1-click evaluation
