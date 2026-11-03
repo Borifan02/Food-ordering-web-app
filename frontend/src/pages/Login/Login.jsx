@@ -8,7 +8,7 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { login, loginWithDemo } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -46,23 +46,6 @@ const Login = () => {
     }
   };
 
-  const handleDemoLogin = async (roleType) => {
-    setSubmitting(true);
-    try {
-      const result = await loginWithDemo(roleType);
-      if (result.success) {
-        toast.success(`Logged in as Demo ${roleType.toUpperCase()}! 🚀`);
-        handleRedirect(result.user);
-      } else {
-        toast.error(result.message || "Failed to log in with demo account");
-      }
-    } catch {
-      toast.error("Network error during demo login");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div className="auth-page-container">
       <div className="auth-card">
@@ -70,41 +53,6 @@ const Login = () => {
           <span className="auth-badge">🍕 Delicious Food Awaits</span>
           <h2>Sign In to Foodie</h2>
           <p>Order your favorite meals in seconds or manage your store</p>
-        </div>
-
-        {/* Quick Demo Logins Bar */}
-        <div className="demo-login-box">
-          <div className="demo-box-label">⚡ Instant 1-Click Demo Login</div>
-          <div className="demo-btn-group">
-            <button
-              type="button"
-              className="demo-quick-btn admin-btn"
-              onClick={() => handleDemoLogin("admin")}
-              disabled={submitting}
-            >
-              👑 Admin
-            </button>
-            <button
-              type="button"
-              className="demo-quick-btn customer-btn"
-              onClick={() => handleDemoLogin("user")}
-              disabled={submitting}
-            >
-              🍔 Customer
-            </button>
-            <button
-              type="button"
-              className="demo-quick-btn delivery-btn"
-              onClick={() => handleDemoLogin("delivery")}
-              disabled={submitting}
-            >
-              🚚 Delivery
-            </button>
-          </div>
-        </div>
-
-        <div className="auth-divider">
-          <span>or sign in with credentials</span>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>

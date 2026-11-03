@@ -37,54 +37,6 @@
   color: #ff4757;
 }
 
-/* Demo Switcher Pill */
-.demo-switch-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border: 1px solid #f59e0b;
-  color: #92400e;
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
-}
-
-.demo-switch-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.35);
-}
-
-.pill-pulse {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #d97706;
-  display: inline-block;
-  animation: pulseDot 1.5s infinite;
-}
-
-@keyframes pulseDot {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
-
-  50% {
-    transform: scale(1.3);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
-}
-
 .nav-links {
   display: flex;
   align-items: center;
@@ -406,121 +358,6 @@
   text-align: center;
 }
 
-/* Demo Switcher Modal */
-.demo-modal-content {
-  background: #ffffff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 520px;
-  padding: 28px 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: scaleUp 0.25s ease forwards;
-}
-
-.demo-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.demo-modal-header h3 {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.close-x-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  color: #94a3b8;
-  cursor: pointer;
-}
-
-.demo-modal-subtitle {
-  color: #64748b;
-  font-size: 0.925rem;
-  margin: 8px 0 20px;
-}
-
-.demo-role-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.demo-card-btn {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1.5px solid #e2e8f0;
-  background: #ffffff;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.demo-card-btn:hover {
-  transform: translateY(-2px);
-  border-color: #3b82f6;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-}
-
-.demo-card-btn.admin:hover {
-  border-color: #7c3aed;
-  background: #faf5ff;
-}
-
-.demo-card-btn.customer:hover {
-  border-color: #ff4757;
-  background: #fff5f5;
-}
-
-.demo-card-btn.delivery:hover {
-  border-color: #f59e0b;
-  background: #fffbeb;
-}
-
-.demo-card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  flex-shrink: 0;
-}
-
-.demo-card-info h4 {
-  margin: 0 0 4px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.demo-card-info p {
-  margin: 0 0 6px;
-  font-size: 0.825rem;
-  color: #64748b;
-  line-height: 1.35;
-}
-
-.demo-email-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  background: #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: monospace;
-  color: #334155;
-}
-
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .desktop-only {
@@ -530,10 +367,5 @@
   .hamburger-btn,
   .mobile-only {
     display: flex;
-  }
-
-  .demo-switch-pill {
-    padding: 4px 9px;
-    font-size: 0.75rem;
   }
 }
