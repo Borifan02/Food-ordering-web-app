@@ -81,3 +81,4 @@ export const triggerConfetti = () => {
     }
   }, 3500);
 };
+

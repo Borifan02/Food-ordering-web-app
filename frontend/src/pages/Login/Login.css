@@ -26,6 +26,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -109,6 +110,7 @@
   border-color: #ddd6fe;
   color: #6d28d9;
 }
+
 .demo-quick-btn.admin-btn:hover {
   background: #ede9fe;
 }
@@ -118,6 +120,7 @@
   border-color: #fecdd3;
   color: #e11d48;
 }
+
 .demo-quick-btn.customer-btn:hover {
   background: #ffe4e6;
 }
@@ -127,6 +130,7 @@
   border-color: #fde68a;
   color: #b45309;
 }
+
 .demo-quick-btn.delivery-btn:hover {
   background: #fef3c7;
 }
@@ -277,9 +281,11 @@
     flex-direction: column;
     gap: 16px;
   }
+
   .auth-card {
     padding: 28px 20px;
   }
+
   .demo-btn-group {
     grid-template-columns: 1fr;
   }

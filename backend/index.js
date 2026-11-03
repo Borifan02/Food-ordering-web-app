@@ -174,8 +174,13 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 // 404 handler for unknown API routes
-app.use("/api/*", (req, res) => {
+app.use("/api", (req, res) => {
   res.status(404).json({ message: "API endpoint not found" });
+});
+
+// Fallback 404 handler for any other unhandled routes
+app.use((req, res) => {
+  res.status(404).json({ message: "Endpoint not found" });
 });
 
 // Global error handler

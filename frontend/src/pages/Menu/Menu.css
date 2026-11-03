@@ -155,6 +155,7 @@
 .category-scroll-container::-webkit-scrollbar {
   height: 6px;
 }
+
 .category-scroll-container::-webkit-scrollbar-thumb {
   background: #e2e8f0;
   border-radius: 10px;
@@ -399,9 +400,17 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
-.chef-badge { background: #7c3aed; }
-.spicy-badge { background: #ef4444; }
-.veg-badge { background: #10b981; }
+.chef-badge {
+  background: #7c3aed;
+}
+
+.spicy-badge {
+  background: #ef4444;
+}
+
+.veg-badge {
+  background: #10b981;
+}
 
 .card-category-pill {
   position: absolute;
@@ -574,8 +583,15 @@
 }
 
 @keyframes floatUp {
-  from { opacity: 0; transform: translate(-50%, 20px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .floating-cart-info {
@@ -880,13 +896,16 @@
   .hero-content h1 {
     font-size: 2rem;
   }
+
   .item-detail-grid {
     grid-template-columns: 1fr;
   }
+
   .modal-image-col {
     height: 220px;
     min-height: auto;
   }
+
   .modal-info-col {
     padding: 20px;
   }

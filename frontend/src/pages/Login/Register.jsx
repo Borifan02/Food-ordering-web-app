@@ -56,7 +56,7 @@ const Register = () => {
       console.error("Registration failed", error);
       toast.error(
         error.response?.data?.message ||
-          "Registration failed. Please check your information and try again."
+        "Registration failed. Please check your information and try again."
       );
     } finally {
       setSubmitting(false);

@@ -45,3 +45,4 @@ const couponSchema = new Schema(
 );
 
 export const CouponModel = model("coupon", couponSchema);
+

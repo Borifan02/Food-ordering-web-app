@@ -26,9 +26,9 @@ const PaymentForm = ({ amount, onSuccess, onCancel }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (!stripe || !elements) return;
-    
+
     setLoading(true);
     setError(null);
 
@@ -63,9 +63,9 @@ const PaymentForm = ({ amount, onSuccess, onCancel }) => {
         <h3>Secure Card Checkout</h3>
         <p className="payment-amount-display">Amount to Pay: <strong>${numAmount.toFixed(2)}</strong></p>
       </div>
-      
+
       <TestCardInfo />
-      
+
       <div className="card-element-container">
         <label className="card-input-label">Credit or Debit Card</label>
         <div className="card-element-box">
@@ -88,15 +88,15 @@ const PaymentForm = ({ amount, onSuccess, onCancel }) => {
           />
         </div>
       </div>
-      
+
       {error && <div className="payment-error">⚠️ {error}</div>}
-      
+
       <div className="payment-buttons">
         <button type="button" onClick={onCancel} className="cancel-btn">
           Cancel
         </button>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={!stripe || loading}
           className="pay-btn"
         >
