@@ -29,11 +29,11 @@ const Footer = () => {
           <h4>Contact & Support</h4>
           <div className="contact-item">
             <span>📍</span>
-            <p>123 Food Street, Downtown, FC 12345</p>
+            <p>Bole, Addis Ababa- Ethiopia</p>
           </div>
           <div className="contact-item">
             <span>📞</span>
-            <p>+1 (555) 019-2834</p>
+            <p>+251965844287</p>
           </div>
           <div className="contact-item">
             <span>✉️</span>
