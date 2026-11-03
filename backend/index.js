@@ -32,6 +32,9 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 const app = express();
 const server = createServer(app);
 
+// Trust first proxy (Render, Vercel, Heroku, Cloudflare) for accurate rate limiting and IP resolution
+app.set("trust proxy", 1);
+
 // Dynamic CORS configuration
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -77,6 +80,7 @@ const authLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { message: "Too many authentication attempts, please try again in a few minutes." }
 });
 
@@ -85,6 +89,7 @@ const apiLimiter = rateLimit({
   max: 1200,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { message: "Too many requests from this IP, please try again later." }
 });
 
