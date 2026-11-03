@@ -21,6 +21,14 @@ const dbConnection = async () => {
 
         await mongoose.connect(mongoUri);
         logger.info("Connected to MongoDB successfully");
+
+        // Automatically ensure demo accounts exist for hassle-free 1-click evaluation
+        try {
+            const { ensureDemoAccounts } = await import("../seedData.js");
+            await ensureDemoAccounts();
+        } catch (seedErr) {
+            logger.warn(`Demo accounts initialization check skipped: ${seedErr.message}`);
+        }
     } catch (error) {
         logger.error("MongoDB Connection Error:", error);
     }

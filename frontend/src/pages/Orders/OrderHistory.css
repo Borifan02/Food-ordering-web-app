@@ -249,6 +249,7 @@
   background: #f1f5f9;
   color: #334155;
 }
+
 .receipt-btn:hover {
   background: #e2e8f0;
 }
@@ -258,6 +259,7 @@
   color: #2563eb;
   border: 1px solid #bfdbfe;
 }
+
 .reorder-btn:hover {
   background: #dbeafe;
 }
@@ -267,6 +269,7 @@
   color: white;
   box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
 }
+
 .track-btn:hover {
   background: #ee3847;
   transform: translateY(-2px);
@@ -391,8 +394,13 @@
   text-transform: uppercase;
 }
 
-.text-center { text-align: center; }
-.text-right { text-align: right; }
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
 
 .receipt-totals {
   display: flex;

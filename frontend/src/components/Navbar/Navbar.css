@@ -69,9 +69,20 @@
 }
 
 @keyframes pulseDot {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.7; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
 }
 
 .nav-links {
@@ -103,7 +114,9 @@
 .admin-nav-link {
   color: #7c3aed;
 }
-.admin-nav-link:hover, .admin-nav-link.active {
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
   color: #6d28d9;
   background-color: #ede9fe;
 }
@@ -111,7 +124,9 @@
 .delivery-nav-link {
   color: #d97706;
 }
-.delivery-nav-link:hover, .delivery-nav-link.active {
+
+.delivery-nav-link:hover,
+.delivery-nav-link.active {
   color: #b45309;
   background-color: #fef3c7;
 }
@@ -141,8 +156,15 @@
 }
 
 @keyframes badgeBounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.35); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.35);
+  }
 }
 
 /* User Profile Badge */
@@ -291,8 +313,15 @@
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .mobile-user-header {
@@ -371,6 +400,7 @@
   gap: 10px;
   margin-top: 10px;
 }
+
 .mobile-auth-actions a {
   flex: 1;
   text-align: center;
@@ -496,10 +526,12 @@
   .desktop-only {
     display: none;
   }
+
   .hamburger-btn,
   .mobile-only {
     display: flex;
   }
+
   .demo-switch-pill {
     padding: 4px 9px;
     font-size: 0.75rem;

@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 export const register = async (req, res) => {
     try {
         const { firstName = "", lastName = "", email = "", password = "", confirmPassword = "", phone = "", address = "" } = req.body;
+        const normalizedEmail = email.toLowerCase().trim();
         
         // Validate first and last name length
         if (firstName.length < 3) {
@@ -23,6 +24,24 @@ export const register = async (req, res) => {
             return res.status(400).json({ message: "Phone number must be 11 digits long" });
         }
 
+        // Check if an account with this email already exists
+        if (typeof userModel.findOne === "function") {
+            const existingUser = await userModel.findOne({ email: normalizedEmail });
+            if (existingUser) {
+                return res.status(400).json({ message: "An account with this email already exists. Please sign in or use another email." });
+            }
+        }
+
+        try {
+            const { DeliveryManModel } = await import("../models/deliveryMan.model.js");
+            if (typeof DeliveryManModel?.findOne === "function") {
+                const existingDriver = await DeliveryManModel.findOne({ email: normalizedEmail });
+                if (existingDriver) {
+                    return res.status(400).json({ message: "This email is registered as a delivery driver account." });
+                }
+            }
+        } catch (_) {}
+
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -30,7 +49,7 @@ export const register = async (req, res) => {
         const newUser = new userModel({
             firstName,
             lastName,
-            email: email.toLowerCase().trim(),
+            email: normalizedEmail,
             password: hashedPassword,
             confirmPassword: hashedPassword,
             phone,
@@ -49,17 +68,46 @@ export const login = async (req, res) => {
         const { email = "", password = "" } = req.body;
         const normalizedEmail = email.toLowerCase().trim();
 
-        // First, try to find user in userModel
-        let user = await userModel.findOne({ email: normalizedEmail });
+        // First, try to find user in userModel (latest record first if duplicates exist)
+        let user;
+        const userQuery = userModel.findOne({ email: normalizedEmail });
+        if (typeof userQuery?.sort === "function") {
+            user = await userQuery.sort({ createdAt: -1, _id: -1 });
+        } else {
+            user = await userQuery;
+        }
+
         let isDeliveryMan = false;
 
         // If not found in userModel, check DeliveryManModel
         if (!user) {
             const { DeliveryManModel } = await import("../models/deliveryMan.model.js");
-            user = await DeliveryManModel.findOne({ email: normalizedEmail });
-            if (user) {
-                isDeliveryMan = true;
+            if (typeof DeliveryManModel?.findOne === "function") {
+                const deliveryQuery = DeliveryManModel.findOne({ email: normalizedEmail });
+                if (typeof deliveryQuery?.sort === "function") {
+                    user = await deliveryQuery.sort({ createdAt: -1, _id: -1 });
+                } else {
+                    user = await deliveryQuery;
+                }
+                if (user) {
+                    isDeliveryMan = true;
+                }
             }
+        }
+
+        // Auto-provision demo account on-the-fly if someone logs in with a demo role and it was missing
+        if (!user && (normalizedEmail === "admin@foodie.com" || normalizedEmail === "user@foodie.com" || normalizedEmail === "delivery@foodie.com")) {
+            try {
+                const { ensureDemoAccounts } = await import("../seedData.js");
+                await ensureDemoAccounts();
+                if (normalizedEmail === "delivery@foodie.com") {
+                    const { DeliveryManModel } = await import("../models/deliveryMan.model.js");
+                    user = await DeliveryManModel.findOne({ email: normalizedEmail });
+                    if (user) isDeliveryMan = true;
+                } else {
+                    user = await userModel.findOne({ email: normalizedEmail });
+                }
+            } catch (_) {}
         }
 
         if (!user) return res.status(404).json({ message: "User not found" });

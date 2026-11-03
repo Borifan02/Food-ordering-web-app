@@ -14,7 +14,7 @@ const Footer = () => {
             <span role="img" aria-label="Twitter">🐦</span>
           </div>
         </div>
-        
+
         <div className="footer-section">
           <h4>Quick Links</h4>
           <ul>
@@ -24,7 +24,7 @@ const Footer = () => {
             <li><Link to="/about">About Us</Link></li>
           </ul>
         </div>
-        
+
         <div className="footer-section">
           <h4>Contact & Support</h4>
           <div className="contact-item">
@@ -40,7 +40,7 @@ const Footer = () => {
             <p>support@foodieapp.com</p>
           </div>
         </div>
-        
+
         <div className="footer-section">
           <h4>Opening Hours</h4>
           <div className="hours">
@@ -52,7 +52,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="footer-bottom">
         <p>&copy; {new Date().getFullYear()} Foodie App. All rights reserved. • Production Ready</p>
       </div>
