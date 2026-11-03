@@ -98,7 +98,7 @@ export const login = async (req, res) => {
         // Auto-provision demo account on-the-fly if someone logs in with a demo role and it was missing
         if (!user && (normalizedEmail === "admin@foodie.com" || normalizedEmail === "user@foodie.com" || normalizedEmail === "delivery@foodie.com")) {
             try {
-                const { ensureDemoAccounts } = await import("../seedData.js");
+                const { ensureDemoAccounts } = await import("../utils/ensureDemo.js");
                 await ensureDemoAccounts();
                 if (normalizedEmail === "delivery@foodie.com") {
                     const { DeliveryManModel } = await import("../models/deliveryMan.model.js");
@@ -122,9 +122,11 @@ export const login = async (req, res) => {
         );
 
         // Send back token and non-sensitive user data
-        const { password: _, confirmPassword: __, ...userData } = user._doc || user;
+        const plainUser = typeof user.toObject === "function" ? user.toObject() : (user._doc || user);
+        const { password: _, confirmPassword: __, ...userData } = plainUser;
         res.status(200).json({ token, user: userData });
     } catch (error) {
+        console.error("Login error:", error);
         res.status(500).json({ message: error.message });
     }
 };

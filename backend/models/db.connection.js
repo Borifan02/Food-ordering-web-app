@@ -24,7 +24,7 @@ const dbConnection = async () => {
 
         // Automatically ensure demo accounts exist for hassle-free 1-click evaluation
         try {
-            const { ensureDemoAccounts } = await import("../seedData.js");
+            const { ensureDemoAccounts } = await import("../utils/ensureDemo.js");
             await ensureDemoAccounts();
         } catch (seedErr) {
             logger.warn(`Demo accounts initialization check skipped: ${seedErr.message}`);
