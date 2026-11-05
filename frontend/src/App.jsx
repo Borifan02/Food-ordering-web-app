@@ -3,6 +3,7 @@ import { useContext } from "react";
 import Menu from "./pages/Menu/Menu";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Login/Register";
+import ForgotPassword from "./pages/Login/ForgotPassword";
 import Cart from "./pages/Cart/Cart";
 import OrderHistory from "./pages/Orders/OrderHistory";
 import OrderTracking from "./pages/Orders/OrderTracking";
@@ -66,6 +67,7 @@ function App() {
           />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/cart" element={<Cart />} />
           <Route

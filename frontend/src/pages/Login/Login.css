@@ -89,6 +89,19 @@
   align-items: center;
 }
 
+.forgot-password-link {
+  font-size: 0.82rem;
+  color: #ff4757;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+  color: #ee3847;
+}
+
 .input-field-group input {
   width: 100%;
   padding: 12px 14px;

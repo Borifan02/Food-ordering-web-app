@@ -70,6 +70,9 @@ const Login = () => {
           <div className="input-field-group">
             <div className="password-header-row">
               <label>Password</label>
+              <Link to="/forgot-password" className="forgot-password-link">
+                Forgot Password?
+              </Link>
             </div>
             <div className="password-input-wrapper">
               <input

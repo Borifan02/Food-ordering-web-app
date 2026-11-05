@@ -4,6 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import ConfirmModal from "../Modal/ConfirmModal";
+import ChangePasswordModal from "../Modal/ChangePasswordModal";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -15,12 +16,12 @@ const Navbar = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const role = (user?.role || "").trim().toLowerCase();
 
   // Hide navbar on pure login/register if needed, but keeping it visible with login/register links is cleaner
-  // If explicitly on /login or /register, let's keep minimal or full navbar
-  const isAuthPage = ["/login", "/register"].includes(location.pathname);
+  const isAuthPage = ["/login", "/register", "/forgot-password"].includes(location.pathname);
 
   const handleLogout = () => {
     logout();
@@ -99,6 +100,15 @@ const Navbar = () => {
                     {user.firstName || user.name || "User"}
                   </span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowChangePassword(true)}
+                  className="change-pw-nav-btn"
+                  title="Change Password Anytime"
+                >
+                  🔒 Password
+                </button>
 
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
@@ -227,15 +237,27 @@ const Navbar = () => {
               </Link>
 
               {user ? (
-                <button
-                  className="mobile-logout-btn"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setShowLogoutConfirm(true);
-                  }}
-                >
-                  Sign Out
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="mobile-nav-link change-pw-mobile-btn"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowChangePassword(true);
+                    }}
+                  >
+                    🔒 Change Password
+                  </button>
+                  <button
+                    className="mobile-logout-btn"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowLogoutConfirm(true);
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </>
               ) : (
                 <div className="mobile-auth-actions">
                   <Link
@@ -269,6 +291,12 @@ const Navbar = () => {
         type="danger"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
       />
     </>
   );

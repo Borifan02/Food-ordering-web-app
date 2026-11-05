@@ -31,6 +31,14 @@ const deliveryManSchema = new Schema(
       ref: "order",
       default: null,
     },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

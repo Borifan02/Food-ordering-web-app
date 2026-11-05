@@ -1,5 +1,15 @@
 import express from "express";
-import { register, login, getProfile, updateProfile, toggleFavorite, getFavorites } from "../controllers/auth.controller.js";
+import { 
+    register, 
+    login, 
+    getProfile, 
+    updateProfile, 
+    toggleFavorite, 
+    getFavorites,
+    forgotPassword,
+    resetPassword,
+    changePassword
+} from "../controllers/auth.controller.js";
 import { userModel } from "../models/user.model.js"; 
 import { verifyToken, verifyAdmin } from "../middleware/authMiddleware.js";
 
@@ -8,10 +18,13 @@ const router = express.Router();
 // Public Routes
 router.post("/register", register);
 router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
-// Protected Routes
+// Protected Routes (Customer, Driver, and Admin)
 router.get("/profile", verifyToken, getProfile);
 router.put("/profile", verifyToken, updateProfile);
+router.put("/change-password", verifyToken, changePassword);
 router.post("/favorites/:itemId", verifyToken, toggleFavorite);
 router.get("/favorites", verifyToken, getFavorites);
 
