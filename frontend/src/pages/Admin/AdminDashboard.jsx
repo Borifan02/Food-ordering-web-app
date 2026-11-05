@@ -1,9 +1,10 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { getSocket } from "../../utils/socket";
 import ConfirmModal from "../../components/Modal/ConfirmModal";
+import UserProfileManager from "../../components/Profile/UserProfileManager";
 import apiClient from "../../api/axios";
 import "./AdminDashboard.css";
 
@@ -34,7 +35,16 @@ const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("stats");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "stats";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Orders State
   const [orders, setOrders] = useState([]);
@@ -613,6 +623,12 @@ const AdminDashboard = () => {
           onClick={() => setActiveTab("delivery")}
         >
           🚚 Fleet ({deliveryMen.length})
+        </button>
+        <button
+          className={activeTab === "profile" ? "active" : ""}
+          onClick={() => setActiveTab("profile")}
+        >
+          👤 Profile & Security
         </button>
       </div>
 
@@ -1358,6 +1374,13 @@ const AdminDashboard = () => {
             </table>
             {renderPager(safeDeliveryPage, deliveryTotalPages, setDeliveryPage)}
           </div>
+        </div>
+      )}
+
+      {/* PROFILE & SECURITY TAB */}
+      {activeTab === "profile" && (
+        <div className="admin-profile-tab-content">
+          <UserProfileManager />
         </div>
       )}
 

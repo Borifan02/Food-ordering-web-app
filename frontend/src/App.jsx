@@ -4,6 +4,7 @@ import Menu from "./pages/Menu/Menu";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Login/Register";
 import ForgotPassword from "./pages/Login/ForgotPassword";
+import Profile from "./pages/Profile/Profile";
 import Cart from "./pages/Cart/Cart";
 import OrderHistory from "./pages/Orders/OrderHistory";
 import OrderTracking from "./pages/Orders/OrderTracking";
@@ -75,6 +76,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["user"]}>
                 <OrderHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

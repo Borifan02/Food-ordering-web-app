@@ -1,8 +1,9 @@
 import { useEffect, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { getSocket } from "../../utils/socket";
+import UserProfileManager from "../../components/Profile/UserProfileManager";
 import apiClient from "../../api/axios";
 import "./DeliveryDashboard.css";
 
@@ -10,13 +11,21 @@ const DeliveryDashboard = () => {
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [pendingOrders, setPendingOrders] = useState([]);
   const [activeDelivery, setActiveDelivery] = useState(null);
   const [deliveryHistory, setDeliveryHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState("active"); // "active", "available", "history"
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "active");
   const [driverStatus, setDriverStatus] = useState("available"); // "available", "busy", "offline"
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -199,6 +208,12 @@ const DeliveryDashboard = () => {
           onClick={() => setActiveTab("history")}
         >
           📜 Past Deliveries ({deliveryHistory.length})
+        </button>
+        <button
+          className={`d-tab-btn ${activeTab === "profile" ? "active" : ""}`}
+          onClick={() => setActiveTab("profile")}
+        >
+          👤 Profile & Security
         </button>
       </div>
 
@@ -401,6 +416,13 @@ const DeliveryDashboard = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* PROFILE & SECURITY TAB */}
+      {activeTab === "profile" && (
+        <div className="delivery-profile-view">
+          <UserProfileManager />
         </div>
       )}
     </div>

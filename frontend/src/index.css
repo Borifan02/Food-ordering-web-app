@@ -10,6 +10,12 @@
   --white: #ffffff;
   --gray: #64748b;
   --border-color: #e2e8f0;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --nav-bg: rgba(255, 255, 255, 0.95);
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -17,6 +23,90 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  --dark-color: #f8fafc;
+  --light-color: #0b0f19;
+  --white: #1e293b;
+  --gray: #94a3b8;
+  --border-color: #334155;
+  --bg-primary: #0b0f19;
+  --bg-secondary: #131b2e;
+  --bg-card: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --nav-bg: rgba(15, 23, 42, 0.95);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .navbar {
+  background-color: var(--nav-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .nav-link {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .nav-link:hover {
+  background-color: #1e293b;
+  color: #ff6b81;
+}
+
+[data-theme="dark"] .logo {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .menu-card,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .admin-card,
+[data-theme="dark"] .delivery-card,
+[data-theme="dark"] .cart-items-card,
+[data-theme="dark"] .delivery-details-card,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .free-shipping-card,
+[data-theme="dark"] .order-history-card,
+[data-theme="dark"] .tracking-card,
+[data-theme="dark"] .user-profile-card,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .confirm-modal-box,
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .change-pw-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: #ff4757 !important;
 }
 
 * {
