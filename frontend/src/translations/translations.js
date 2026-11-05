@@ -334,3 +334,4 @@ export const languages = [
   { code: "om", name: "Afaan Oromoo", nativeName: "Afaan Oromoo", flag: "🇪🇹" },
   { code: "am", name: "Amharic", nativeName: "አማርኛ", flag: "🇪🇹" },
 ];
+

@@ -15,3 +15,4 @@ export const isEthiopianPhone = (phone) => {
 
 export const ETHIOPIAN_PHONE_PLACEHOLDER = "09xxxxxxxx or +251 9xxxxxxxx";
 export const ETHIOPIAN_PHONE_ERROR = "Please enter a valid Ethiopian phone number (e.g. 0911234567 or +251911234567)";
+

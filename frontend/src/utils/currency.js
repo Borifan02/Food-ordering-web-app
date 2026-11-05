@@ -9,3 +9,4 @@ export const formatCurrency = (amount) => {
 };
 
 export const formatETB = formatCurrency;
+
