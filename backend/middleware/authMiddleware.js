@@ -38,3 +38,15 @@ export const verifyDeliveryMan = (req, res, next) => {
         }
     });
 };
+
+export const verifyCustomer = (req, res, next) => {
+    verifyToken(req, res, () => {
+        const role = (req.user?.role || "").trim().toLowerCase();
+        if (role === "admin" || role === "deliveryman") {
+            return res.status(403).json({
+                message: "Access denied. Placing orders is restricted to customers. Admins and Delivery Drivers cannot place consumer orders."
+            });
+        }
+        next();
+    });
+};

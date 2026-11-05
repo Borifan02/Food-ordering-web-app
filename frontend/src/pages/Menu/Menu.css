@@ -910,4 +910,207 @@
   .modal-info-col {
     padding: 20px;
   }
+
+  .menu-role-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+/* Role Mode Banner at Top of Menu */
+.menu-role-banner {
+  max-width: 1200px;
+  margin: 1.25rem auto 0;
+  padding: 1rem 1.5rem;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+.menu-role-banner.admin-banner {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+}
+
+.menu-role-banner.driver-banner {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #bbf7d0;
+}
+
+.role-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.role-banner-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-banner .role-banner-badge {
+  color: #1d4ed8;
+}
+
+.driver-banner .role-banner-badge {
+  color: #15803d;
+}
+
+.role-banner-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.role-banner-btn {
+  white-space: nowrap;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-banner .role-banner-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.admin-banner .role-banner-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.driver-banner .role-banner-btn {
+  background: #16a34a;
+  color: white;
+}
+
+.driver-banner .role-banner-btn:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+}
+
+/* Card Role Actions & Badges */
+.card-role-action-btn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.card-role-action-btn.admin-action {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.card-role-action-btn.admin-action:hover {
+  background: #2563eb;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.card-role-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.card-role-preview-tag.driver-tag {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* Modal Role Banner in Quick View */
+.modal-role-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: auto;
+}
+
+.admin-modal-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.driver-modal-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.modal-role-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-role-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-role-badge.admin {
+  color: #1d4ed8;
+}
+
+.modal-role-badge.driver {
+  color: #15803d;
+}
+
+.modal-role-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.modal-role-action-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.modal-role-action-btn.admin {
+  background: #2563eb;
+  color: white;
+}
+
+.modal-role-action-btn.admin:hover {
+  background: #1d4ed8;
+}
+
+.modal-role-action-btn.driver {
+  background: #16a34a;
+  color: white;
+}
+
+.modal-role-action-btn.driver:hover {
+  background: #15803d;
 }

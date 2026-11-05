@@ -67,14 +67,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/menu" element={<Menu />} />
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute allowedRoles={["user"]}>
-                <Cart />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/cart" element={<Cart />} />
           <Route
             path="/orders"
             element={

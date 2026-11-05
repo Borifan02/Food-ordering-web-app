@@ -7,6 +7,13 @@ export const createOrder = async (req, res) => {
     try {
         const { items, deliveryAddress, paymentMethod, orderNotes = "", couponCode = "" } = req.body;
         const userId = req.user.id; // JWT uses 'id' field
+        const userRole = (req.user?.role || "").trim().toLowerCase();
+
+        if (userRole === "admin" || userRole === "deliveryman") {
+            return res.status(403).json({
+                message: "Placing orders is restricted to customers. Admins and Delivery Drivers cannot create customer orders."
+            });
+        }
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items in order" });

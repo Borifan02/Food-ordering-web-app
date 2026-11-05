@@ -8,14 +8,14 @@ import {
     cancelOrder, 
     validateCoupon 
 } from "../controllers/order.controller.js";
-import { verifyToken, verifyAdmin } from "../middleware/authMiddleware.js";
+import { verifyToken, verifyAdmin, verifyCustomer } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", verifyToken, createOrder);
+router.post("/", verifyCustomer, createOrder);
 router.get("/", verifyToken, getUserOrders);
 router.get("/all", verifyAdmin, getAllOrders);
-router.post("/validate-coupon", verifyToken, validateCoupon);
+router.post("/validate-coupon", verifyCustomer, validateCoupon);
 router.get("/:id", verifyToken, getOrderById);
 router.put("/:id/status", verifyAdmin, updateOrderStatus);
 router.post("/:id/cancel", verifyToken, cancelOrder);

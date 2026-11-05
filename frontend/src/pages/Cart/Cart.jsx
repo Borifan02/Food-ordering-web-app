@@ -30,6 +30,10 @@ const Cart = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const userRole = (user?.role || "").trim().toLowerCase();
+  const isAdmin = userRole === "admin";
+  const isDriver = userRole === "deliveryman";
+
   const [address, setAddress] = useState(user?.address || "");
   const [paymentMethod, setPaymentMethod] = useState("Cash"); // "Cash" or "Card"
   const [couponInput, setCouponInput] = useState("");
@@ -78,8 +82,18 @@ const Cart = () => {
 
   // Place Cash On Delivery Order
   const handlePlaceOrder = async () => {
+    const userRole = (user?.role || "").trim().toLowerCase();
+    if (userRole === "admin" || userRole === "deliveryman") {
+      toast.error(
+        userRole === "admin"
+          ? "Administrators cannot place orders. Use the Admin Dashboard to manage store operations."
+          : "Delivery Partners cannot place orders. Ordering is for customer accounts only."
+      );
+      return;
+    }
+
     if (!user) {
-      toast.info("Please sign in to place your order");
+      toast.info("Please sign in or register as a Customer to place your order");
       navigate("/login");
       return;
     }
@@ -166,6 +180,41 @@ const Cart = () => {
       setLoading(false);
     }
   };
+
+  if (isAdmin || isDriver) {
+    return (
+      <div className="empty-cart-container">
+        <div className="empty-cart-card role-restricted-cart-card">
+          <div className="role-restricted-cart-icon">
+            {isAdmin ? "🛡️" : "🛵"}
+          </div>
+          <span className={`role-restricted-badge ${isAdmin ? "admin" : "driver"}`}>
+            {isAdmin ? "Administrator Notice" : "Delivery Partner Notice"}
+          </span>
+          <h2>Customer Ordering Only</h2>
+          <p>
+            {isAdmin
+              ? "Shopping carts and food ordering are reserved exclusively for customer accounts. As an administrator, you can manage dishes, pricing, inventory, live orders, and couriers from the Admin Dashboard."
+              : "Shopping carts and food ordering are reserved exclusively for customer accounts. As a delivery partner, your dashboard lets you review pickup orders, fulfill deliveries, and view earnings."}
+          </p>
+          <div className="role-restricted-cart-actions">
+            <button
+              className="role-primary-btn"
+              onClick={() => navigate(isAdmin ? "/admin" : "/delivery")}
+            >
+              {isAdmin ? "Go to Admin Dashboard ⚙️" : "Go to Delivery Hub 🛵"}
+            </button>
+            <button
+              className="role-secondary-btn"
+              onClick={() => navigate("/menu")}
+            >
+              Browse Menu Preview 🍽️
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (

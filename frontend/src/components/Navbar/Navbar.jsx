@@ -46,7 +46,7 @@ const Navbar = () => {
                   to="/menu"
                   className={`nav-link ${location.pathname === "/menu" ? "active" : ""}`}
                 >
-                  Menu
+                  {role === "admin" || role === "deliveryman" ? "🍽️ Menu Preview" : "Menu"}
                 </Link>
 
                 {role === "admin" && (
@@ -109,6 +109,17 @@ const Navbar = () => {
               </>
             ) : (
               <div className="guest-links">
+                <Link to="/menu" className="nav-link">
+                  Menu
+                </Link>
+                <Link to="/cart" className="nav-link cart-link">
+                  <span>🛒 Cart</span>
+                  {totalItemCount > 0 && (
+                    <span className="cart-badge animate-bounce">
+                      {totalItemCount}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/about" className="nav-link">
                   About
                 </Link>
@@ -155,7 +166,7 @@ const Navbar = () => {
                 className="mobile-nav-link"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                🍽️ Browse Menu
+                {role === "admin" || role === "deliveryman" ? "🍽️ Menu Preview" : "🍽️ Browse Menu"}
               </Link>
 
               {role === "admin" && (
@@ -195,6 +206,16 @@ const Navbar = () => {
                     🛒 My Cart ({totalItemCount})
                   </Link>
                 </>
+              )}
+
+              {!user && (
+                <Link
+                  to="/cart"
+                  className="mobile-nav-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  🛒 Cart ({totalItemCount})
+                </Link>
               )}
 
               <Link

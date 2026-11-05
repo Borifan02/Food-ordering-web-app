@@ -173,8 +173,21 @@ const Menu = () => {
     return result;
   }, [items, activeCategory, activeDietary, searchTerm, sortBy]);
 
+  const userRole = (user?.role || "").trim().toLowerCase();
+  const isCustomer = !user || userRole === "user" || userRole === "customer";
+  const isAdmin = userRole === "admin";
+  const isDriver = userRole === "deliveryman";
+
   const handleAddToCart = (item, e) => {
     e?.stopPropagation?.();
+    if (!isCustomer) {
+      if (isAdmin) {
+        toast.warning("Administrators cannot add items to cart. Manage dishes in the Admin Dashboard.");
+      } else if (isDriver) {
+        toast.warning("Delivery Partners cannot add items to cart. Food ordering is reserved for customers.");
+      }
+      return;
+    }
     addToCart(item, 1);
     toast.success(`Added ${item.name} to cart! 🛒`);
   };
@@ -192,6 +205,41 @@ const Menu = () => {
 
   return (
     <div className="menu-container">
+      {/* Role-Specific Preview Banners for Staff */}
+      {isAdmin && (
+        <div className="menu-role-banner admin-banner">
+          <div className="role-banner-content">
+            <span className="role-banner-icon">👑</span>
+            <div className="role-banner-text">
+              <strong>Administrator View:</strong> You are previewing the live menu as customers see it. Food ordering and cart are disabled for administrative accounts.
+            </div>
+          </div>
+          <button
+            className="role-banner-action-btn admin-btn"
+            onClick={() => navigate("/admin")}
+          >
+            Open Admin Ops →
+          </button>
+        </div>
+      )}
+
+      {isDriver && (
+        <div className="menu-role-banner driver-banner">
+          <div className="role-banner-content">
+            <span className="role-banner-icon">🛵</span>
+            <div className="role-banner-text">
+              <strong>Delivery Partner View:</strong> You are viewing the live menu. Food ordering is disabled for driver accounts.
+            </div>
+          </div>
+          <button
+            className="role-banner-action-btn driver-btn"
+            onClick={() => navigate("/delivery")}
+          >
+            Open Delivery Hub →
+          </button>
+        </div>
+      )}
+
       {/* Modern Hero Section */}
       <div className="hero-section">
         <div className="hero-content">
@@ -411,35 +459,52 @@ const Menu = () => {
                       ${Number(item.price).toFixed(2)}
                     </span>
 
-                    {/* Inline Card Quantity Controls */}
-                    {inCartQty > 0 ? (
-                      <div
-                        className="inline-cart-stepper"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          className="stepper-btn"
-                          onClick={() => updateQuantity(item._id, -1)}
-                          aria-label="Decrease quantity"
+                    {/* Customer gets Add-to-Cart stepper. Admin gets Manage shortcut. Driver gets Preview */}
+                    {isCustomer ? (
+                      inCartQty > 0 ? (
+                        <div
+                          className="inline-cart-stepper"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          -
-                        </button>
-                        <span className="stepper-val">{inCartQty}</span>
+                          <button
+                            className="stepper-btn"
+                            onClick={() => updateQuantity(item._id, -1)}
+                            aria-label="Decrease quantity"
+                          >
+                            -
+                          </button>
+                          <span className="stepper-val">{inCartQty}</span>
+                          <button
+                            className="stepper-btn"
+                            onClick={() => updateQuantity(item._id, 1)}
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          className="stepper-btn"
-                          onClick={() => updateQuantity(item._id, 1)}
-                          aria-label="Increase quantity"
+                          className="card-add-btn"
+                          onClick={(e) => handleAddToCart(item, e)}
                         >
-                          +
+                          Add +
                         </button>
-                      </div>
-                    ) : (
+                      )
+                    ) : isAdmin ? (
                       <button
-                        className="card-add-btn"
-                        onClick={(e) => handleAddToCart(item, e)}
+                        className="card-role-action-btn admin-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate("/admin");
+                        }}
+                        title="Edit dish in Admin Dashboard"
                       >
-                        Add +
+                        ⚙️ Manage
                       </button>
+                    ) : (
+                      <span className="card-role-preview-tag driver-tag">
+                        🛵 Preview
+                      </span>
                     )}
                   </div>
                 </div>
@@ -449,8 +514,8 @@ const Menu = () => {
         </div>
       )}
 
-      {/* Floating Bottom Cart Bar */}
-      {totalItemCount > 0 && (
+      {/* Floating Bottom Cart Bar - ONLY for customers */}
+      {isCustomer && totalItemCount > 0 && (
         <div className="floating-cart-bar">
           <div className="floating-cart-info">
             <span className="floating-cart-count">
@@ -559,34 +624,68 @@ const Menu = () => {
                   )}
                 </div>
 
-                {/* Modal Add to Cart Controls */}
-                <div className="modal-actions-bar">
-                  <div className="modal-stepper">
+                {/* Modal Action Controls: Customer gets add-to-cart, Admin/Driver get role banners */}
+                {isCustomer ? (
+                  <div className="modal-actions-bar">
+                    <div className="modal-stepper">
+                      <button
+                        onClick={() => setModalQuantity(Math.max(1, modalQuantity - 1))}
+                      >
+                        -
+                      </button>
+                      <span>{modalQuantity}</span>
+                      <button onClick={() => setModalQuantity(modalQuantity + 1)}>
+                        +
+                      </button>
+                    </div>
+
                     <button
-                      onClick={() => setModalQuantity(Math.max(1, modalQuantity - 1))}
+                      className="modal-add-btn"
+                      onClick={() => {
+                        addToCart(selectedItem, modalQuantity);
+                        toast.success(
+                          `Added ${modalQuantity}x ${selectedItem.name} to cart!`
+                        );
+                        setSelectedItem(null);
+                      }}
                     >
-                      -
-                    </button>
-                    <span>{modalQuantity}</span>
-                    <button onClick={() => setModalQuantity(modalQuantity + 1)}>
-                      +
+                      Add {modalQuantity} to Order • $
+                      {(Number(selectedItem.price) * modalQuantity).toFixed(2)}
                     </button>
                   </div>
-
-                  <button
-                    className="modal-add-btn"
-                    onClick={() => {
-                      addToCart(selectedItem, modalQuantity);
-                      toast.success(
-                        `Added ${modalQuantity}x ${selectedItem.name} to cart!`
-                      );
-                      setSelectedItem(null);
-                    }}
-                  >
-                    Add {modalQuantity} to Order • $
-                    {(Number(selectedItem.price) * modalQuantity).toFixed(2)}
-                  </button>
-                </div>
+                ) : isAdmin ? (
+                  <div className="modal-role-banner admin-modal-banner">
+                    <div className="modal-role-info">
+                      <span className="modal-role-badge admin">👑 Admin Preview</span>
+                      <p>Food ordering is disabled for Admin accounts. Manage menu items, pricing, and stock in the Admin Dashboard.</p>
+                    </div>
+                    <button
+                      className="modal-role-action-btn admin"
+                      onClick={() => {
+                        setSelectedItem(null);
+                        navigate("/admin");
+                      }}
+                    >
+                      Open Admin Dashboard →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="modal-role-banner driver-modal-banner">
+                    <div className="modal-role-info">
+                      <span className="modal-role-badge driver">🛵 Delivery Partner</span>
+                      <p>Food ordering is disabled for driver accounts. Head to the Delivery Hub to view orders waiting for pickup.</p>
+                    </div>
+                    <button
+                      className="modal-role-action-btn driver"
+                      onClick={() => {
+                        setSelectedItem(null);
+                        navigate("/delivery");
+                      }}
+                    >
+                      Open Delivery Hub →
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -1,8 +1,18 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
+import { AuthContext } from "./AuthContext";
+import { useToast } from "./ToastContext";
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  const { toast } = useToast();
+
+  const role = (user?.role || "").trim().toLowerCase();
+  const isCustomer = !user || role === "user" || role === "customer";
+  const isAdmin = role === "admin";
+  const isDriver = role === "deliveryman";
+
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem("foodCart");
@@ -42,6 +52,15 @@ export const CartProvider = ({ children }) => {
   }, [appliedCoupon]);
 
   const addToCart = (item, quantity = 1) => {
+    if (!isCustomer) {
+      if (isAdmin) {
+        toast.warning("Administrators cannot add items to cart. Use the Admin Dashboard to manage menu items.");
+      } else if (isDriver) {
+        toast.warning("Delivery Partners cannot add items to cart. Food ordering is for customers only.");
+      }
+      return false;
+    }
+
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex(
         (cartItem) => cartItem._id === item._id
@@ -72,6 +91,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = (itemId, amount) => {
+    if (!isCustomer) return;
     setCart((prevCart) =>
       prevCart
         .map((item) => {
@@ -86,6 +106,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const setItemQuantity = (itemId, quantity) => {
+    if (!isCustomer) return;
     if (quantity <= 0) {
       removeFromCart(itemId);
       return;
@@ -98,6 +119,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const getItemQuantity = (itemId) => {
+    if (!isCustomer) return 0;
     const item = cart.find((i) => i._id === itemId);
     return item ? item.quantity : 0;
   };
@@ -112,6 +134,10 @@ export const CartProvider = ({ children }) => {
   };
 
   const reorderItems = (items) => {
+    if (!isCustomer) {
+      toast.warning("Reordering is only allowed for customer accounts.");
+      return;
+    }
     if (!Array.isArray(items)) return;
     const formatted = items.map((i) => ({
       _id: i.menuItemId?._id || i.menuItemId || i._id,
@@ -168,6 +194,9 @@ export const CartProvider = ({ children }) => {
         setOrderNotes,
         appliedCoupon,
         setAppliedCoupon,
+        isCustomer,
+        isAdmin,
+        isDriver,
       }}
     >
       {children}
