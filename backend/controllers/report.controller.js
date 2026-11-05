@@ -88,7 +88,7 @@ export const exportDashboardStatsPDF = async (req, res) => {
         // Summary Stats
         doc.fontSize(18).text('Summary Statistics', { underline: true });
         doc.moveDown();
-        doc.fontSize(14).text(`Total Revenue: $${(totalStats[0]?.totalRevenue || 0).toFixed(2)}`);
+        doc.fontSize(14).text(`Total Revenue: ${(totalStats[0]?.totalRevenue || 0).toFixed(2)} ETB`);
         doc.text(`Total Orders: ${totalStats[0]?.totalOrders || 0}`);
         doc.text(`Pending Orders: ${pendingCount}`);
         doc.moveDown(2);
@@ -120,7 +120,7 @@ export const exportDashboardStatsPDF = async (req, res) => {
 
         dailyStats.forEach(stat => {
             doc.text(stat._id, dateX, y);
-            doc.text(`$${stat.dailyRevenue.toFixed(2)}`, revenueX, y);
+            doc.text(`${stat.dailyRevenue.toFixed(2)} ETB`, revenueX, y);
             doc.text(stat.orderCount.toString(), ordersX, y);
             y += 20;
         });

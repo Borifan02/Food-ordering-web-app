@@ -177,7 +177,7 @@ const DeliveryDashboard = () => {
         </div>
         <div className="d-stat-box">
           <span className="d-stat-label">Delivery Earnings</span>
-          <span className="d-stat-val text-green">${totalEarnings.toFixed(2)}</span>
+          <span className="d-stat-val text-green">{totalEarnings.toFixed(2)} ETB</span>
         </div>
         <div className="d-stat-box">
           <span className="d-stat-label">Driver Rating</span>
@@ -278,14 +278,14 @@ const DeliveryDashboard = () => {
                 <ul>
                   {activeDelivery.items?.map((item, idx) => (
                     <li key={idx}>
-                      {item.quantity}x {item.name} - ${(item.price * item.quantity).toFixed(2)}
+                      {item.quantity}x {item.name} - {(item.price * item.quantity).toFixed(2)} ETB
                     </li>
                   ))}
                 </ul>
                 <div className="order-total-preview">
                   <span>Payment Method: {activeDelivery.payment?.method || "Cash"}</span>
                   <span className="order-total-badge">
-                    Total to Collect: ${Number(activeDelivery.totalAmount).toFixed(2)}
+                    Total to Collect: {Number(activeDelivery.totalAmount).toFixed(2)} ETB
                   </span>
                 </div>
               </div>
@@ -344,7 +344,7 @@ const DeliveryDashboard = () => {
                       <strong>Drop-off:</strong> {order.deliveryAddress}
                     </p>
                     <p>
-                      <strong>Order Total:</strong> ${Number(order.totalAmount).toFixed(2)} ({order.payment?.method || "Cash"})
+                      <strong>Order Total:</strong> {Number(order.totalAmount).toFixed(2)} ETB ({order.payment?.method || "Cash"})
                     </p>
                     <div className="pickup-items-snippet">
                       <strong>Items ({order.items?.length}):</strong>
@@ -407,7 +407,7 @@ const DeliveryDashboard = () => {
                       </td>
                       <td>
                         <span className="earned-badge">
-                          +${(d.deliveryFee || 3.99).toFixed(2)}
+                          +{Number(d.deliveryFee || 3.99).toFixed(2)} ETB
                         </span>
                       </td>
                     </tr>

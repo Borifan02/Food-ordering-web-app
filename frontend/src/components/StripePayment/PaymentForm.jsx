@@ -61,7 +61,7 @@ const PaymentForm = ({ amount, onSuccess, onCancel }) => {
     <form onSubmit={handleSubmit} className="payment-form">
       <div className="payment-header">
         <h3>Secure Card Checkout</h3>
-        <p className="payment-amount-display">Amount to Pay: <strong>${numAmount.toFixed(2)}</strong></p>
+        <p className="payment-amount-display">Amount to Pay: <strong>{numAmount.toFixed(2)} ETB</strong></p>
       </div>
 
       <TestCardInfo />
@@ -100,7 +100,7 @@ const PaymentForm = ({ amount, onSuccess, onCancel }) => {
           disabled={!stripe || loading}
           className="pay-btn"
         >
-          {loading ? 'Processing Payment...' : `Pay $${numAmount.toFixed(2)} Now`}
+          {loading ? 'Processing Payment...' : `Pay ${numAmount.toFixed(2)} ETB Now`}
         </button>
       </div>
     </form>

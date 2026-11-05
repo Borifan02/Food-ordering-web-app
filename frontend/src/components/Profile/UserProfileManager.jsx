@@ -1,12 +1,15 @@
 import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
+import { isEthiopianPhone, ETHIOPIAN_PHONE_ERROR, ETHIOPIAN_PHONE_PLACEHOLDER } from "../../utils/phone";
 import apiClient from "../../api/axios";
 import "./UserProfileManager.css";
 
 const UserProfileManager = () => {
   const { user, updateUser } = useContext(AuthContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const role = (user?.role || "").trim().toLowerCase();
 
@@ -44,6 +47,10 @@ const UserProfileManager = () => {
     e.preventDefault();
     if (!profileForm.firstName.trim()) {
       toast.warning("First name cannot be empty");
+      return;
+    }
+    if (profileForm.phone.trim() && !isEthiopianPhone(profileForm.phone.trim())) {
+      toast.warning(ETHIOPIAN_PHONE_ERROR);
       return;
     }
 
@@ -214,10 +221,10 @@ const UserProfileManager = () => {
             </div>
 
             <div className="form-group">
-              <label>Phone Number</label>
+              <label>{t("phoneNumber")}</label>
               <input
                 type="tel"
-                placeholder="01xxxxxxxxx"
+                placeholder={ETHIOPIAN_PHONE_PLACEHOLDER}
                 value={profileForm.phone}
                 onChange={(e) =>
                   setProfileForm({ ...profileForm, phone: e.target.value })
@@ -227,11 +234,11 @@ const UserProfileManager = () => {
 
             <div className="form-group">
               <label>
-                {role === "deliveryman" ? "Primary Delivery Zone" : "Default Delivery Address"}
+                {role === "deliveryman" ? "Primary Delivery Zone" : t("deliveryAddress")}
               </label>
               <textarea
                 rows="2"
-                placeholder="Street address, apartment, city"
+                placeholder="Bole, Addis Ababa, Ethiopia"
                 value={profileForm.address}
                 onChange={(e) =>
                   setProfileForm({ ...profileForm, address: e.target.value })
@@ -244,7 +251,7 @@ const UserProfileManager = () => {
               className="save-profile-btn"
               disabled={savingProfile}
             >
-              {savingProfile ? "Saving Changes..." : "Save Details ✓"}
+              {savingProfile ? "Saving Changes..." : `${t("saveChanges")}`}
             </button>
           </form>
         </div>

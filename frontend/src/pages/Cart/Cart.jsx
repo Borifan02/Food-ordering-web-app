@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import apiClient from "../../api/axios";
 import StripePayment from "../../components/StripePayment/PaymentForm";
 import { triggerConfetti } from "../../utils/confetti";
+import { formatCurrency, CURRENCY } from "../../utils/currency";
 import "./Cart.css";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150";
@@ -28,6 +30,7 @@ const Cart = () => {
 
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const userRole = (user?.role || "").trim().toLowerCase();
@@ -221,10 +224,10 @@ const Cart = () => {
       <div className="empty-cart-container">
         <div className="empty-cart-card">
           <div className="empty-cart-icon">🛒</div>
-          <h2>Your Cart is Empty</h2>
-          <p>Explore our handcrafted menu and add delicious meals to your cart!</p>
+          <h2>{t("emptyCartTitle")}</h2>
+          <p>{t("emptyCartSubtitle")}</p>
           <button className="browse-menu-btn" onClick={() => navigate("/menu")}>
-            Explore Delicious Menu ➔
+            {t("exploreMenuBtn")}
           </button>
         </div>
       </div>
@@ -234,9 +237,9 @@ const Cart = () => {
   return (
     <div className="cart-container">
       <div className="cart-header-row">
-        <h2>Your Shopping Cart 🛍️</h2>
+        <h2>{t("yourCart")} 🛍️</h2>
         <button className="clear-cart-text-btn" onClick={clearCart}>
-          Clear All Items
+          {t("clearAll")}
         </button>
       </div>
 
@@ -245,11 +248,11 @@ const Cart = () => {
         <div className="free-shipping-text">
           {amountToFreeDelivery > 0 ? (
             <span>
-              🚚 Add <strong>${amountToFreeDelivery.toFixed(2)}</strong> more to get <strong>FREE Delivery</strong>!
+              🚚 {t("addMoreForFreeDelivery")} (<strong>{amountToFreeDelivery.toFixed(2)} ETB</strong> {t("addMoreForFreeDelivery")})
             </span>
           ) : (
             <span className="free-shipping-unlocked">
-              🎉 Congratulations! You unlocked <strong>FREE Delivery</strong>!
+              {t("freeDeliveryUnlocked")}
             </span>
           )}
         </div>
@@ -265,7 +268,7 @@ const Cart = () => {
         {/* Left Column: Cart Items List */}
         <div className="cart-items-column">
           <div className="cart-items-card">
-            <h3 className="column-title">Order Items ({cart.length})</h3>
+            <h3 className="column-title">{t("orderItems")} ({cart.length})</h3>
 
             <div className="items-list">
               {cart.map((item) => (
@@ -279,7 +282,7 @@ const Cart = () => {
 
                   <div className="item-row-details">
                     <h4 className="item-name">{item.name}</h4>
-                    <p className="item-unit-price">${Number(item.price).toFixed(2)} each</p>
+                    <p className="item-unit-price">{Number(item.price).toFixed(2)} ETB {t("each")}</p>
                   </div>
 
                   <div className="item-row-actions">
@@ -302,7 +305,7 @@ const Cart = () => {
                     </div>
 
                     <div className="item-row-total">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {(item.price * item.quantity).toFixed(2)} ETB
                     </div>
 
                     <button
@@ -321,26 +324,26 @@ const Cart = () => {
 
           {/* Delivery & Cooking Notes Card */}
           <div className="delivery-details-card">
-            <h3 className="column-title">Delivery & Instructions</h3>
+            <h3 className="column-title">{t("deliveryAddress")}</h3>
 
             <div className="input-group">
-              <label>Delivery Address *</label>
+              <label>{t("deliveryAddress")} *</label>
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Street address, apartment or suite number, city..."
+                placeholder={t("deliveryAddressPlaceholder")}
                 rows={3}
                 required
               />
             </div>
 
             <div className="input-group">
-              <label>Special Cooking / Delivery Notes (Optional)</label>
+              <label>{t("specialInstructions")}</label>
               <input
                 type="text"
                 value={orderNotes}
                 onChange={(e) => setOrderNotes(e.target.value)}
-                placeholder="e.g. Extra napkins, please ring the front doorbell..."
+                placeholder={t("notesPlaceholder")}
               />
             </div>
           </div>
@@ -417,37 +420,37 @@ const Cart = () => {
             {/* Price Calculations */}
             <div className="summary-rows-box">
               <div className="summary-row">
-                <span>Items Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{t("subtotal")}</span>
+                <span>{subtotal.toFixed(2)} ETB</span>
               </div>
 
               <div className="summary-row">
-                <span>Delivery Fee</span>
+                <span>{t("deliveryFee")}</span>
                 <span>
                   {deliveryFee === 0 ? (
                     <span className="free-badge">FREE</span>
                   ) : (
-                    `$${deliveryFee.toFixed(2)}`
+                    `${deliveryFee.toFixed(2)} ETB`
                   )}
                 </span>
               </div>
 
               {discountAmount > 0 && (
                 <div className="summary-row discount-row">
-                  <span>Promo Discount</span>
-                  <span>-${discountAmount.toFixed(2)}</span>
+                  <span>{t("discount")}</span>
+                  <span>-{discountAmount.toFixed(2)} ETB</span>
                 </div>
               )}
 
               <div className="summary-row total-row">
-                <span>Total Amount</span>
-                <span>${finalTotal.toFixed(2)}</span>
+                <span>{t("totalAmount")}</span>
+                <span>{finalTotal.toFixed(2)} ETB</span>
               </div>
             </div>
 
             {/* Payment Method Selector */}
             <div className="payment-method-selector">
-              <label className="payment-label">Select Payment Method</label>
+              <label className="payment-label">{t("paymentMethod")}</label>
 
               <div className="payment-options-grid">
                 <label
@@ -462,8 +465,8 @@ const Cart = () => {
                   />
                   <span className="option-icon">💵</span>
                   <div>
-                    <div className="option-title">Cash on Delivery</div>
-                    <div className="option-sub">Pay at your doorstep</div>
+                    <div className="option-title">{t("cashOnDelivery")}</div>
+                    <div className="option-sub">{t("cashDesc")}</div>
                   </div>
                 </label>
 
@@ -479,8 +482,8 @@ const Cart = () => {
                   />
                   <span className="option-icon">💳</span>
                   <div>
-                    <div className="option-title">Credit / Debit Card</div>
-                    <div className="option-sub">Instant Stripe checkout</div>
+                    <div className="option-title">{t("cardPayment")}</div>
+                    <div className="option-sub">{t("cardDesc")}</div>
                   </div>
                 </label>
               </div>
@@ -495,8 +498,8 @@ const Cart = () => {
               {loading
                 ? "Placing Order..."
                 : paymentMethod === "Card"
-                ? `Proceed to Card Payment • $${finalTotal.toFixed(2)}`
-                : `Place Order (Cash) • $${finalTotal.toFixed(2)} ➔`}
+                ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
+                : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
             </button>
 
             <div className="checkout-trust-badges">

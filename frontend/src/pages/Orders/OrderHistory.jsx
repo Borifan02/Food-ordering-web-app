@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axios";
 import { CartContext } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import "./OrderHistory.css";
 
 const OrderHistory = () => {
@@ -13,6 +14,7 @@ const OrderHistory = () => {
 
   const { reorderItems } = useContext(CartContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -174,8 +176,8 @@ const OrderHistory = () => {
 
                 <div className="order-footer">
                   <div className="order-total-block">
-                    <span className="total-label">Total Amount</span>
-                    <span className="total-amount">${Number(order.totalAmount).toFixed(2)}</span>
+                    <span className="total-label">{t("totalAmount")}</span>
+                    <span className="total-amount">{Number(order.totalAmount).toFixed(2)} ETB</span>
                     <span className="payment-chip">
                       {order.payment?.method || "Cash"}
                     </span>
@@ -186,14 +188,14 @@ const OrderHistory = () => {
                       className="receipt-btn"
                       onClick={() => setReceiptOrder(order)}
                     >
-                      🧾 Receipt
+                      🧾 {t("viewReceipt")}
                     </button>
 
                     <button
                       className="reorder-btn"
                       onClick={() => handleReorder(order)}
                     >
-                      ↺ Reorder
+                      ↺ {t("reorder")}
                     </button>
 
                     {isActive && (
@@ -201,7 +203,7 @@ const OrderHistory = () => {
                         className="track-btn"
                         onClick={() => navigate(`/orders/${order._id}`)}
                       >
-                        🛵 Track Live
+                        🛵 {t("trackOrder")}
                       </button>
                     )}
                   </div>
@@ -222,7 +224,7 @@ const OrderHistory = () => {
             <div className="receipt-header">
               <div className="receipt-brand">
                 <h3>Foodie Restaurant</h3>
-                <p>123 Food Street, Downtown • Tel: +1 (555) 019-2834</p>
+                <p>Bole, Addis Ababa, Ethiopia • Tel: +251 965 844 287</p>
               </div>
               <button
                 className="close-receipt-btn"
@@ -234,10 +236,10 @@ const OrderHistory = () => {
 
             <div className="receipt-meta">
               <div>
-                <strong>Order #:</strong> {receiptOrder._id}
+                <strong>{t("orderId")}</strong> {receiptOrder._id}
               </div>
               <div>
-                <strong>Date:</strong>{" "}
+                <strong>{t("orderDate")}:</strong>{" "}
                 {new Date(receiptOrder.createdAt).toLocaleString()}
               </div>
               <div>
@@ -264,9 +266,9 @@ const OrderHistory = () => {
                 <div key={idx} className="receipt-row">
                   <span>{i.name}</span>
                   <span className="text-center">{i.quantity}</span>
-                  <span className="text-right">${Number(i.price).toFixed(2)}</span>
+                  <span className="text-right">{Number(i.price).toFixed(2)} ETB</span>
                   <span className="text-right">
-                    ${(Number(i.price) * Number(i.quantity)).toFixed(2)}
+                    {(Number(i.price) * Number(i.quantity)).toFixed(2)} ETB
                   </span>
                 </div>
               ))}
@@ -276,25 +278,24 @@ const OrderHistory = () => {
               <div className="receipt-total-row">
                 <span>Subtotal</span>
                 <span>
-                  $
                   {receiptOrder.items
                     .reduce((sum, item) => sum + item.price * item.quantity, 0)
-                    .toFixed(2)}
+                    .toFixed(2)} ETB
                 </span>
               </div>
               <div className="receipt-total-row">
                 <span>Delivery Fee</span>
-                <span>${(receiptOrder.deliveryFee || 0).toFixed(2)}</span>
+                <span>{(receiptOrder.deliveryFee || 0).toFixed(2)} ETB</span>
               </div>
               {receiptOrder.discountAmount > 0 && (
                 <div className="receipt-total-row discount">
                   <span>Discount ({receiptOrder.couponCode || "Promo"})</span>
-                  <span>-${receiptOrder.discountAmount.toFixed(2)}</span>
+                  <span>-{(receiptOrder.discountAmount || 0).toFixed(2)} ETB</span>
                 </div>
               )}
               <div className="receipt-total-row grand-total">
                 <span>Grand Total</span>
-                <span>${Number(receiptOrder.totalAmount).toFixed(2)}</span>
+                <span>{Number(receiptOrder.totalAmount).toFixed(2)} ETB</span>
               </div>
             </div>
 

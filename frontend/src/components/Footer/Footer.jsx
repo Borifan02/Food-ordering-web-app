@@ -48,7 +48,7 @@ const Footer = () => {
             <p><strong>Sat - Sun:</strong> 10:00 AM - 12:00 AM</p>
           </div>
           <div className="delivery-info">
-            <p>🚚 Free delivery on all orders over $25</p>
+            <p>🚚 Free delivery on all orders over 25 ETB</p>
           </div>
         </div>
       </div>

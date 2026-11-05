@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import apiClient from "../../api/axios";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
+import { isEthiopianPhone, ETHIOPIAN_PHONE_ERROR, ETHIOPIAN_PHONE_PLACEHOLDER } from "../../utils/phone";
 import "./Login.css";
 
 const Register = () => {
@@ -17,6 +19,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -42,8 +45,8 @@ const Register = () => {
       toast.error("Passwords do not match!");
       return;
     }
-    if (formData.phone.length !== 11) {
-      toast.warning("Phone number must be exactly 11 digits (e.g. 01234567890)");
+    if (!isEthiopianPhone(formData.phone)) {
+      toast.warning(ETHIOPIAN_PHONE_ERROR);
       return;
     }
 
@@ -75,22 +78,22 @@ const Register = () => {
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="input-field-group">
-              <label>First Name</label>
+              <label>{t("firstName")}</label>
               <input
                 type="text"
                 name="firstName"
-                placeholder="John"
+                placeholder="Abebe"
                 required
                 value={formData.firstName}
                 onChange={handleChange}
               />
             </div>
             <div className="input-field-group">
-              <label>Last Name</label>
+              <label>{t("lastName")}</label>
               <input
                 type="text"
                 name="lastName"
-                placeholder="Doe"
+                placeholder="Kebede"
                 required
                 value={formData.lastName}
                 onChange={handleChange}
@@ -99,11 +102,11 @@ const Register = () => {
           </div>
 
           <div className="input-field-group">
-            <label>Email Address</label>
+            <label>{t("emailAddress")}</label>
             <input
               type="email"
               name="email"
-              placeholder="john@example.com"
+              placeholder="abebe@example.com"
               required
               value={formData.email}
               onChange={handleChange}
@@ -112,22 +115,22 @@ const Register = () => {
 
           <div className="form-row">
             <div className="input-field-group">
-              <label>Phone Number (11 digits)</label>
+              <label>{t("phoneNumber")}</label>
               <input
                 type="tel"
                 name="phone"
-                placeholder="01234567890"
+                placeholder={ETHIOPIAN_PHONE_PLACEHOLDER}
                 required
                 value={formData.phone}
                 onChange={handleChange}
               />
             </div>
             <div className="input-field-group">
-              <label>Default Address</label>
+              <label>{t("deliveryAddress")}</label>
               <input
                 type="text"
                 name="address"
-                placeholder="123 Food Street, Apt 4B"
+                placeholder="Bole, Addis Ababa, House 123"
                 required
                 value={formData.address}
                 onChange={handleChange}

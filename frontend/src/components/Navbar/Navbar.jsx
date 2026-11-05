@@ -3,6 +3,7 @@ import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import ConfirmModal from "../Modal/ConfirmModal";
 import "./Navbar.css";
 
@@ -10,25 +11,31 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const { totalItemCount } = useContext(CartContext);
   const { toast } = useToast();
+  const { language, changeLanguage, t, languages, currentLanguageInfo } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const dropdownRef = useRef(null);
+  const langDropdownRef = useRef(null);
 
   const role = (user?.role || "").trim().toLowerCase();
   const isCustomer = !user || role === "user" || role === "customer";
   const isAdmin = role === "admin";
   const isDriver = role === "deliveryman";
 
-  // Close dropdown on click outside
+  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setUserDropdownOpen(false);
+      }
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target)) {
+        setLangDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -39,6 +46,7 @@ const Navbar = () => {
   useEffect(() => {
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
+    setLangDropdownOpen(false);
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -62,9 +70,9 @@ const Navbar = () => {
   };
 
   const getDashboardLabel = () => {
-    if (isAdmin) return "👑 Admin Operations";
-    if (isDriver) return "🛵 Delivery Hub";
-    return "📦 My Orders";
+    if (isAdmin) return t("adminOperations");
+    if (isDriver) return t("deliveryHub");
+    return t("orders");
   };
 
   const displayName =
@@ -87,7 +95,7 @@ const Navbar = () => {
               to="/menu"
               className={`nav-link ${location.pathname === "/menu" ? "active" : ""}`}
             >
-              {isAdmin || isDriver ? "🍽️ Menu Preview" : "Menu"}
+              {isAdmin || isDriver ? t("menuPreview") : t("menu")}
             </Link>
 
             {isAdmin && (
@@ -95,7 +103,7 @@ const Navbar = () => {
                 to="/admin"
                 className={`nav-link admin-nav-link ${location.pathname === "/admin" ? "active" : ""}`}
               >
-                👑 Admin Dashboard
+                {t("adminDashboard")}
               </Link>
             )}
 
@@ -104,7 +112,7 @@ const Navbar = () => {
                 to="/delivery"
                 className={`nav-link delivery-nav-link ${location.pathname === "/delivery" ? "active" : ""}`}
               >
-                🛵 Delivery Hub
+                {t("deliveryHub")}
               </Link>
             )}
 
@@ -113,7 +121,7 @@ const Navbar = () => {
                 to="/orders"
                 className={`nav-link ${location.pathname.startsWith("/orders") ? "active" : ""}`}
               >
-                My Orders
+                {t("orders")}
               </Link>
             )}
 
@@ -121,12 +129,47 @@ const Navbar = () => {
               to="/about"
               className={`nav-link ${location.pathname === "/about" ? "active" : ""}`}
             >
-              About
+              {t("about")}
             </Link>
           </div>
 
           {/* Right Action Cluster */}
           <div className="nav-actions-cluster desktop-only">
+            {/* Language Selector Dropdown (English, Afaan Oromoo, Amharic) */}
+            <div className="language-selector-wrapper" ref={langDropdownRef}>
+              <button
+                type="button"
+                className={`lang-select-btn ${langDropdownOpen ? "open" : ""}`}
+                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                aria-label="Select Language"
+                title="Switch Language (English / Afaan Oromoo / አማርኛ)"
+              >
+                <span className="lang-flag">{currentLanguageInfo.flag}</span>
+                <span className="lang-code">{currentLanguageInfo.code.toUpperCase()}</span>
+                <span className="lang-chevron">{langDropdownOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {langDropdownOpen && (
+                <div className="lang-dropdown-menu">
+                  {languages.map((l) => (
+                    <button
+                      key={l.code}
+                      type="button"
+                      className={`lang-option-item ${language === l.code ? "active" : ""}`}
+                      onClick={() => {
+                        changeLanguage(l.code);
+                        setLangDropdownOpen(false);
+                      }}
+                    >
+                      <span className="lang-option-flag">{l.flag}</span>
+                      <span className="lang-option-name">{l.nativeName}</span>
+                      {language === l.code && <span className="lang-check">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Shopping Cart (Customers & Guests only) */}
             {isCustomer && (
               <Link
@@ -135,7 +178,7 @@ const Navbar = () => {
                 title="View Shopping Cart"
               >
                 <span className="cart-btn-icon">🛒</span>
-                <span className="cart-btn-label">Cart</span>
+                <span className="cart-btn-label">{t("cart")}</span>
                 {totalItemCount > 0 && (
                   <span className="cart-badge animate-bounce">
                     {totalItemCount}
@@ -188,7 +231,7 @@ const Navbar = () => {
                         onClick={() => setUserDropdownOpen(false)}
                       >
                         <span className="item-icon">👤</span>
-                        <span>My Profile & Security</span>
+                        <span>{t("profileAndSecurity")}</span>
                       </Link>
 
                       <Link
@@ -214,7 +257,7 @@ const Navbar = () => {
                       }}
                     >
                       <span className="item-icon">🚪</span>
-                      <span>Sign Out</span>
+                      <span>{t("signOut")}</span>
                     </button>
                   </div>
                 )}
@@ -222,10 +265,10 @@ const Navbar = () => {
             ) : (
               <div className="guest-action-btns">
                 <Link to="/login" className="nav-login-btn">
-                  Sign In
+                  {t("signIn")}
                 </Link>
                 <Link to="/register" className="nav-register-btn">
-                  Sign Up
+                  {t("signUp")}
                 </Link>
               </div>
             )}
@@ -257,6 +300,23 @@ const Navbar = () => {
         {/* Mobile Slide-down Drawer */}
         {mobileMenuOpen && (
           <div className="mobile-drawer mobile-only">
+            {/* Mobile Language Switcher Row */}
+            <div className="mobile-lang-row">
+              <span className="mobile-lang-label">🌐 Language / Afaan / ቋንቋ:</span>
+              <div className="mobile-lang-pills">
+                {languages.map((l) => (
+                  <button
+                    key={l.code}
+                    type="button"
+                    className={`mobile-lang-pill ${language === l.code ? "active" : ""}`}
+                    onClick={() => changeLanguage(l.code)}
+                  >
+                    <span>{l.flag}</span> {l.code.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {user ? (
               <div className="mobile-user-card">
                 <div className="mobile-avatar">{userInitial}</div>
@@ -284,7 +344,7 @@ const Navbar = () => {
                 className="mobile-nav-link"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {isAdmin || isDriver ? "🍽️ Menu Preview" : "🍽️ Browse Menu"}
+                {isAdmin || isDriver ? t("menuPreview") : t("menu")}
               </Link>
 
               {isAdmin && (
@@ -293,7 +353,7 @@ const Navbar = () => {
                   className="mobile-nav-link"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  👑 Admin Dashboard
+                  {t("adminDashboard")}
                 </Link>
               )}
 
@@ -303,7 +363,7 @@ const Navbar = () => {
                   className="mobile-nav-link"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  🛵 Delivery Hub
+                  {t("deliveryHub")}
                 </Link>
               )}
 
@@ -313,7 +373,7 @@ const Navbar = () => {
                   className="mobile-nav-link"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  📦 My Orders
+                  {t("orders")}
                 </Link>
               )}
 
@@ -323,7 +383,7 @@ const Navbar = () => {
                   className="mobile-nav-link"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  👤 My Profile & Security
+                  {t("profileAndSecurity")}
                 </Link>
               )}
 
@@ -332,7 +392,7 @@ const Navbar = () => {
                 className="mobile-nav-link"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                ℹ️ About Us
+                {t("about")}
               </Link>
 
               {user ? (
@@ -344,7 +404,7 @@ const Navbar = () => {
                     setShowLogoutConfirm(true);
                   }}
                 >
-                  🚪 Sign Out
+                  🚪 {t("signOut")}
                 </button>
               ) : (
                 <div className="mobile-auth-actions">
@@ -353,14 +413,14 @@ const Navbar = () => {
                     className="nav-login-btn"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Sign In
+                    {t("signIn")}
                   </Link>
                   <Link
                     to="/register"
                     className="nav-register-btn"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Create Account
+                    {t("signUp")}
                   </Link>
                 </div>
               )}

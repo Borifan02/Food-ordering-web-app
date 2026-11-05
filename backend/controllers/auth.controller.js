@@ -20,8 +20,10 @@ export const register = async (req, res) => {
         if (password !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match" });
         }
-        if (phone.length !== 11) {
-            return res.status(400).json({ message: "Phone number must be 11 digits long" });
+        const cleanPhone = (phone || "").replace(/[\s-]/g, "");
+        const isEthPhone = /^(\+251|251|0)?[79]\d{8}$/.test(cleanPhone) || (cleanPhone.length >= 9 && cleanPhone.length <= 13 && /^\+?\d+$/.test(cleanPhone));
+        if (!isEthPhone) {
+            return res.status(400).json({ message: "Please enter a valid Ethiopian phone number (e.g. 0911234567 or +251911234567)" });
         }
 
         // Check if an account with this email already exists
@@ -156,7 +158,14 @@ export const updateProfile = async (req, res) => {
         const updates = {};
         if (firstName) updates.firstName = firstName;
         if (lastName) updates.lastName = lastName;
-        if (phone) updates.phone = phone;
+        if (phone) {
+            const cleanPhone = (phone || "").replace(/[\s-]/g, "");
+            const isEthPhone = /^(\+251|251|0)?[79]\d{8}$/.test(cleanPhone) || (cleanPhone.length >= 9 && cleanPhone.length <= 13 && /^\+?\d+$/.test(cleanPhone));
+            if (!isEthPhone) {
+                return res.status(400).json({ message: "Please enter a valid Ethiopian phone number (e.g. 0911234567 or +251911234567)" });
+            }
+            updates.phone = cleanPhone;
+        }
         if (typeof address !== "undefined") updates.address = address;
         if (Array.isArray(savedAddresses)) updates.savedAddresses = savedAddresses;
 

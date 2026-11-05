@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
 
@@ -10,6 +11,7 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false);
   const { login } = useContext(AuthContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleRedirect = (user) => {
@@ -51,13 +53,13 @@ const Login = () => {
       <div className="auth-card">
         <div className="auth-header">
           <span className="auth-badge">🍕 Delicious Food Awaits</span>
-          <h2>Sign In to Foodie</h2>
-          <p>Order your favorite meals in seconds or manage your store</p>
+          <h2>{t("signIn")} to Foodie</h2>
+          <p>{t("signInSubtitle")}</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="input-field-group">
-            <label>Email Address</label>
+            <label>{t("emailAddress")}</label>
             <input
               type="email"
               placeholder="name@example.com"
@@ -69,9 +71,9 @@ const Login = () => {
 
           <div className="input-field-group">
             <div className="password-header-row">
-              <label>Password</label>
+              <label>{t("password")}</label>
               <Link to="/forgot-password" className="forgot-password-link">
-                Forgot Password?
+                {t("forgotPassword")}
               </Link>
             </div>
             <div className="password-input-wrapper">
@@ -94,11 +96,12 @@ const Login = () => {
           </div>
 
           <button type="submit" className="submit-btn" disabled={submitting}>
-            {submitting ? "Signing In..." : "Sign In →"}
+            {submitting ? "Signing In..." : `${t("signIn")} →`}
           </button>
 
           <p className="switch-auth">
-            Don't have an account yet? <Link to="/register">Create one here</Link>
+            {t("dontHaveAccount")}{" "}
+            <Link to="/register">{t("createOne")}</Link>
           </p>
         </form>
       </div>

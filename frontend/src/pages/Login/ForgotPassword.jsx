@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import apiClient from "../../api/axios";
 import "./ForgotPassword.css";
 
@@ -16,6 +17,7 @@ const ForgotPassword = () => {
   const [serverProvidedCode, setServerProvidedCode] = useState(null);
 
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Step 1: Submit email to generate reset code
@@ -85,8 +87,8 @@ const ForgotPassword = () => {
     <div className="auth-page-container">
       <div className="auth-card forgot-password-card">
         <div className="auth-header">
-          <span className="auth-badge">🔐 Account Recovery</span>
-          <h2>Reset Password</h2>
+          <span className="auth-badge">🔐 {t("accountRecovery")}</span>
+          <h2>{t("resetPassword")}</h2>
           <p>
             {step === 1
               ? "Enter your email to receive a 6-digit verification code"
@@ -97,7 +99,7 @@ const ForgotPassword = () => {
         {step === 1 ? (
           <form className="auth-form" onSubmit={handleRequestCode}>
             <div className="input-field-group">
-              <label>Registered Email Address</label>
+              <label>{t("emailAddress")}</label>
               <input
                 type="email"
                 placeholder="name@example.com"
@@ -112,11 +114,11 @@ const ForgotPassword = () => {
             </div>
 
             <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "Generating Code..." : "Send Verification Code →"}
+              {loading ? "Generating Code..." : `${t("sendVerificationCode")}`}
             </button>
 
             <p className="switch-auth">
-              Remembered your password? <Link to="/login">Back to Sign In</Link>
+              Remembered your password? <Link to="/login">{t("backToSignIn")}</Link>
             </p>
           </form>
         ) : (

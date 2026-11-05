@@ -105,7 +105,7 @@ describe('Delivery Controller', () => {
             expect(res.json).toHaveBeenCalledWith({ message: 'Passwords do not match' });
         });
 
-        it('should return 400 if phone number is not 11 digits', async () => {
+        it('should return 400 if phone number is not a valid Ethiopian number', async () => {
             req.body = {
                 name: 'John Doe',
                 phone: '123',
@@ -117,7 +117,7 @@ describe('Delivery Controller', () => {
             await createDeliveryMan(req, res);
 
             expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'Phone number must be 11 digits long' });
+            expect(res.json).toHaveBeenCalledWith({ message: 'Please enter a valid Ethiopian phone number (e.g. 0911234567 or +251911234567)' });
         });
     });
 

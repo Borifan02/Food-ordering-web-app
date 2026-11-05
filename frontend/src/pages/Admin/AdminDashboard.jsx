@@ -498,8 +498,10 @@ const AdminDashboard = () => {
       toast.warning("Passwords do not match");
       return;
     }
-    if (newDeliveryMan.phone.length !== 11) {
-      toast.warning("Phone number must be exactly 11 digits");
+    const cleanPhone = (newDeliveryMan.phone || "").replace(/[\s\-()]/g, "");
+    const ethiopianPhoneRegex = /^(\+251|251|0)?[79]\d{8}$/;
+    if (!ethiopianPhoneRegex.test(cleanPhone)) {
+      toast.warning("Please enter a valid Ethiopian phone number (e.g. 0911234567 or +251911234567)");
       return;
     }
 
@@ -642,7 +644,7 @@ const AdminDashboard = () => {
                   <span className="kpi-icon">💰</span>
                   <div className="kpi-info">
                     <span className="kpi-label">Total Revenue</span>
-                    <h3 className="kpi-value">${Number(dashboardStats.totalRevenue || 0).toFixed(2)}</h3>
+                    <h3 className="kpi-value">{Number(dashboardStats.totalRevenue || 0).toFixed(2)} ETB</h3>
                     <span className="kpi-trend positive">+14.2% from last week</span>
                   </div>
                 </div>
@@ -714,10 +716,10 @@ const AdminDashboard = () => {
                       dashboardStats.dailyStats?.map((d) => (
                         <tr key={d._id}>
                           <td><strong>{d._id}</strong></td>
-                          <td><span className="money-cell">${Number(d.dailyRevenue).toFixed(2)}</span></td>
+                          <td><span className="money-cell">{Number(d.dailyRevenue).toFixed(2)} ETB</span></td>
                           <td>{d.orderCount} orders</td>
                           <td>
-                            ${(d.dailyRevenue / Math.max(1, d.orderCount)).toFixed(2)}
+                            {(d.dailyRevenue / Math.max(1, d.orderCount)).toFixed(2)} ETB
                           </td>
                         </tr>
                       ))
@@ -816,7 +818,7 @@ const AdminDashboard = () => {
                         </select>
                       </td>
                       <td>
-                        <strong>${Number(o.totalAmount).toFixed(2)}</strong>
+                        <strong>{Number(o.totalAmount).toFixed(2)} ETB</strong>
                       </td>
                       <td>
                         <span className="sub-text">
@@ -870,14 +872,14 @@ const AdminDashboard = () => {
               </div>
 
               <div className="form-group">
-                <label>Price ($) *</label>
+                <label>Price (ETB) *</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={newItem.price}
                   onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                  placeholder="14.99"
+                  placeholder="150.00"
                   required
                 />
               </div>
@@ -994,7 +996,7 @@ const AdminDashboard = () => {
                           className="table-input"
                         />
                       ) : (
-                        `$${Number(item.price).toFixed(2)}`
+                        `${Number(item.price).toFixed(2)} ETB`
                       )}
                     </td>
                     <td>
@@ -1206,16 +1208,16 @@ const AdminDashboard = () => {
                 <input
                   value={newDeliveryMan.name}
                   onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, name: e.target.value })}
-                  placeholder="e.g. Carlos Gomez"
+                  placeholder="e.g. Abebe Bikila"
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number (11 digits) *</label>
+                <label>Phone Number (Ethiopian) *</label>
                 <input
                   value={newDeliveryMan.phone}
                   onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, phone: e.target.value })}
-                  placeholder="01234567890"
+                  placeholder="09xxxxxxxx or +251 9xxxxxxxx"
                   required
                 />
               </div>

@@ -6,17 +6,20 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
+import { LanguageProvider } from "./context/LanguageContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
-        </AuthProvider>
-      </ToastProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </LanguageProvider>
     </BrowserRouter>
   </StrictMode>
 );

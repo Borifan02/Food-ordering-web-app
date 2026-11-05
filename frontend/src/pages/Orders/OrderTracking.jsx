@@ -373,13 +373,13 @@ const OrderTracking = () => {
                 <span className="item-qty-badge">{item.quantity}x</span>
                 <div>
                   <div className="tracking-item-name">{item.name}</div>
-                  <div className="tracking-item-price">${Number(item.price).toFixed(2)} each</div>
+                  <div className="tracking-item-price">{Number(item.price).toFixed(2)} ETB each</div>
                 </div>
               </div>
 
               <div className="tracking-item-right">
                 <span className="item-row-total-price">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  {(item.price * item.quantity).toFixed(2)} ETB
                 </span>
 
                 {/* Show review button if delivered */}
@@ -415,7 +415,7 @@ const OrderTracking = () => {
           )}
           <div className="totals-row total-highlight">
             <span>Total Amount</span>
-            <span>${Number(order.totalAmount).toFixed(2)}</span>
+            <span>{Number(order.totalAmount).toFixed(2)} ETB</span>
           </div>
         </div>
       </div>

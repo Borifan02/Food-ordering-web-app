@@ -4,6 +4,7 @@ import apiClient from "../../api/axios";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import "./Menu.css";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
@@ -14,7 +15,7 @@ const DIETARY_FILTERS = [
   { id: "veg", label: "Vegetarian", icon: "🌱" },
   { id: "spicy", label: "Spicy", icon: "🌶️" },
   { id: "special", label: "Chef's Special", icon: "⭐" },
-  { id: "under12", label: "Under $12", icon: "🏷️" },
+  { id: "budget", label: "Budget Friendly", icon: "🏷️" },
 ];
 
 const Menu = () => {
@@ -44,6 +45,7 @@ const Menu = () => {
     useContext(CartContext);
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Compute base asset URL without hardcoding localhost:5000
@@ -141,8 +143,8 @@ const Menu = () => {
         result = result.filter(
           (i) => i.isFeatured || (i.tags && i.tags.includes("ChefSpecial"))
         );
-      } else if (activeDietary === "under12") {
-        result = result.filter((i) => Number(i.price) < 12);
+      } else if (activeDietary === "budget") {
+        result = result.filter((i) => Number(i.price) < 25);
       }
     }
 
@@ -257,7 +259,7 @@ const Menu = () => {
             <span className="search-icon">🔍</span>
             <input
               type="text"
-              placeholder="Search dishes, ingredients, or cravings..."
+              placeholder={t("searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -456,7 +458,7 @@ const Menu = () => {
 
                   <div className="card-footer">
                     <span className="price-tag">
-                      ${Number(item.price).toFixed(2)}
+                      {Number(item.price).toFixed(2)} ETB
                     </span>
 
                     {/* Customer gets Add-to-Cart stepper. Admin gets Manage shortcut. Driver gets Preview */}
@@ -487,7 +489,7 @@ const Menu = () => {
                           className="card-add-btn"
                           onClick={(e) => handleAddToCart(item, e)}
                         >
-                          Add +
+                          {t("addToCart")}
                         </button>
                       )
                     ) : isAdmin ? (
@@ -499,11 +501,11 @@ const Menu = () => {
                         }}
                         title="Edit dish in Admin Dashboard"
                       >
-                        ⚙️ Manage
+                        {t("adminManage")}
                       </button>
                     ) : (
                       <span className="card-role-preview-tag driver-tag">
-                        🛵 Preview
+                        {t("driverPreview")}
                       </span>
                     )}
                   </div>
@@ -519,17 +521,17 @@ const Menu = () => {
         <div className="floating-cart-bar">
           <div className="floating-cart-info">
             <span className="floating-cart-count">
-              🛒 {totalItemCount} {totalItemCount === 1 ? "Item" : "Items"}
+              🛒 {totalItemCount} {totalItemCount === 1 ? t("items") : t("items")}
             </span>
             <span className="floating-cart-total">
-              ${finalTotal.toFixed(2)}
+              {finalTotal.toFixed(2)} ETB
             </span>
           </div>
           <button
             className="floating-checkout-btn"
             onClick={() => navigate("/cart")}
           >
-            View Cart & Checkout →
+            {t("viewCartCheckout")} →
           </button>
         </div>
       )}
@@ -570,7 +572,7 @@ const Menu = () => {
 
                 <h2>{selectedItem.name}</h2>
                 <div className="modal-price">
-                  ${Number(selectedItem.price).toFixed(2)}
+                  {Number(selectedItem.price).toFixed(2)} ETB
                 </div>
 
                 <p className="modal-desc">{selectedItem.description}</p>
@@ -649,8 +651,8 @@ const Menu = () => {
                         setSelectedItem(null);
                       }}
                     >
-                      Add {modalQuantity} to Order • $
-                      {(Number(selectedItem.price) * modalQuantity).toFixed(2)}
+                      Add {modalQuantity} to Order •{" "}
+                      {(Number(selectedItem.price) * modalQuantity).toFixed(2)} ETB
                     </button>
                   </div>
                 ) : isAdmin ? (

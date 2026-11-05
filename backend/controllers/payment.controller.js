@@ -36,11 +36,11 @@ export const createPaymentIntent = async (req, res) => {
     }
     
     if (amount < 0.50) {
-      return res.status(400).json({ message: "Minimum amount is $0.50" });
+      return res.status(400).json({ message: "Minimum amount is 0.50 ETB" });
     }
     
     if (amount > 999999.99) {
-      return res.status(400).json({ message: "Maximum amount is $999,999.99" });
+      return res.status(400).json({ message: "Maximum amount is 999,999.99 ETB" });
     }
 
     const paymentIntent = await stripe.paymentIntents.create({

@@ -263,7 +263,7 @@ export const validateCoupon = async (req, res) => {
             if (subtotal < 20) {
                 return res.status(400).json({
                     valid: false,
-                    message: "TASTY20 requires a minimum order of $20.00"
+                    message: "TASTY20 requires a minimum order of 20.00 ETB"
                 });
             }
             const discount = Math.round(subtotal * 0.2 * 100) / 100;
@@ -271,7 +271,7 @@ export const validateCoupon = async (req, res) => {
                 valid: true,
                 code: upperCode,
                 discount,
-                description: "20% off orders over $20"
+                description: "20% off orders over 20 ETB"
             });
         }
 
