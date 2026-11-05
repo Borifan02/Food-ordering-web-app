@@ -96,35 +96,6 @@
   gap: 12px;
 }
 
-/* Theme Toggle Button */
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  color: var(--text-primary, #334155);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.theme-toggle-btn:hover {
-  border-color: #ff4757;
-  transform: translateY(-1px);
-}
-
-.theme-toggle-icon {
-  font-size: 1rem;
-}
-
-.theme-toggle-text {
-  font-size: 0.8rem;
-}
-
 /* Cart Button */
 .cart-btn-link {
   position: relative;
@@ -417,19 +388,6 @@
   display: none;
   align-items: center;
   gap: 10px;
-}
-
-.mobile-theme-btn {
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  cursor: pointer;
 }
 
 .mobile-cart-btn {

@@ -201,10 +201,6 @@
   background-color: #f1f5f9 !important;
 }
 
-[data-theme="dark"] .disabled-input {
-  background-color: #0b0f19 !important;
-}
-
 .field-hint {
   font-size: 0.75rem;
   color: var(--text-secondary, #94a3b8);
@@ -270,17 +266,9 @@
   transition: all 0.2s ease;
 }
 
-[data-theme="dark"] .save-profile-btn {
-  background: #334155;
-}
-
 .save-profile-btn:hover:not(:disabled) {
   background: #1e293b;
   transform: translateY(-1px);
-}
-
-[data-theme="dark"] .save-profile-btn:hover:not(:disabled) {
-  background: #475569;
 }
 
 .update-password-btn {

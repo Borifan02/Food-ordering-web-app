@@ -3,7 +3,6 @@ import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
-import { useTheme } from "../../context/ThemeContext";
 import ConfirmModal from "../Modal/ConfirmModal";
 import "./Navbar.css";
 
@@ -11,7 +10,6 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const { totalItemCount } = useContext(CartContext);
   const { toast } = useToast();
-  const { theme, toggleTheme, isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -129,18 +127,6 @@ const Navbar = () => {
 
           {/* Right Action Cluster */}
           <div className="nav-actions-cluster desktop-only">
-            {/* Theme Toggle (Light / Dark) */}
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
-              aria-label="Toggle color theme"
-            >
-              <span className="theme-toggle-icon">{isDark ? "☀️" : "🌙"}</span>
-              <span className="theme-toggle-text">{isDark ? "Light" : "Dark"}</span>
-            </button>
-
             {/* Shopping Cart (Customers & Guests only) */}
             {isCustomer && (
               <Link
@@ -245,17 +231,8 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Right Cluster (Theme + Cart + Hamburger) */}
+          {/* Mobile Right Cluster (Cart + Hamburger) */}
           <div className="mobile-right-cluster mobile-only">
-            <button
-              type="button"
-              className="mobile-theme-btn"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {isDark ? "☀️" : "🌙"}
-            </button>
-
             {isCustomer && (
               <Link to="/cart" className="mobile-cart-btn" aria-label="Cart">
                 <span>🛒</span>
