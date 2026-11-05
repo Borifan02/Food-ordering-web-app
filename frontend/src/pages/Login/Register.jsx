@@ -71,7 +71,7 @@ const Register = () => {
       <div className="auth-card register-card">
         <div className="auth-header">
           <span className="auth-badge">🌟 Join Foodie</span>
-          <h2>Create Your Account</h2>
+          <h2>{t("signUp")}</h2>
           <p>Get hot meals delivered to your doorstep in minutes</p>
         </div>
 
@@ -140,7 +140,7 @@ const Register = () => {
 
           <div className="form-row">
             <div className="input-field-group">
-              <label>Password (min 6 chars)</label>
+              <label>{t("password")} (min 6 chars)</label>
               <div className="password-input-wrapper">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -162,7 +162,7 @@ const Register = () => {
             </div>
 
             <div className="input-field-group">
-              <label>Confirm Password</label>
+              <label>{t("confirmPassword")}</label>
               <input
                 type={showPassword ? "text" : "password"}
                 name="confirmPassword"
@@ -175,11 +175,11 @@ const Register = () => {
           </div>
 
           <button type="submit" className="submit-btn" disabled={submitting}>
-            {submitting ? "Creating Account..." : "Create Account →"}
+            {submitting ? "Creating Account..." : `${t("signUp")} →`}
           </button>
 
           <p className="switch-auth">
-            Already have an account? <Link to="/login">Sign In here</Link>
+            {t("alreadyHaveAccount")} <Link to="/login">{t("signIn")}</Link>
           </p>
         </form>
       </div>
