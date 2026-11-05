@@ -5,11 +5,11 @@
   "main": "backend/index.js",
   "scripts": {
     "test": "cd backend && npm test",
-    "build": "cd frontend && npm run build",
+    "build": "cd frontend && npm run build && cd .. && rm -rf dist && cp -r frontend/dist ./dist",
     "seed": "cd backend && npm run seed",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
-    "vercel-build": "cd backend && npm install && cd ../frontend && npm install && npm run build"
+    "vercel-build": "cd frontend && npm install && npm run build && cd .. && rm -rf dist && cp -r frontend/dist ./dist"
   },
   "keywords": ["food-ordering", "react", "express", "socketio", "stripe", "mongodb"],
   "author": "",
