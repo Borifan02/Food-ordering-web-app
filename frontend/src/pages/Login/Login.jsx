@@ -21,7 +21,7 @@ const Login = () => {
     } else if (role === "deliveryman") {
       navigate("/delivery");
     } else {
-      navigate("/menu");
+      navigate("/customer");
     }
   };
 

@@ -6,6 +6,7 @@ import { useToast } from "../../context/ToastContext";
 import { useLanguage } from "../../context/LanguageContext";
 import apiClient from "../../api/axios";
 import StripePayment from "../../components/StripePayment/PaymentForm";
+import EthiopianPaymentModal from "../../components/EthiopianPayment/EthiopianPaymentModal";
 import { triggerConfetti } from "../../utils/confetti";
 import { formatCurrency, CURRENCY } from "../../utils/currency";
 import "./Cart.css";
@@ -38,11 +39,12 @@ const Cart = () => {
   const isDriver = userRole === "deliveryman";
 
   const [address, setAddress] = useState(user?.address || "");
-  const [paymentMethod, setPaymentMethod] = useState("Cash"); // "Cash" or "Card"
+  const [paymentMethod, setPaymentMethod] = useState("Cash"); // "Cash", "Telebirr", "CBE", "Card"
   const [couponInput, setCouponInput] = useState("");
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [showEthiopianModal, setShowEthiopianModal] = useState(false);
 
   // Free delivery calculation
   const freeDeliveryThreshold = 25;
@@ -114,6 +116,11 @@ const Cart = () => {
       return;
     }
 
+    if (paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "BankTransfer") {
+      setShowEthiopianModal(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const orderPayload = {
@@ -142,6 +149,45 @@ const Cart = () => {
     } catch (err) {
       console.error("Order error:", err);
       toast.error(err.response?.data?.message || "Failed to place order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ethiopian Local Payment Success Handler (Telebirr, CBE, Banks)
+  const handleEthiopianPaymentSuccess = async (paymentData) => {
+    setLoading(true);
+    try {
+      const orderPayload = {
+        items: cart.map((item) => ({
+          menuItemId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        deliveryAddress: address,
+        orderNotes: orderNotes,
+        paymentMethod: paymentData.method, // "Telebirr", "CBE", or "BankTransfer"
+        paymentProvider: paymentData.provider,
+        paymentAccount: paymentData.accountNumber,
+        transactionId: paymentData.transactionId,
+        couponCode: appliedCoupon?.code || "",
+      };
+
+      const res = await apiClient.post("/orders", orderPayload);
+      triggerConfetti();
+      toast.success(`${paymentData.provider} verified & Order Placed! 🍕🇪🇹`);
+      clearCart();
+      setShowEthiopianModal(false);
+      const orderId = res.data.orderId || res.data.order?._id;
+      if (orderId) {
+        navigate(`/orders/${orderId}`);
+      } else {
+        navigate("/orders");
+      }
+    } catch (err) {
+      console.error("Order completion error:", err);
+      toast.error(err.response?.data?.message || "Payment verified but order recording failed. Contact support.");
     } finally {
       setLoading(false);
     }
@@ -450,9 +496,43 @@ const Cart = () => {
 
             {/* Payment Method Selector */}
             <div className="payment-method-selector">
-              <label className="payment-label">{t("paymentMethod")}</label>
+              <label className="payment-label">{t("paymentMethod")} 🇪🇹</label>
 
               <div className="payment-options-grid">
+                <label
+                  className={`payment-option-card ${paymentMethod === "Telebirr" ? "selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="Telebirr"
+                    checked={paymentMethod === "Telebirr"}
+                    onChange={() => setPaymentMethod("Telebirr")}
+                  />
+                  <span className="option-icon">📱</span>
+                  <div>
+                    <div className="option-title">{t("telebirr")}</div>
+                    <div className="option-sub">{t("telebirrDesc")}</div>
+                  </div>
+                </label>
+
+                <label
+                  className={`payment-option-card ${paymentMethod === "CBE" ? "selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="CBE"
+                    checked={paymentMethod === "CBE"}
+                    onChange={() => setPaymentMethod("CBE")}
+                  />
+                  <span className="option-icon">🏦</span>
+                  <div>
+                    <div className="option-title">{t("cbeBirr")}</div>
+                    <div className="option-sub">{t("cbeDesc")}</div>
+                  </div>
+                </label>
+
                 <label
                   className={`payment-option-card ${paymentMethod === "Cash" ? "selected" : ""}`}
                 >
@@ -497,6 +577,10 @@ const Cart = () => {
             >
               {loading
                 ? "Placing Order..."
+                : paymentMethod === "Telebirr"
+                ? `${t("payWithTelebirr")} • ${finalTotal.toFixed(2)} ETB ➔`
+                : paymentMethod === "CBE"
+                ? `${t("payWithCbe")} • ${finalTotal.toFixed(2)} ETB ➔`
                 : paymentMethod === "Card"
                 ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
                 : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
@@ -509,6 +593,15 @@ const Cart = () => {
           </div>
         </div>
       </div>
+
+      {/* Ethiopian Local Payment Modal (Telebirr, CBE, Banks) */}
+      {showEthiopianModal && (
+        <EthiopianPaymentModal
+          amount={finalTotal}
+          onPaymentSuccess={handleEthiopianPaymentSuccess}
+          onCancel={() => setShowEthiopianModal(false)}
+        />
+      )}
 
       {/* Stripe Payment Modal */}
       {showCardModal && (

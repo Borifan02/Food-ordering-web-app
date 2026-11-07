@@ -66,13 +66,13 @@ const Navbar = () => {
   const getDashboardLink = () => {
     if (isAdmin) return "/admin";
     if (isDriver) return "/delivery";
-    return "/orders";
+    return "/customer";
   };
 
   const getDashboardLabel = () => {
-    if (isAdmin) return t("adminOperations");
+    if (isAdmin) return t("adminDashboard");
     if (isDriver) return t("deliveryHub");
-    return t("orders");
+    return t("customerDashboard");
   };
 
   const displayName =
@@ -117,12 +117,20 @@ const Navbar = () => {
             )}
 
             {isCustomer && user && (
-              <Link
-                to="/orders"
-                className={`nav-link ${location.pathname.startsWith("/orders") ? "active" : ""}`}
-              >
-                {t("orders")}
-              </Link>
+              <>
+                <Link
+                  to="/customer"
+                  className={`nav-link ${location.pathname === "/customer" ? "active" : ""}`}
+                >
+                  {t("customerDashboard")}
+                </Link>
+                <Link
+                  to="/orders"
+                  className={`nav-link ${location.pathname.startsWith("/orders") ? "active" : ""}`}
+                >
+                  {t("orders")}
+                </Link>
+              </>
             )}
 
             <Link
@@ -368,13 +376,22 @@ const Navbar = () => {
               )}
 
               {isCustomer && user && (
-                <Link
-                  to="/orders"
-                  className="mobile-nav-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {t("orders")}
-                </Link>
+                <>
+                  <Link
+                    to="/customer"
+                    className="mobile-nav-link"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t("customerDashboard")}
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="mobile-nav-link"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t("orders")}
+                  </Link>
+                </>
               )}
 
               {user && (

@@ -10,6 +10,7 @@ import OrderHistory from "./pages/Orders/OrderHistory";
 import OrderTracking from "./pages/Orders/OrderTracking";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import DeliveryDashboard from "./pages/Delivery/DeliveryDashboard";
+import CustomerDashboard from "./pages/Customer/CustomerDashboard";
 import About from "./pages/About/About";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
@@ -61,6 +62,8 @@ function App() {
                 <Navigate to="/admin" replace />
               ) : role === "deliveryman" ? (
                 <Navigate to="/delivery" replace />
+              ) : user ? (
+                <Navigate to="/customer" replace />
               ) : (
                 <Navigate to="/menu" replace />
               )
@@ -71,6 +74,14 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/cart" element={<Cart />} />
+          <Route
+            path="/customer"
+            element={
+              <ProtectedRoute allowedRoles={["user"]}>
+                <CustomerDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/orders"
             element={

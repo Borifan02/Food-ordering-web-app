@@ -175,7 +175,7 @@ const UserProfileManager = () => {
           <div className="section-card-header">
             <span className="section-card-icon">👤</span>
             <div>
-              <h3>Personal Details</h3>
+              <h3>{t("personalDetails")}</h3>
               <p>Update your personal and contact details</p>
             </div>
           </div>
@@ -183,10 +183,10 @@ const UserProfileManager = () => {
           <form onSubmit={handleProfileSubmit} className="profile-form">
             <div className="form-row-2col">
               <div className="form-group">
-                <label>First Name</label>
+                <label>{t("firstName")}</label>
                 <input
                   type="text"
-                  placeholder="First Name"
+                  placeholder={t("firstName")}
                   value={profileForm.firstName}
                   required
                   onChange={(e) =>
@@ -196,10 +196,10 @@ const UserProfileManager = () => {
               </div>
 
               <div className="form-group">
-                <label>Last Name</label>
+                <label>{t("lastName")}</label>
                 <input
                   type="text"
-                  placeholder="Last Name"
+                  placeholder={t("lastName")}
                   value={profileForm.lastName}
                   onChange={(e) =>
                     setProfileForm({ ...profileForm, lastName: e.target.value })
@@ -209,7 +209,7 @@ const UserProfileManager = () => {
             </div>
 
             <div className="form-group">
-              <label>Email Address</label>
+              <label>{t("emailAddress")}</label>
               <input
                 type="email"
                 value={user?.email || ""}
@@ -251,7 +251,7 @@ const UserProfileManager = () => {
               className="save-profile-btn"
               disabled={savingProfile}
             >
-              {savingProfile ? "Saving Changes..." : `${t("saveChanges")}`}
+              {savingProfile ? "..." : `${t("saveChanges")}`}
             </button>
           </form>
         </div>
@@ -261,18 +261,18 @@ const UserProfileManager = () => {
           <div className="section-card-header">
             <span className="section-card-icon">🔒</span>
             <div>
-              <h3>Security & Password</h3>
+              <h3>{t("profileAndSecurity")}</h3>
               <p>Update your account password anytime</p>
             </div>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="profile-form">
             <div className="form-group">
-              <label>Current Password</label>
+              <label>{t("currentPassword")}</label>
               <div className="input-with-eye">
                 <input
                   type={showCurrent ? "text" : "password"}
-                  placeholder="Enter current password"
+                  placeholder={t("currentPassword")}
                   value={currentPassword}
                   required
                   onChange={(e) => setCurrentPassword(e.target.value)}
@@ -289,11 +289,11 @@ const UserProfileManager = () => {
             </div>
 
             <div className="form-group">
-              <label>New Password</label>
+              <label>{t("newPassword")}</label>
               <div className="input-with-eye">
                 <input
                   type={showNew ? "text" : "password"}
-                  placeholder="At least 6 characters"
+                  placeholder={t("newPassword")}
                   value={newPassword}
                   required
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -310,11 +310,11 @@ const UserProfileManager = () => {
             </div>
 
             <div className="form-group">
-              <label>Confirm New Password</label>
+              <label>{t("confirmPassword")}</label>
               <div className="input-with-eye">
                 <input
                   type={showConfirm ? "text" : "password"}
-                  placeholder="Repeat new password"
+                  placeholder={t("confirmPassword")}
                   value={confirmPassword}
                   required
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -348,7 +348,7 @@ const UserProfileManager = () => {
               className="update-password-btn"
               disabled={changingPassword}
             >
-              {changingPassword ? "Updating..." : "Update Password 🔒"}
+              {changingPassword ? "..." : `${t("updatePassword")}`}
             </button>
           </form>
         </div>

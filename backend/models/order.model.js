@@ -31,13 +31,20 @@ export const orderSchema = Schema(
       default: () => new Date(Date.now() + 45 * 60 * 1000), // 45 minutes from now
     },
     payment: {
-      method: { type: String, enum: ["Cash", "Card"], default: "Cash" },
+      method: { 
+        type: String, 
+        enum: ["Cash", "Card", "Telebirr", "CBE", "BankTransfer"], 
+        default: "Cash" 
+      },
+      provider: { type: String, default: "" },
+      accountNumber: { type: String, default: "" },
       status: {
         type: String,
         enum: ["Pending", "Paid", "Failed"],
         default: "Pending",
       },
       transactionId: { type: String, default: "" },
+      paidAt: { type: Date, default: null },
     },
     subtotal: {
       type: Number,

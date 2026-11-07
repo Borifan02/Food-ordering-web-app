@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { getSocket } from "../../utils/socket";
 import UserProfileManager from "../../components/Profile/UserProfileManager";
 import apiClient from "../../api/axios";
@@ -10,6 +11,7 @@ import "./DeliveryDashboard.css";
 const DeliveryDashboard = () => {
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -139,9 +141,9 @@ const DeliveryDashboard = () => {
         <div className="driver-profile-info">
           <div className="driver-avatar-circle">🛵</div>
           <div>
-            <h1>Delivery Partner Hub</h1>
+            <h1>{t("deliveryHub")}</h1>
             <p className="welcome-text">
-              Welcome back, <strong>{user?.name || user?.firstName}</strong>!
+              {t("welcomeBack")}, <strong>{user?.name || user?.firstName}</strong>!
             </p>
           </div>
         </div>
@@ -155,7 +157,7 @@ const DeliveryDashboard = () => {
               toast.success("You are now ONLINE and ready for orders!");
             }}
           >
-            🟢 Available for Orders
+            {t("driverStatusAvailable")}
           </button>
           <button
             className={`status-toggle-btn ${driverStatus === "offline" ? "active-break" : ""}`}
@@ -164,7 +166,7 @@ const DeliveryDashboard = () => {
               toast.info("You are now ON BREAK / Offline");
             }}
           >
-            ☕ On Break
+            ☕ {t("onBreak")}
           </button>
         </div>
       </div>
@@ -172,20 +174,20 @@ const DeliveryDashboard = () => {
       {/* Driver Performance Metrics Bar */}
       <div className="delivery-stats-bar">
         <div className="d-stat-box">
-          <span className="d-stat-label">Deliveries Completed</span>
+          <span className="d-stat-label">{t("deliveriesCompleted")}</span>
           <span className="d-stat-val">{deliveryHistory.length}</span>
         </div>
         <div className="d-stat-box">
-          <span className="d-stat-label">Delivery Earnings</span>
+          <span className="d-stat-label">{t("deliveryEarnings")}</span>
           <span className="d-stat-val text-green">{totalEarnings.toFixed(2)} ETB</span>
         </div>
         <div className="d-stat-box">
-          <span className="d-stat-label">Driver Rating</span>
+          <span className="d-stat-label">{t("driverRating")}</span>
           <span className="d-stat-val">★ 4.95</span>
         </div>
         <div className="d-stat-box">
-          <span className="d-stat-label">Vehicle</span>
-          <span className="d-stat-val">Scooter</span>
+          <span className="d-stat-label">{t("vehicleType")}</span>
+          <span className="d-stat-val">{t("scooter")}</span>
         </div>
       </div>
 
@@ -195,25 +197,25 @@ const DeliveryDashboard = () => {
           className={`d-tab-btn ${activeTab === "active" ? "active" : ""}`}
           onClick={() => setActiveTab("active")}
         >
-          🛵 Active Delivery {activeDelivery && <span className="tab-dot"></span>}
+          {t("activeDeliveriesTab")} {activeDelivery && <span className="tab-dot"></span>}
         </button>
         <button
           className={`d-tab-btn ${activeTab === "available" ? "active" : ""}`}
           onClick={() => setActiveTab("available")}
         >
-          📦 Ready for Pickup ({pendingOrders.length})
+          {t("availablePickupsTab")} ({pendingOrders.length})
         </button>
         <button
           className={`d-tab-btn ${activeTab === "history" ? "active" : ""}`}
           onClick={() => setActiveTab("history")}
         >
-          📜 Past Deliveries ({deliveryHistory.length})
+          {t("deliveryHistoryTab")} ({deliveryHistory.length})
         </button>
         <button
           className={`d-tab-btn ${activeTab === "profile" ? "active" : ""}`}
           onClick={() => setActiveTab("profile")}
         >
-          👤 Profile & Security
+          👤 {t("profileAndSecurity")}
         </button>
       </div>
 
@@ -224,10 +226,10 @@ const DeliveryDashboard = () => {
             <div className="order-card active-delivery-card">
               <div className="order-header">
                 <span className="order-id">
-                  Order #{activeDelivery._id.substring(0, 8)}
+                  {t("orderId")} #{activeDelivery._id.substring(0, 8)}
                 </span>
                 <span className="order-status status-ontheway">
-                  🛵 Out for Delivery
+                  🛵 {t("outForDelivery")}
                 </span>
               </div>
 
@@ -247,7 +249,7 @@ const DeliveryDashboard = () => {
                       href={`tel:${activeDelivery.userId?.phone}`}
                       className="call-customer-btn"
                     >
-                      📞 Call Customer
+                      {t("callCustomer")}
                     </a>
                   )}
                 </div>
@@ -255,7 +257,7 @@ const DeliveryDashboard = () => {
                 <div className="customer-info-line">
                   <span className="info-icon">📍</span>
                   <div>
-                    <strong>Drop-off Address:</strong>
+                    <strong>{t("dropoffLocation")}:</strong>
                     <div className="delivery-address-text">
                       {activeDelivery.deliveryAddress}
                     </div>
@@ -266,7 +268,7 @@ const DeliveryDashboard = () => {
                   <div className="customer-info-line notes-highlight">
                     <span className="info-icon">📝</span>
                     <div>
-                      <strong>Customer Instructions:</strong>
+                      <strong>{t("customerInstructions")}:</strong>
                       <div>"{activeDelivery.orderNotes}"</div>
                     </div>
                   </div>
@@ -274,7 +276,7 @@ const DeliveryDashboard = () => {
               </div>
 
               <div className="order-items-preview-box">
-                <strong>Items to Deliver:</strong>
+                <strong>{t("orderItemsToDeliver")}:</strong>
                 <ul>
                   {activeDelivery.items?.map((item, idx) => (
                     <li key={idx}>
@@ -283,9 +285,9 @@ const DeliveryDashboard = () => {
                   ))}
                 </ul>
                 <div className="order-total-preview">
-                  <span>Payment Method: {activeDelivery.payment?.method || "Cash"}</span>
+                  <span>{t("paymentMethod")}: {activeDelivery.payment?.method || "Cash"}</span>
                   <span className="order-total-badge">
-                    Total to Collect: {Number(activeDelivery.totalAmount).toFixed(2)} ETB
+                    {t("totalToCollect")}: {Number(activeDelivery.totalAmount).toFixed(2)} ETB
                   </span>
                 </div>
               </div>
@@ -295,19 +297,19 @@ const DeliveryDashboard = () => {
                 onClick={() => handleMarkDelivered(activeDelivery._id)}
                 disabled={loading}
               >
-                {loading ? "Processing..." : "✓ Confirm Order Delivered"}
+                {loading ? "..." : `✓ ${t("confirmDelivered")}`}
               </button>
             </div>
           ) : (
             <div className="no-active-delivery-card">
               <div className="no-active-icon">🛵</div>
-              <h3>No Active Delivery Right Now</h3>
-              <p>You have no delivery currently in progress.</p>
+              <h3>{t("noActiveDeliveryTitle")}</h3>
+              <p>{t("noActiveDeliveries")}</p>
               <button
                 className="check-available-btn"
                 onClick={() => setActiveTab("available")}
               >
-                Check Orders Ready for Pickup ({pendingOrders.length}) ➔
+                {t("checkOrdersReady")} ({pendingOrders.length}) ➔
               </button>
             </div>
           )}
@@ -320,8 +322,8 @@ const DeliveryDashboard = () => {
           {pendingOrders.length === 0 ? (
             <div className="no-orders-box">
               <span className="no-orders-icon">☕</span>
-              <h3>No orders currently waiting for pickup</h3>
-              <p>New orders will appear here in real-time as the kitchen prepares them.</p>
+              <h3>{t("noOrdersWaiting")}</h3>
+              <p>{t("noAvailablePickups")}</p>
             </div>
           ) : (
             <div className="orders-grid">
@@ -329,25 +331,25 @@ const DeliveryDashboard = () => {
                 <div key={order._id} className="order-card ready-pickup-card">
                   <div className="order-header">
                     <span className="order-id">
-                      Order #{order._id.substring(0, 8)}
+                      {t("orderId")} #{order._id.substring(0, 8)}
                     </span>
                     <span className="order-status status-preparing">
-                      Ready for Pickup
+                      {t("readyForPickup")}
                     </span>
                   </div>
 
                   <div className="pickup-details">
                     <p>
-                      <strong>Customer:</strong> {order.userId?.firstName} {order.userId?.lastName}
+                      <strong>{t("customer")}:</strong> {order.userId?.firstName} {order.userId?.lastName}
                     </p>
                     <p>
-                      <strong>Drop-off:</strong> {order.deliveryAddress}
+                      <strong>{t("dropoffLocation")}:</strong> {order.deliveryAddress}
                     </p>
                     <p>
-                      <strong>Order Total:</strong> {Number(order.totalAmount).toFixed(2)} ETB ({order.payment?.method || "Cash"})
+                      <strong>{t("totalAmount")}:</strong> {Number(order.totalAmount).toFixed(2)} ETB ({order.payment?.method || "Cash"})
                     </p>
                     <div className="pickup-items-snippet">
-                      <strong>Items ({order.items?.length}):</strong>
+                      <strong>{t("orderItems")} ({order.items?.length}):</strong>
                       <ul>
                         {order.items?.map((item, idx) => (
                           <li key={idx}>
@@ -363,7 +365,7 @@ const DeliveryDashboard = () => {
                     onClick={() => handleAcceptOrder(order._id)}
                     disabled={loading || !!activeDelivery}
                   >
-                    {activeDelivery ? "Busy with Active Order" : "Accept Delivery ➔"}
+                    {activeDelivery ? "Busy with Active Order" : `${t("acceptDeliveryBtn")}`}
                   </button>
                 </div>
               ))}
@@ -377,18 +379,18 @@ const DeliveryDashboard = () => {
         <div className="history-tab-view">
           {deliveryHistory.length === 0 ? (
             <div className="no-orders-box">
-              <p>No completed deliveries recorded yet.</p>
+              <p>{t("noOrdersWaiting")}</p>
             </div>
           ) : (
             <div className="history-table-box">
               <table className="delivery-history-table">
                 <thead>
                   <tr>
-                    <th>Order Reference</th>
-                    <th>Customer</th>
-                    <th>Drop-off Address</th>
-                    <th>Delivered Date</th>
-                    <th>Earned Fee</th>
+                    <th>{t("orderId")}</th>
+                    <th>{t("customer")}</th>
+                    <th>{t("dropoffLocation")}</th>
+                    <th>{t("deliveredDate")}</th>
+                    <th>{t("earnedFee")}</th>
                   </tr>
                 </thead>
                 <tbody>

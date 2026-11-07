@@ -65,8 +65,15 @@ export const createOrder = async (req, res) => {
             orderNotes,
             payment: {
                 method: paymentMethod || "Cash",
-                status: paymentMethod === "Card" ? "Paid" : "Pending",
-                transactionId: req.body.paymentIntentId || ""
+                provider: req.body.paymentProvider || "",
+                accountNumber: req.body.paymentAccount || "",
+                status: (paymentMethod === "Card" || paymentMethod === "Telebirr" || paymentMethod === "CBE") && (req.body.transactionId || req.body.paymentIntentId)
+                    ? "Paid"
+                    : paymentMethod === "Card"
+                    ? "Paid"
+                    : "Pending",
+                transactionId: req.body.transactionId || req.body.paymentIntentId || "",
+                paidAt: req.body.transactionId ? new Date() : null,
             },
             status: "pending",
             estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes

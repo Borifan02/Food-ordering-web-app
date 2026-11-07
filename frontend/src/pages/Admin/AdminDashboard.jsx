@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { getSocket } from "../../utils/socket";
 import ConfirmModal from "../../components/Modal/ConfirmModal";
 import UserProfileManager from "../../components/Profile/UserProfileManager";
@@ -34,6 +35,7 @@ const PAGE_SIZE = 8;
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "stats";
@@ -583,14 +585,14 @@ const AdminDashboard = () => {
     <div className="admin-container">
       <div className="admin-header-row">
         <div>
-          <h1>Administration Dashboard 👑</h1>
+          <h1>{t("adminDashboard")}</h1>
           <p className="admin-subtitle">
-            Welcome back, {user?.firstName}! Complete control over store orders, menu, and fleet.
+            {t("welcomeBack")}, {user?.firstName}! {t("adminOperations")}
           </p>
         </div>
 
         <button className="download-report-top-btn" onClick={handleDownloadPDF}>
-          📄 Export PDF Report
+          📄 {t("exportPdfReport")}
         </button>
       </div>
 
@@ -600,37 +602,37 @@ const AdminDashboard = () => {
           className={activeTab === "stats" ? "active" : ""}
           onClick={() => setActiveTab("stats")}
         >
-          📊 Analytics & Sales
+          📊 {t("analyticsAndSales")}
         </button>
         <button
           className={activeTab === "orders" ? "active" : ""}
           onClick={() => setActiveTab("orders")}
         >
-          📦 Orders ({orders.length})
+          📦 {t("allOrders")} ({orders.length})
         </button>
         <button
           className={activeTab === "menu" ? "active" : ""}
           onClick={() => setActiveTab("menu")}
         >
-          🍔 Menu Catalog ({menuItems.length})
+          🍔 {t("menuManager")} ({menuItems.length})
         </button>
         <button
           className={activeTab === "categories" ? "active" : ""}
           onClick={() => setActiveTab("categories")}
         >
-          🏷️ Categories ({categories.length})
+          🏷️ {t("categoriesTab")} ({categories.length})
         </button>
         <button
           className={activeTab === "delivery" ? "active" : ""}
           onClick={() => setActiveTab("delivery")}
         >
-          🚚 Fleet ({deliveryMen.length})
+          🚚 {t("deliveryFleet")} ({deliveryMen.length})
         </button>
         <button
           className={activeTab === "profile" ? "active" : ""}
           onClick={() => setActiveTab("profile")}
         >
-          👤 Profile & Security
+          👤 {t("profileAndSecurity")}
         </button>
       </div>
 
@@ -643,38 +645,38 @@ const AdminDashboard = () => {
                 <div className="kpi-card revenue">
                   <span className="kpi-icon">💰</span>
                   <div className="kpi-info">
-                    <span className="kpi-label">Total Revenue</span>
+                    <span className="kpi-label">{t("totalRevenue")}</span>
                     <h3 className="kpi-value">{Number(dashboardStats.totalRevenue || 0).toFixed(2)} ETB</h3>
-                    <span className="kpi-trend positive">+14.2% from last week</span>
+                    <span className="kpi-trend positive">+14.2%</span>
                   </div>
                 </div>
 
                 <div className="kpi-card orders">
                   <span className="kpi-icon">📦</span>
                   <div className="kpi-info">
-                    <span className="kpi-label">Total Orders</span>
+                    <span className="kpi-label">{t("orderCount")}</span>
                     <h3 className="kpi-value">{dashboardStats.totalOrders || 0}</h3>
-                    <span className="kpi-trend neutral">All-time completed</span>
+                    <span className="kpi-trend neutral">{t("allTimeCompleted")}</span>
                   </div>
                 </div>
 
                 <div className="kpi-card pending">
                   <span className="kpi-icon">⏳</span>
                   <div className="kpi-info">
-                    <span className="kpi-label">Pending Orders</span>
+                    <span className="kpi-label">{t("statusPending")}</span>
                     <h3 className="kpi-value">{dashboardStats.pendingOrders || 0}</h3>
-                    <span className="kpi-trend alert">Requires kitchen action</span>
+                    <span className="kpi-trend alert">{t("requiresKitchenAction")}</span>
                   </div>
                 </div>
 
                 <div className="kpi-card fleet">
                   <span className="kpi-icon">🛵</span>
                   <div className="kpi-info">
-                    <span className="kpi-label">Active Drivers</span>
+                    <span className="kpi-label">{t("activeDrivers")}</span>
                     <h3 className="kpi-value">
                       {deliveryMen.filter((d) => d.status === "available").length} / {deliveryMen.length}
                     </h3>
-                    <span className="kpi-trend positive">Fleet ready</span>
+                    <span className="kpi-trend positive">{t("fleetReady")}</span>
                   </div>
                 </div>
               </div>
@@ -682,7 +684,7 @@ const AdminDashboard = () => {
               {/* Top Selling Items Table */}
               {dashboardStats.topSellingItems?.length > 0 && (
                 <div className="admin-card-box">
-                  <h3>🔥 Top 5 Best-Selling Dishes</h3>
+                  <h3>🔥 {t("topSellingDishesTitle")}</h3>
                   <div className="top-sellers-grid">
                     {dashboardStats.topSellingItems.map((item, idx) => (
                       <div key={idx} className="seller-chip">
@@ -697,20 +699,20 @@ const AdminDashboard = () => {
 
               {/* Daily Sales Table */}
               <div className="admin-card-box">
-                <h3>📅 Daily Sales Performance (Recent)</h3>
+                <h3>📅 {t("dailySalesTitle")}</h3>
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Revenue</th>
-                      <th>Order Count</th>
-                      <th>Avg Order Value</th>
+                      <th>{t("date")}</th>
+                      <th>{t("totalRevenue")}</th>
+                      <th>{t("orderCount")}</th>
+                      <th>{t("avgOrderValue")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {dashboardStats.dailyStats?.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="text-center">No daily sales records yet</td>
+                        <td colSpan={4} className="text-center">-</td>
                       </tr>
                     ) : (
                       dashboardStats.dailyStats?.map((d) => (
@@ -729,7 +731,7 @@ const AdminDashboard = () => {
               </div>
             </>
           ) : (
-            <div className="admin-loading">Loading statistics...</div>
+            <div className="admin-loading">...</div>
           )}
         </div>
       )}
@@ -739,23 +741,30 @@ const AdminDashboard = () => {
         <div className="orders-tab-content">
           <div className="order-filter-bar">
             <div className="status-pill-filters">
-              {["all", "pending", "Preparing", "onTheWay", "delivered", "cancelled"].map((st) => (
+              {[
+                { id: "all", label: t("allOrders") },
+                { id: "pending", label: t("statusPending") },
+                { id: "Preparing", label: t("statusPreparing") },
+                { id: "onTheWay", label: t("statusOnTheWay") },
+                { id: "delivered", label: t("statusDelivered") },
+                { id: "cancelled", label: t("statusCancelled") },
+              ].map((st) => (
                 <button
-                  key={st}
-                  className={`order-filter-pill ${orderStatusFilter === st ? "active" : ""}`}
+                  key={st.id}
+                  className={`order-filter-pill ${orderStatusFilter === st.id ? "active" : ""}`}
                   onClick={() => {
-                    setOrderStatusFilter(st);
+                    setOrderStatusFilter(st.id);
                     setOrderPage(1);
                   }}
                 >
-                  {st === "all" ? "All Orders" : st}
+                  {st.label}
                 </button>
               ))}
             </div>
 
             <input
               className="admin-search-input"
-              placeholder="Search by order ID, customer name, or status..."
+              placeholder={t("searchPlaceholderAdmin")}
               value={orderSearch}
               onChange={(e) => {
                 setOrderSearch(e.target.value);
@@ -768,19 +777,19 @@ const AdminDashboard = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Address</th>
-                  <th>Items</th>
-                  <th>Status Progress</th>
-                  <th>Total</th>
-                  <th>Date</th>
+                  <th>{t("orderId")}</th>
+                  <th>{t("customer")}</th>
+                  <th>{t("address")}</th>
+                  <th>{t("items")}</th>
+                  <th>{t("statusProgress")}</th>
+                  <th>{t("totalAmount")}</th>
+                  <th>{t("orderDate")}</th>
                 </tr>
               </thead>
               <tbody>
                 {pagedOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center">No orders match your search or filter</td>
+                    <td colSpan={7} className="text-center">-</td>
                   </tr>
                 ) : (
                   pagedOrders.map((o) => (
@@ -790,7 +799,7 @@ const AdminDashboard = () => {
                       </td>
                       <td>
                         <div className="customer-cell">
-                          <strong>{o.userId?.firstName || o.userId?.name || "Customer"}</strong>
+                          <strong>{o.userId?.firstName || o.userId?.name || t("customer")}</strong>
                           <span className="sub-text">{o.userId?.phone || o.userId?.email || ""}</span>
                         </div>
                       </td>
@@ -801,7 +810,7 @@ const AdminDashboard = () => {
                       </td>
                       <td>
                         <span className="items-count-badge">
-                          {o.items?.reduce((s, i) => s + i.quantity, 0) || o.items?.length || 0} items
+                          {o.items?.reduce((s, i) => s + i.quantity, 0) || o.items?.length || 0} {t("items")}
                         </span>
                       </td>
                       <td>
@@ -810,11 +819,11 @@ const AdminDashboard = () => {
                           onChange={(e) => handleStatusChange(o._id, e.target.value)}
                           className={`status-select status-${o.status}`}
                         >
-                          <option value="pending">pending (Order Placed)</option>
-                          <option value="Preparing">Preparing (Kitchen)</option>
-                          <option value="onTheWay">onTheWay (Assign Driver)</option>
-                          <option value="delivered">delivered (Completed)</option>
-                          <option value="cancelled">cancelled</option>
+                          <option value="pending">{t("statusPending")}</option>
+                          <option value="Preparing">{t("statusPreparing")}</option>
+                          <option value="onTheWay">{t("statusOnTheWay")}</option>
+                          <option value="delivered">{t("statusDelivered")}</option>
+                          <option value="cancelled">{t("statusCancelled")}</option>
                         </select>
                       </td>
                       <td>
@@ -845,10 +854,10 @@ const AdminDashboard = () => {
         <div className="menu-tab-content">
           {/* Add Item Card */}
           <div className="admin-card-box">
-            <h3>Add New Dish to Menu</h3>
+            <h3>{t("addNewDish")}</h3>
             <form onSubmit={handleAddItem} className="admin-form-grid">
               <div className="form-group">
-                <label>Dish Name *</label>
+                <label>{t("dishName")} *</label>
                 <input
                   value={newItem.name}
                   onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
@@ -858,13 +867,13 @@ const AdminDashboard = () => {
               </div>
 
               <div className="form-group">
-                <label>Category *</label>
+                <label>{t("category")} *</label>
                 <select
                   value={newItem.categoryId}
                   onChange={(e) => setNewItem({ ...newItem, categoryId: e.target.value })}
                   required
                 >
-                  <option value="">Select Category</option>
+                  <option value="">-- {t("category")} --</option>
                   {categories.map((c) => (
                     <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
@@ -872,7 +881,7 @@ const AdminDashboard = () => {
               </div>
 
               <div className="form-group">
-                <label>Price (ETB) *</label>
+                <label>{t("priceETB")} *</label>
                 <input
                   type="number"
                   min="0"
@@ -885,7 +894,7 @@ const AdminDashboard = () => {
               </div>
 
               <div className="form-group">
-                <label>Prep Time</label>
+                <label>{t("prepTime")}</label>
                 <input
                   value={newItem.prepTime}
                   onChange={(e) => setNewItem({ ...newItem, prepTime: e.target.value })}
@@ -894,7 +903,7 @@ const AdminDashboard = () => {
               </div>
 
               <div className="form-group full-width">
-                <label>Description *</label>
+                <label>{t("dishDescription")} *</label>
                 <textarea
                   value={newItem.description}
                   onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
@@ -905,7 +914,7 @@ const AdminDashboard = () => {
               </div>
 
               <div className="form-group">
-                <label>Food Photo Upload *</label>
+                <label>{t("dishImage")} *</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -916,7 +925,7 @@ const AdminDashboard = () => {
 
               <div className="form-group submit-col">
                 <button type="submit" className="admin-primary-btn">
-                  + Add Dish to Menu
+                  + {t("addDishBtn")}
                 </button>
               </div>
             </form>
@@ -925,10 +934,10 @@ const AdminDashboard = () => {
           {/* Manage Menu Table */}
           <div className="admin-card-box">
             <div className="table-header-controls">
-              <h3>Manage Menu Items ({menuItems.length})</h3>
+              <h3>{t("manageMenu")} ({menuItems.length})</h3>
               <input
                 className="admin-search-input"
-                placeholder="Search dish or category..."
+                placeholder={t("searchPlaceholder")}
                 value={menuSearch}
                 onChange={(e) => {
                   setMenuSearch(e.target.value);
@@ -940,12 +949,12 @@ const AdminDashboard = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Dish</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Live Status</th>
-                  <th>Image</th>
-                  <th>Actions</th>
+                  <th>{t("dishName")}</th>
+                  <th>{t("category")}</th>
+                  <th>{t("priceETB")}</th>
+                  <th>{t("status")}</th>
+                  <th>{t("dishImage")}</th>
+                  <th>{t("actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1006,7 +1015,7 @@ const AdminDashboard = () => {
                         onClick={() => toggleItemAvailability(item)}
                         title="Click to toggle availability"
                       >
-                        {item.isAvailable ? "✓ Available" : "✕ Out of Stock"}
+                        {item.isAvailable ? `✓ ${t("available")}` : `✕ ${t("outOfStock")}`}
                       </button>
                     </td>
                     <td>
@@ -1033,13 +1042,13 @@ const AdminDashboard = () => {
                             className="btn-action save"
                             onClick={() => saveMenuItem(item._id)}
                           >
-                            Save
+                            {t("save")}
                           </button>
                           <button
                             className="btn-action cancel"
                             onClick={() => setEditingMenuItemId("")}
                           >
-                            Cancel
+                            {t("cancel")}
                           </button>
                         </div>
                       ) : (
@@ -1048,13 +1057,13 @@ const AdminDashboard = () => {
                             className="btn-action edit"
                             onClick={() => startEditMenuItem(item)}
                           >
-                            Edit
+                            {t("edit")}
                           </button>
                           <button
                             className="btn-action delete"
                             onClick={() => deleteMenuItem(item._id, item.name)}
                           >
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       )}
@@ -1072,12 +1081,12 @@ const AdminDashboard = () => {
       {activeTab === "categories" && (
         <div className="categories-tab-content">
           <div className="admin-card-box">
-            <h3>Add New Category</h3>
+            <h3>{t("addCategory")}</h3>
             <form onSubmit={handleAddCategory} className="admin-form-inline">
               <input
                 value={newCategory.name}
                 onChange={(e) => setNewCategory({ name: e.target.value })}
-                placeholder="Category Name (e.g. Pasta, Tacos, Wraps)"
+                placeholder={t("categoryName")}
                 required
               />
               <input
@@ -1087,20 +1096,20 @@ const AdminDashboard = () => {
                 required
               />
               <button type="submit" className="admin-primary-btn">
-                Add Category
+                + {t("addCategory")}
               </button>
             </form>
           </div>
 
           <div className="admin-card-box">
-            <h3>Manage Categories ({categories.length})</h3>
+            <h3>{t("manageCategories")} ({categories.length})</h3>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Category Name</th>
-                  <th>Status</th>
-                  <th>Image</th>
-                  <th>Actions</th>
+                  <th>{t("categoryName")}</th>
+                  <th>{t("status")}</th>
+                  <th>{t("categoryImage")}</th>
+                  <th>{t("actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1131,13 +1140,13 @@ const AdminDashboard = () => {
                           }
                           className="table-input"
                         >
-                          <option value="true">Active</option>
-                          <option value="false">Inactive</option>
+                          <option value="true">{t("available")}</option>
+                          <option value="false">{t("outOfStock")}</option>
                         </select>
                       ) : c.isActive ? (
-                        <span className="badge-active">Active</span>
+                        <span className="badge-active">{t("available")}</span>
                       ) : (
-                        <span className="badge-inactive">Inactive</span>
+                        <span className="badge-inactive">{t("outOfStock")}</span>
                       )}
                     </td>
                     <td>
@@ -1163,13 +1172,13 @@ const AdminDashboard = () => {
                             className="btn-action save"
                             onClick={() => saveCategory(c._id)}
                           >
-                            Save
+                            {t("save")}
                           </button>
                           <button
                             className="btn-action cancel"
                             onClick={() => setEditingCategoryId("")}
                           >
-                            Cancel
+                            {t("cancel")}
                           </button>
                         </div>
                       ) : (
@@ -1178,13 +1187,13 @@ const AdminDashboard = () => {
                             className="btn-action edit"
                             onClick={() => startEditCategory(c)}
                           >
-                            Edit
+                            {t("edit")}
                           </button>
                           <button
                             className="btn-action delete"
                             onClick={() => deleteCategory(c._id, c.name)}
                           >
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       )}
@@ -1201,10 +1210,10 @@ const AdminDashboard = () => {
       {activeTab === "delivery" && (
         <div className="fleet-tab-content">
           <div className="admin-card-box">
-            <h3>Add Delivery Personnel</h3>
+            <h3>{t("addDeliveryMan")}</h3>
             <form onSubmit={handleAddDeliveryMan} className="admin-form-grid">
               <div className="form-group">
-                <label>Full Name *</label>
+                <label>{t("fullName")} *</label>
                 <input
                   value={newDeliveryMan.name}
                   onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, name: e.target.value })}
@@ -1213,7 +1222,7 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number (Ethiopian) *</label>
+                <label>{t("phoneNumber")} (+251) *</label>
                 <input
                   value={newDeliveryMan.phone}
                   onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, phone: e.target.value })}
@@ -1222,7 +1231,7 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Email Address *</label>
+                <label>{t("emailAddress")} *</label>
                 <input
                   type="email"
                   value={newDeliveryMan.email}
@@ -1232,19 +1241,19 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Vehicle Type</label>
+                <label>{t("vehicleType")}</label>
                 <select
                   value={newDeliveryMan.vehicleType}
                   onChange={(e) => setNewDeliveryMan({ ...newDeliveryMan, vehicleType: e.target.value })}
                 >
-                  <option value="Scooter">Scooter</option>
+                  <option value="Scooter">{t("scooter")}</option>
                   <option value="Motorcycle">Motorcycle</option>
-                  <option value="Bicycle">Bicycle</option>
-                  <option value="Car">Car</option>
+                  <option value="Bicycle">{t("bicycle")}</option>
+                  <option value="Car">{t("car")}</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Password (min 6 chars) *</label>
+                <label>{t("password")} *</label>
                 <input
                   type="password"
                   value={newDeliveryMan.password}
@@ -1253,7 +1262,7 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Confirm Password *</label>
+                <label>{t("confirmPassword")} *</label>
                 <input
                   type="password"
                   value={newDeliveryMan.confirmPassword}
@@ -1263,7 +1272,7 @@ const AdminDashboard = () => {
               </div>
               <div className="form-group submit-col full-width">
                 <button type="submit" className="admin-primary-btn">
-                  + Create Delivery Account
+                  + {t("createDeliveryAccount")}
                 </button>
               </div>
             </form>
@@ -1271,10 +1280,10 @@ const AdminDashboard = () => {
 
           <div className="admin-card-box">
             <div className="table-header-controls">
-              <h3>Fleet Drivers ({deliveryMen.length})</h3>
+              <h3>{t("fleetDrivers")} ({deliveryMen.length})</h3>
               <input
                 className="admin-search-input"
-                placeholder="Search by driver name, phone, email..."
+                placeholder={t("searchPlaceholderAdmin")}
                 value={deliverySearch}
                 onChange={(e) => {
                   setDeliverySearch(e.target.value);
@@ -1286,12 +1295,12 @@ const AdminDashboard = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Driver Name</th>
-                  <th>Contact Info</th>
-                  <th>Vehicle</th>
-                  <th>Fleet Status</th>
-                  <th>Rating</th>
-                  <th>Actions</th>
+                  <th>{t("driverName")}</th>
+                  <th>{t("contactInfo")}</th>
+                  <th>{t("vehicleType")}</th>
+                  <th>{t("fleetStatus")}</th>
+                  <th>{t("rating")}</th>
+                  <th>{t("actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1344,13 +1353,13 @@ const AdminDashboard = () => {
                             className="btn-action save"
                             onClick={() => saveDelivery(man._id)}
                           >
-                            Save
+                            {t("save")}
                           </button>
                           <button
                             className="btn-action cancel"
                             onClick={() => setEditingDeliveryId("")}
                           >
-                            Cancel
+                            {t("cancel")}
                           </button>
                         </div>
                       ) : (
@@ -1359,13 +1368,13 @@ const AdminDashboard = () => {
                             className="btn-action edit"
                             onClick={() => startEditDelivery(man)}
                           >
-                            Edit
+                            {t("edit")}
                           </button>
                           <button
                             className="btn-action delete"
                             onClick={() => deleteDelivery(man._id, man.name)}
                           >
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       )}
@@ -1393,9 +1402,9 @@ const AdminDashboard = () => {
             className="driver-assign-modal-box"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3>Assign Delivery Partner 🛵</h3>
+            <h3>{t("assignDriverModalTitle")} 🛵</h3>
             <p>
-              Order #{assignModalOrder._id.substring(0, 8)} to {assignModalOrder.deliveryAddress}
+              {t("orderId")} #{assignModalOrder._id.substring(0, 8)} - {assignModalOrder.deliveryAddress}
             </p>
 
             <div className="driver-picker-list">
@@ -1441,13 +1450,13 @@ const AdminDashboard = () => {
                 className="cancel-btn"
                 onClick={() => setAssignModalOrder(null)}
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 className="confirm-assign-btn"
                 onClick={handleConfirmDriverAssign}
               >
-                Assign & Dispatch Order ➔
+                {t("confirmAssign")} ➔
               </button>
             </div>
           </div>
