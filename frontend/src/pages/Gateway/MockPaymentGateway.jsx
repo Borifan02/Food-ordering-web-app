@@ -13,6 +13,7 @@ const MockPaymentGateway = () => {
   const [session, setSession] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAccount, setCustomerAccount] = useState("1000123456789");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [customerPin, setCustomerPin] = useState("1234");
@@ -41,6 +42,7 @@ const MockPaymentGateway = () => {
       setSession(res.data.session);
       setOrderItems(res.data.orderItems || []);
       setCustomerPhone(res.data.session?.customerPhone || "0911223344");
+      setCustomerAccount(res.data.session?.customerAccount || "1000123456789");
     } catch (err) {
       console.error("Error loading gateway session:", err);
       setError(err.response?.data?.message || "Payment session not found or has expired.");
@@ -59,6 +61,7 @@ const MockPaymentGateway = () => {
         customerPin,
         otpCode,
         customerPhone,
+        customerAccount,
       });
 
       if (res.data.redirectUrl) {
@@ -185,20 +188,34 @@ const MockPaymentGateway = () => {
 
         {/* Authentication Simulation Form */}
         <div className="gateway-auth-box">
-          <div className="auth-field-group">
-            <label>Customer Mobile Number (+251)</label>
-            <input
-              type="text"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              className="gateway-input"
-              placeholder="0911223344"
-            />
-          </div>
+          {isTelebirr ? (
+            <div className="auth-field-group">
+              <label>Customer Telebirr Mobile Number (+251)</label>
+              <input
+                type="text"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="gateway-input"
+                placeholder="0911223344"
+              />
+            </div>
+          ) : (
+            <div className="auth-field-group">
+              <label>Customer CBE Bank Account Number (13 Digits)</label>
+              <input
+                type="text"
+                maxLength={13}
+                value={customerAccount}
+                onChange={(e) => setCustomerAccount(e.target.value.replace(/\D/g, "").slice(0, 13))}
+                className="gateway-input"
+                placeholder="1000123456789"
+              />
+            </div>
+          )}
 
           <div className="auth-field-row">
             <div className="auth-field-group">
-              <label>Telebirr / CBE 4-Digit PIN</label>
+              <label>{isTelebirr ? "Telebirr 4-Digit PIN" : "CBE Mobile / Internet Banking 4-Digit PIN"}</label>
               <input
                 type="password"
                 maxLength={4}

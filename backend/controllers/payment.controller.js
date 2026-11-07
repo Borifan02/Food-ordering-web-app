@@ -752,6 +752,7 @@ const findOrRestoreSession = async (sessionId) => {
             merchantPhone: isTelebirr ? "+251911223344" : undefined,
             ussdCode: isTelebirr ? "*127#" : isCbe ? "*847#" : undefined,
             customerPhone: payment.senderPhone || order.userId?.phone || "0911223344",
+            customerAccount: payment.senderAccount || (isCbe ? "1000123456789" : ""),
             customerName: `${order.userId?.firstName || ""} ${order.userId?.lastName || ""}`.trim() || order.userId?.name || "Customer",
             status: payment.status === "COMPLETED" ? "SUCCESS" : payment.status,
             createdAt: payment.createdAt,
@@ -800,7 +801,7 @@ export const getGatewaySessionDetails = async (req, res) => {
  */
 export const processMockGatewayPayment = async (req, res) => {
   try {
-    const { sessionId, action = "confirm", customerPin, otpCode, customerPhone } = req.body;
+    const { sessionId, action = "confirm", customerPin, otpCode, customerPhone, customerAccount } = req.body;
     
     // Ensure session is in memory cache
     await findOrRestoreSession(sessionId);
@@ -816,6 +817,9 @@ export const processMockGatewayPayment = async (req, res) => {
     if (customerPhone) {
       session.customerPhone = customerPhone;
     }
+    if (customerAccount) {
+      session.customerAccount = customerAccount;
+    }
     const clientOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 
     if (result.success) {
@@ -826,6 +830,7 @@ export const processMockGatewayPayment = async (req, res) => {
         payment.transactionReference = result.transactionReference;
         payment.paidAt = result.paidAt;
         payment.senderPhone = customerPhone || session.customerPhone;
+        payment.senderAccount = customerAccount || session.customerAccount || "";
         payment.verificationChannel = "WEB_GATEWAY";
         await payment.save();
       }
@@ -838,6 +843,7 @@ export const processMockGatewayPayment = async (req, res) => {
           provider: session.provider,
           accountNumber: session.accountNumber || session.merchantCode,
           senderPhone: customerPhone || session.customerPhone,
+          senderAccount: customerAccount || session.customerAccount || "",
           status: "Paid",
           transactionId: result.transactionReference,
           paidAt: result.paidAt,

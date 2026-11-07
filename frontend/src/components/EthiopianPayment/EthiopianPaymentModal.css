@@ -205,7 +205,8 @@
   color: #334155;
 }
 
-.phone-input-wrap {
+.phone-input-wrap,
+.account-input-wrap {
   display: flex;
   align-items: center;
   border: 2px solid #e2e8f0;
@@ -215,20 +216,24 @@
   transition: border-color 0.2s ease;
 }
 
-.phone-input-wrap:focus-within {
+.phone-input-wrap:focus-within,
+.account-input-wrap:focus-within {
   border-color: #0284c7;
 }
 
+.theme-cbe .account-input-wrap:focus-within,
 .theme-cbe .phone-input-wrap:focus-within {
   border-color: #7e22ce;
 }
 
-.phone-flag {
+.phone-flag,
+.field-icon-lead {
   font-size: 20px;
   margin-right: 8px;
 }
 
-.sheet-phone-input {
+.sheet-phone-input,
+.sheet-account-input {
   width: 100%;
   border: none;
   font-size: 17px;
@@ -237,6 +242,11 @@
   outline: none;
   padding: 8px 0;
   letter-spacing: 0.5px;
+  font-family: inherit;
+}
+
+.sheet-account-input {
+  letter-spacing: 1px;
 }
 
 .field-helper {

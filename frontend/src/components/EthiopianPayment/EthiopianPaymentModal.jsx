@@ -4,7 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useToast } from "../../context/ToastContext";
 import { triggerConfetti } from "../../utils/confetti";
-import { isEthiopianPhone, ETHIOPIAN_PHONE_PLACEHOLDER } from "../../utils/phone";
+import { ETHIOPIAN_PHONE_PLACEHOLDER } from "../../utils/phone";
 import apiClient from "../../api/axios";
 import "./EthiopianPaymentModal.css";
 
@@ -34,11 +34,11 @@ const PAYMENT_METHODS_DATA = {
     id: "cbe",
     methodKey: "CBE",
     title: "Commercial Bank of Ethiopia",
-    titleAm: "የኢትዮጵያ ንግድ ባንክ (CBE Birr)",
+    titleAm: "የኢትዮጵያ ንግድ ባንክ (CBE)",
     titleOm: "Baankii Daldala Itoophiyaa (CBE)",
-    subtitle: "CBE Birr & Mobile Banking",
-    subtitleAm: "ሲቢኢ ብር እና ሞባይል ባንኪንግ",
-    subtitleOm: "CBE Birr & Baankii Moobaayilaa",
+    subtitle: "CBE Direct Account Transfer & CBE Birr",
+    subtitleAm: "ቀጥታ የCBE ሂሳብ ዝውውር እና ሲቢኢ ብር",
+    subtitleOm: "Dabarsa Herrega CBE & CBE Birr",
     icon: "🏦",
     color: "#6b21a8",
     badge: "Verified Account",
@@ -97,6 +97,7 @@ const EthiopianPaymentModal = ({
   const [activeMethodId, setActiveMethodId] = useState(() => resolveMethodKey(initialMethod));
   const [step, setStep] = useState("prompt"); // "prompt" | "pin" | "success"
   const [customerPhone, setCustomerPhone] = useState(user?.phone || "0911223344");
+  const [customerAccount, setCustomerAccount] = useState("1000123456789");
   const [customerPin, setCustomerPin] = useState("1234");
   const [loading, setLoading] = useState(false);
   const [showManualSection, setShowManualSection] = useState(false);
@@ -128,9 +129,22 @@ const EthiopianPaymentModal = ({
 
   // Step 1: User clicks "Pay with Telebirr / CBE" -> Initialize session & show PIN prompt
   const handleInitiatePayment = async () => {
-    if (!customerPhone.trim()) {
-      toast.warning("Please enter your mobile phone number");
-      return;
+    if (isCbe) {
+      if (!customerAccount.trim() || customerAccount.trim().length < 10) {
+        toast.warning(
+          language === "am"
+            ? "እባክዎ ትክክለኛ የCBE ሂሳብ ቁጥር ያስገቡ (13 አሃዝ)"
+            : language === "om"
+              ? "Maaloo lakkoofsa herrega CBE sirrii galchaa"
+              : "Please enter your valid 13-digit CBE account number"
+        );
+        return;
+      }
+    } else {
+      if (!customerPhone.trim()) {
+        toast.warning("Please enter your mobile phone number");
+        return;
+      }
     }
 
     setLoading(true);
@@ -138,6 +152,8 @@ const EthiopianPaymentModal = ({
       const res = await apiClient.post("/payments/gateway/session", {
         orderId,
         paymentMethod: activeMethod.methodKey,
+        customerAccount: isCbe ? customerAccount.trim() : undefined,
+        customerPhone: !isCbe ? customerPhone.trim() : undefined,
       });
 
       // If live external gateway URL is returned (e.g. Chapa live gateway)
@@ -175,7 +191,8 @@ const EthiopianPaymentModal = ({
         sessionId: gatewaySession?.sessionId,
         action: "confirm",
         customerPin,
-        customerPhone: customerPhone.trim(),
+        customerPhone: !isCbe ? customerPhone.trim() : undefined,
+        customerAccount: isCbe ? customerAccount.trim() : undefined,
       });
 
       triggerConfetti();
@@ -188,6 +205,8 @@ const EthiopianPaymentModal = ({
         transactionId: res.data.transactionReference,
         status: "Paid",
         amount: Number(amount),
+        customerPhone: !isCbe ? customerPhone.trim() : undefined,
+        customerAccount: isCbe ? customerAccount.trim() : undefined,
         paidAt: new Date(),
         receiptNumber: `REC-${Date.now().toString().slice(-8)}`,
       };
@@ -220,7 +239,8 @@ const EthiopianPaymentModal = ({
         orderId,
         method: activeMethod.id,
         referenceCode: manualRefCode.trim().toUpperCase(),
-        senderPhone: customerPhone.trim() || undefined,
+        senderPhone: !isCbe ? customerPhone.trim() : undefined,
+        senderAccount: isCbe ? customerAccount.trim() : undefined,
       });
 
       triggerConfetti();
@@ -233,6 +253,8 @@ const EthiopianPaymentModal = ({
         transactionId: manualRefCode.trim().toUpperCase(),
         status: "Paid",
         amount: Number(amount),
+        customerPhone: !isCbe ? customerPhone.trim() : undefined,
+        customerAccount: isCbe ? customerAccount.trim() : undefined,
         paidAt: new Date(),
         receiptNumber: `REC-${Date.now().toString().slice(-8)}`,
       };
@@ -247,7 +269,7 @@ const EthiopianPaymentModal = ({
       console.error("Manual verification error:", err);
       toast.error(
         err.response?.data?.message ||
-          "Could not verify transaction reference. Please double-check your SMS code."
+          "Could not verify transaction reference. Please double-check your bank reference code."
       );
     } finally {
       setVerifyingManual(false);
@@ -331,7 +353,11 @@ const EthiopianPaymentModal = ({
               </div>
 
               <h3 className="success-heading">
-                {language === "am" ? "ክፍያው በተሳካ ሁኔታ ተፈጽሟል!" : language === "om" ? "Kaffaltiin Milkaa'inaan Xumurameera!" : "Payment Confirmed!"}
+                {language === "am"
+                  ? "ክፍያው በተሳካ ሁኔታ ተፈጽሟል!"
+                  : language === "om"
+                    ? "Kaffaltiin Milkaa'inaan Xumurameera!"
+                    : "Payment Confirmed!"}
               </h3>
               <p className="success-subheading">
                 {language === "am"
@@ -359,6 +385,17 @@ const EthiopianPaymentModal = ({
                   <span>Payment Method</span>
                   <span>{completedPayment.provider}</span>
                 </div>
+                {isCbe ? (
+                  <div className="receipt-line">
+                    <span>Debited CBE Account</span>
+                    <strong>{completedPayment.customerAccount || customerAccount}</strong>
+                  </div>
+                ) : (
+                  <div className="receipt-line">
+                    <span>Telebirr Mobile</span>
+                    <strong>{completedPayment.customerPhone || customerPhone}</strong>
+                  </div>
+                )}
                 <div className="receipt-line">
                   <span>Status</span>
                   <span className="receipt-status-paid">Paid ✓</span>
@@ -396,25 +433,37 @@ const EthiopianPaymentModal = ({
             <div className="sheet-pin-view">
               <div className="pin-prompt-box">
                 <div className="pin-security-badge">
-                  <span>🔒 Secure Authorization</span>
+                  <span>🔒 Secure Bank Authorization</span>
                 </div>
                 <h4>
-                  {language === "am"
-                    ? `የ${activeMethod.title} 4-አሃዝ ሚስጥር ቁጥርዎን ያስገቡ`
-                    : language === "om"
-                      ? `Koodii PIN ${activeMethod.title} keessan galchaa`
-                      : `Enter your 4-Digit ${activeMethod.title} PIN`}
+                  {isCbe
+                    ? language === "am"
+                      ? "የCBE ሞባይል ባንኪንግ ሚስጥር ቁጥርዎን ያስገቡ"
+                      : language === "om"
+                        ? "Koodii PIN Baankii CBE galchaa"
+                        : "Enter your CBE Mobile Banking PIN"
+                    : language === "am"
+                      ? `የ${activeMethod.title} 4-አሃዝ ሚስጥር ቁጥርዎን ያስገቡ`
+                      : language === "om"
+                        ? `Koodii PIN ${activeMethod.title} keessan galchaa`
+                        : `Enter your 4-Digit ${activeMethod.title} PIN`}
                 </h4>
                 <p>
-                  {language === "am"
-                    ? `የ ${Number(amount).toFixed(2)} ብር ክፍያን ለማረጋገጥ ወደ ስልክዎ የተላከውን የፍቃድ ቁጥር ያረጋግጡ።`
-                    : language === "om"
-                      ? `Kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
-                      : `Confirm the payment of ${Number(amount).toFixed(2)} ETB to Foodie Restaurant PLC.`}
+                  {isCbe
+                    ? language === "am"
+                      ? `ከCBE ሂሳብ ቁጥር ${customerAccount} የ ${Number(amount).toFixed(2)} ብር ዝውውር ለማረጋገጥ ሚስጥር ቁጥርዎን ያስገቡ።`
+                      : language === "om"
+                        ? `Herrega CBE ${customerAccount} irraa kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
+                        : `Authorizing transfer of ${Number(amount).toFixed(2)} ETB from CBE Account ${customerAccount} to Foodie Restaurant PLC.`
+                    : language === "am"
+                      ? `የ ${Number(amount).toFixed(2)} ብር ክፍያን በስልክ ቁጥር ${customerPhone} ለማረጋገጥ ሚስጥር ቁጥርዎን ያስገቡ።`
+                      : language === "om"
+                        ? `Bilbila ${customerPhone} irraa kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
+                        : `Confirm the payment of ${Number(amount).toFixed(2)} ETB to Foodie Restaurant PLC.`}
                 </p>
 
                 <div className="pin-input-group">
-                  <label>4-Digit Wallet PIN</label>
+                  <label>{isCbe ? "CBE Banking PIN" : "Telebirr PIN"}</label>
                   <input
                     type="password"
                     maxLength={4}
@@ -445,44 +494,77 @@ const EthiopianPaymentModal = ({
                     onClick={() => setStep("prompt")}
                     disabled={loading}
                   >
-                    ← Change mobile number
+                    {isCbe ? "← Change CBE account number" : "← Change mobile number"}
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 1: MOBILE WALLET PAY (DEFAULT PRIMARY FLOW) */}
+          {/* STEP 1: CUSTOMER IDENTIFICATION (PHONE FOR TELEBIRR, ACCOUNT NUMBER FOR CBE) */}
           {step === "prompt" && (
             <div className="sheet-prompt-view">
-              {/* Primary Mobile Pay Form */}
               <div className="primary-wallet-form">
-                <div className="field-group">
-                  <label className="field-label">
-                    {language === "am"
-                      ? `የ${activeMethod.title} ስልክ ቁጥርዎ (+251)`
-                      : language === "om"
-                        ? `Lakkoofsa Bilbila ${activeMethod.title} (+251)`
-                        : `Your ${activeMethod.title} Mobile Number (+251)`}
-                  </label>
-                  <div className="phone-input-wrap">
-                    <span className="phone-flag">🇪🇹</span>
-                    <input
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder={ETHIOPIAN_PHONE_PLACEHOLDER}
-                      className="sheet-phone-input"
-                    />
+                {isCbe ? (
+                  /* CBE: Customer enters their 13-Digit CBE Account Number */
+                  <div className="field-group">
+                    <label className="field-label">
+                      {language === "am"
+                        ? "የእርስዎ የCBE የሂሳብ ቁጥር (13 አሃዝ) *"
+                        : language === "om"
+                          ? "Lakkoofsa Herrega CBE Keessan (Digitii 13) *"
+                          : "Your CBE Account Number (13 Digits) *"}
+                    </label>
+                    <div className="account-input-wrap">
+                      <span className="field-icon-lead">🏦</span>
+                      <input
+                        type="text"
+                        maxLength={16}
+                        value={customerAccount}
+                        onChange={(e) => setCustomerAccount(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="1000123456789"
+                        className="sheet-account-input"
+                        autoFocus
+                      />
+                    </div>
+                    <span className="field-helper">
+                      {language === "am"
+                        ? `የ ${Number(amount).toFixed(2)} ብር ክፍያ ከዚህ የCBE ሂሳብ ቁጥር ይቀነሳል`
+                        : language === "om"
+                          ? `Kaffaltiin ${Number(amount).toFixed(2)} ETB herrega CBE kana irraa kaffalama`
+                          : `Payment of ${Number(amount).toFixed(2)} ETB will be transferred from this CBE account`}
+                    </span>
                   </div>
-                  <span className="field-helper">
-                    {language === "am"
-                      ? `የክፍያ ጥያቄ ወደዚህ ስልክ ይላካል`
-                      : language === "om"
-                        ? `Gaaffiin kaffaltii gara bilbila kanaatti ergama`
-                        : `A payment request will be authorized directly from this number`}
-                  </span>
-                </div>
+                ) : (
+                  /* Telebirr: Customer enters their Mobile Phone Number */
+                  <div className="field-group">
+                    <label className="field-label">
+                      {language === "am"
+                        ? "የቴሌብር ስልክ ቁጥርዎ (+251) *"
+                        : language === "om"
+                          ? "Lakkoofsa Bilbila Telebirr (+251) *"
+                          : "Your Telebirr Mobile Number (+251) *"}
+                    </label>
+                    <div className="phone-input-wrap">
+                      <span className="phone-flag">📱</span>
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder={ETHIOPIAN_PHONE_PLACEHOLDER}
+                        className="sheet-phone-input"
+                        autoFocus
+                      />
+                    </div>
+                    <span className="field-helper">
+                      {language === "am"
+                        ? "የክፍያ ጥያቄ ወደዚህ የቴሌብር ስልክ ይላካል"
+                        : language === "om"
+                          ? "Gaaffiin kaffaltii gara bilbila Telebirr kanaatti ergama"
+                          : "A payment request will be authorized directly from this number"}
+                    </span>
+                  </div>
+                )}
 
                 {/* Big, Clear Primary Action Button */}
                 <button
@@ -498,7 +580,7 @@ const EthiopianPaymentModal = ({
                       {isTelebirr
                         ? `${t("payWithTelebirr") || "Pay with Telebirr"} • ${Number(amount).toFixed(2)} ETB ➔`
                         : isCbe
-                          ? `${t("payWithCbe") || "Pay with CBE Birr"} • ${Number(amount).toFixed(2)} ETB ➔`
+                          ? `${t("payWithCbe") || "Pay via CBE Account"} • ${Number(amount).toFixed(2)} ETB ➔`
                           : `Pay ${Number(amount).toFixed(2)} ETB ➔`}
                     </span>
                   )}
@@ -507,7 +589,7 @@ const EthiopianPaymentModal = ({
 
               {/* Trust Badge */}
               <div className="sheet-trust-row">
-                <span>🔒 Secure 256-Bit Encryption</span>
+                <span>🔒 Secure Bank-Grade Encryption</span>
                 <span>⚡ Instant Order Confirmation</span>
               </div>
 
@@ -523,10 +605,10 @@ const EthiopianPaymentModal = ({
                     {isTelebirr
                       ? "Or pay manually via Telebirr App / *127#"
                       : isCbe
-                        ? "Or transfer to CBE Bank Account / *847#"
+                        ? "Or transfer to CBE Restaurant Account / *847#"
                         : "Or transfer manually to bank account"}
                   </span>
-                  <span className="toggle-sub">Offline / SMS confirmation</span>
+                  <span className="toggle-sub">Offline / Reference confirmation</span>
                 </button>
 
                 {showManualSection && (
@@ -552,13 +634,13 @@ const EthiopianPaymentModal = ({
                         <>
                           <div className="account-row-card">
                             <div>
-                              <span className="acc-label">CBE Account (Foodie Restaurant PLC)</span>
+                              <span className="acc-label">Restaurant CBE Account (Foodie Restaurant PLC)</span>
                               <strong className="acc-value">{activeMethod.accountNumber}</strong>
                             </div>
                             <button
                               type="button"
                               className="btn-acc-copy"
-                              onClick={() => handleCopy(activeMethod.accountNumber, "Account Number")}
+                              onClick={() => handleCopy(activeMethod.accountNumber, "Restaurant Account")}
                             >
                               📋 Copy
                             </button>
@@ -607,15 +689,21 @@ const EthiopianPaymentModal = ({
                       <span className="ussd-hint">Transfer exact amount: {Number(amount).toFixed(2)} ETB</span>
                     </div>
 
-                    {/* Manual SMS Reference Input */}
+                    {/* Manual Bank Reference Input */}
                     <form onSubmit={handleVerifyManualReference} className="manual-ref-form">
                       <div className="ref-input-group">
                         <label>
-                          {language === "am"
-                            ? "በSMS የደረሰዎትን የማረጋገጫ ቁጥር ያስገቡ"
-                            : language === "om"
-                              ? "Koodii Mirkaneessa SMS galchaa"
-                              : "Enter SMS Transaction Reference Code"}
+                          {isCbe
+                            ? language === "am"
+                              ? "የCBE የትራንዛክሽን ማረጋገጫ ቁጥር (ለምሳሌ፡ FT26...)"
+                              : language === "om"
+                                ? "Koodii Mirkaneessa CBE (Fkn: FT26...)"
+                                : "Enter CBE Bank Transaction Reference (e.g. FT26...)"
+                            : language === "am"
+                              ? "በSMS የደረሰዎትን የማረጋገጫ ቁጥር ያስገቡ"
+                              : language === "om"
+                                ? "Koodii Mirkaneessa SMS galchaa"
+                                : "Enter SMS Transaction Reference Code"}
                         </label>
                         <div className="ref-submit-row">
                           <input
