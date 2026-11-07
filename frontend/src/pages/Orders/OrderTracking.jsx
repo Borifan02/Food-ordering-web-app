@@ -481,6 +481,8 @@ const OrderTracking = () => {
         <EthiopianPaymentModal
           orderId={order._id}
           amount={order.totalAmount}
+          initialMethod={order.payment?.method || "Telebirr"}
+          orderItems={order.items || []}
           onPaymentSuccess={() => {
             setShowPaymentModal(false);
             fetchOrder();
