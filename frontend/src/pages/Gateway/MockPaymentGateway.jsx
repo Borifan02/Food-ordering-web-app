@@ -11,6 +11,8 @@ const MockPaymentGateway = () => {
   const { toast } = useToast();
 
   const [session, setSession] = useState(null);
+  const [orderItems, setOrderItems] = useState([]);
+  const [customerPhone, setCustomerPhone] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [customerPin, setCustomerPin] = useState("1234");
@@ -37,6 +39,8 @@ const MockPaymentGateway = () => {
       setLoading(true);
       const res = await apiClient.get(`/payments/gateway/session/${sessionId}`);
       setSession(res.data.session);
+      setOrderItems(res.data.orderItems || []);
+      setCustomerPhone(res.data.session?.customerPhone || "0911223344");
     } catch (err) {
       console.error("Error loading gateway session:", err);
       setError(err.response?.data?.message || "Payment session not found or has expired.");
@@ -54,6 +58,7 @@ const MockPaymentGateway = () => {
         action: actionType,
         customerPin,
         otpCode,
+        customerPhone,
       });
 
       if (res.data.redirectUrl) {
@@ -144,7 +149,15 @@ const MockPaymentGateway = () => {
           <div className="summary-left">
             <span className="summary-label">Merchant</span>
             <strong>{session.merchantName}</strong>
-            <span className="merchant-code-text">Short Code: {session.merchantCode}</span>
+            {isTelebirr ? (
+              <span className="merchant-code-text">
+                Telebirr Short Code: <strong>554433</strong> • Phone: <strong>+251 911 223 344</strong>
+              </span>
+            ) : (
+              <span className="merchant-code-text">
+                CBE Account: <strong>1000234567891</strong> • CBE Birr Code: <strong>998877</strong>
+              </span>
+            )}
           </div>
 
           <div className="summary-right">
@@ -155,15 +168,31 @@ const MockPaymentGateway = () => {
           </div>
         </div>
 
+        {/* Order Items List */}
+        {orderItems && orderItems.length > 0 && (
+          <div className="gateway-order-items-box">
+            <span className="gateway-items-title">🛍️ Order Dishes ({orderItems.length})</span>
+            <div className="gateway-items-list">
+              {orderItems.map((item, idx) => (
+                <div key={idx} className="gateway-item-row">
+                  <span>{item.quantity}x {item.name}</span>
+                  <strong>{(item.price * item.quantity).toFixed(2)} ETB</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Authentication Simulation Form */}
         <div className="gateway-auth-box">
           <div className="auth-field-group">
             <label>Customer Mobile Number (+251)</label>
             <input
               type="text"
-              value={session.customerPhone || "0911223344"}
-              disabled
-              className="gateway-input disabled"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              className="gateway-input"
+              placeholder="0911223344"
             />
           </div>
 

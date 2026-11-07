@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import mongoose from "mongoose";
 import { OrderModel } from "../models/order.model.js";
 import { PaymentModel } from "../models/payment.model.js";
 import { ethiopianGateway } from "../services/ethiopianGateway.service.js";
@@ -725,13 +726,55 @@ export const createGatewaySession = async (req, res) => {
 };
 
 /**
+ * Helper: Find session in memory cache or restore from MongoDB audit record
+ */
+const findOrRestoreSession = async (sessionId) => {
+  let session = ethiopianGateway.getSession(sessionId);
+  if (!session && mongoose.connection?.readyState === 1) {
+    try {
+      const payment = await PaymentModel.findOne({ gatewayCheckoutId: sessionId });
+      if (payment) {
+        const order = await OrderModel.findById(payment.orderId).populate("userId");
+        if (order) {
+          const isTelebirr = payment.paymentMethod === "Telebirr";
+          const isCbe = payment.paymentMethod === "CBE";
+          session = {
+            sessionId,
+            outTradeNo: payment.transactionReference || `FOODIE-${order._id.toString().slice(-8)}`,
+            orderId: order._id,
+            amount: Number(payment.amount || order.totalAmount),
+            currency: "ETB",
+            paymentMethod: payment.paymentMethod,
+            provider: payment.providerName || (isTelebirr ? "Telebirr (Ethio Telecom)" : "Commercial Bank of Ethiopia (CBE)"),
+            merchantName: "Foodie Restaurant PLC",
+            merchantCode: isTelebirr ? "554433" : "998877",
+            accountNumber: isCbe ? "1000234567891" : undefined,
+            merchantPhone: isTelebirr ? "+251911223344" : undefined,
+            ussdCode: isTelebirr ? "*127#" : isCbe ? "*847#" : undefined,
+            customerPhone: payment.senderPhone || order.userId?.phone || "0911223344",
+            customerName: `${order.userId?.firstName || ""} ${order.userId?.lastName || ""}`.trim() || order.userId?.name || "Customer",
+            status: payment.status === "COMPLETED" ? "SUCCESS" : payment.status,
+            createdAt: payment.createdAt,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          };
+          ethiopianGateway.setSession(sessionId, session);
+        }
+      }
+    } catch (err) {
+      logger.error("Error in findOrRestoreSession:", err);
+    }
+  }
+  return session;
+};
+
+/**
  * GET /api/payments/gateway/session/:sessionId
  * Retrieves session details for rendering the Gateway Checkout Portal
  */
 export const getGatewaySessionDetails = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const session = ethiopianGateway.getSession(sessionId);
+    const session = await findOrRestoreSession(sessionId);
     if (!session) {
       return res.status(404).json({ message: "Gateway payment session expired or not found" });
     }
@@ -757,7 +800,11 @@ export const getGatewaySessionDetails = async (req, res) => {
  */
 export const processMockGatewayPayment = async (req, res) => {
   try {
-    const { sessionId, action = "confirm", customerPin, otpCode } = req.body;
+    const { sessionId, action = "confirm", customerPin, otpCode, customerPhone } = req.body;
+    
+    // Ensure session is in memory cache
+    await findOrRestoreSession(sessionId);
+
     const result = await ethiopianGateway.processMockAuthorization({
       sessionId,
       action,
@@ -766,6 +813,9 @@ export const processMockGatewayPayment = async (req, res) => {
     });
 
     const session = result.session;
+    if (customerPhone) {
+      session.customerPhone = customerPhone;
+    }
     const clientOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 
     if (result.success) {
@@ -775,7 +825,7 @@ export const processMockGatewayPayment = async (req, res) => {
         payment.status = "COMPLETED";
         payment.transactionReference = result.transactionReference;
         payment.paidAt = result.paidAt;
-        payment.senderPhone = session.customerPhone;
+        payment.senderPhone = customerPhone || session.customerPhone;
         payment.verificationChannel = "WEB_GATEWAY";
         await payment.save();
       }
@@ -786,8 +836,8 @@ export const processMockGatewayPayment = async (req, res) => {
         order.payment = {
           method: session.paymentMethod,
           provider: session.provider,
-          accountNumber: session.merchantCode,
-          senderPhone: session.customerPhone,
+          accountNumber: session.accountNumber || session.merchantCode,
+          senderPhone: customerPhone || session.customerPhone,
           status: "Paid",
           transactionId: result.transactionReference,
           paidAt: result.paidAt,
@@ -847,7 +897,7 @@ export const processMockGatewayPayment = async (req, res) => {
 export const verifyGatewaySession = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const session = ethiopianGateway.getSession(sessionId);
+    const session = await findOrRestoreSession(sessionId);
     if (!session) {
       return res.status(404).json({ message: "Gateway session not found or expired" });
     }

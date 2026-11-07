@@ -47,6 +47,8 @@ const Cart = () => {
   const [showEthiopianModal, setShowEthiopianModal] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState("");
   const [activeOrderAmount, setActiveOrderAmount] = useState(0);
+  const [activePaymentMethod, setActivePaymentMethod] = useState("Telebirr");
+  const [activeOrderItems, setActiveOrderItems] = useState([]);
 
   // Free delivery calculation
   const freeDeliveryThreshold = 25;
@@ -137,41 +139,14 @@ const Cart = () => {
       const newOrderId = res.data.orderId || res.data.order?._id;
       const orderAmount = res.data.order?.totalAmount || finalTotal;
 
-      if (paymentMethod === "Telebirr" || paymentMethod === "CBE") {
+      if (paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "BankTransfer") {
         setActiveOrderId(newOrderId);
         setActiveOrderAmount(orderAmount);
-        clearCart();
-        toast.info("Connecting to payment gateway...");
-        try {
-          const gatewayRes = await apiClient.post("/payments/gateway/session", {
-            orderId: newOrderId,
-            paymentMethod,
-          });
-
-          if (gatewayRes.data?.sessionId) {
-            const checkoutUrl = gatewayRes.data.checkoutUrl;
-            if (
-              checkoutUrl &&
-              (checkoutUrl.startsWith("http://") || checkoutUrl.startsWith("https://")) &&
-              !checkoutUrl.includes(window.location.host)
-            ) {
-              window.location.href = checkoutUrl;
-            } else {
-              navigate(`/gateway/checkout/${gatewayRes.data.sessionId}`);
-            }
-            return;
-          }
-        } catch (gwErr) {
-          console.error("Gateway session creation failed:", gwErr);
-          toast.warning("Online gateway redirect unavailable. Opening manual verification.");
-          setShowEthiopianModal(true);
-          return;
-        }
-      } else if (paymentMethod === "BankTransfer") {
-        setActiveOrderId(newOrderId);
-        setActiveOrderAmount(orderAmount);
-        clearCart();
+        setActivePaymentMethod(paymentMethod);
+        setActiveOrderItems([...cart]);
         setShowEthiopianModal(true);
+        clearCart();
+        return;
       } else {
         triggerConfetti();
         toast.success("Order placed successfully with Cash on Delivery! 🍕🎉");
@@ -282,7 +257,7 @@ const Cart = () => {
     );
   }
 
-  if (cart.length === 0) {
+  if (cart.length === 0 && !showEthiopianModal && !showCardModal) {
     return (
       <div className="empty-cart-container">
         <div className="empty-cart-card">
@@ -616,6 +591,8 @@ const Cart = () => {
         <EthiopianPaymentModal
           orderId={activeOrderId}
           amount={activeOrderAmount || finalTotal}
+          initialMethod={activePaymentMethod || paymentMethod}
+          orderItems={activeOrderItems.length > 0 ? activeOrderItems : cart}
           onPaymentSuccess={handleEthiopianPaymentSuccess}
           onCancel={handleCancelEthiopianModal}
         />

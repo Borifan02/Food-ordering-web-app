@@ -118,6 +118,9 @@ export class EthiopianGatewayService {
       provider: isTelebirr ? "Telebirr (Ethio Telecom)" : isCbe ? "Commercial Bank of Ethiopia (CBE)" : "Bank Transfer",
       merchantName: "Foodie Restaurant PLC",
       merchantCode: isTelebirr ? "554433" : "998877",
+      accountNumber: isCbe ? "1000234567891" : undefined,
+      merchantPhone: isTelebirr ? "+251911223344" : undefined,
+      ussdCode: isTelebirr ? "*127#" : isCbe ? "*847#" : undefined,
       customerPhone: customerInfo.phone || "0911223344",
       customerName: customerInfo.name || "Customer",
       status: "PENDING",
@@ -140,6 +143,9 @@ export class EthiopianGatewayService {
       checkoutUrl,
       provider: sessionData.provider,
       merchantCode: sessionData.merchantCode,
+      accountNumber: sessionData.accountNumber,
+      merchantPhone: sessionData.merchantPhone,
+      ussdCode: sessionData.ussdCode,
       amount: Number(amount),
       currency: "ETB",
       expiresAt,
@@ -152,6 +158,13 @@ export class EthiopianGatewayService {
    */
   getSession(sessionId) {
     return mockGatewaySessions.get(sessionId) || null;
+  }
+
+  /**
+   * Store or update session in cache
+   */
+  setSession(sessionId, sessionData) {
+    mockGatewaySessions.set(sessionId, sessionData);
   }
 
   /**
@@ -216,3 +229,4 @@ export class EthiopianGatewayService {
 }
 
 export const ethiopianGateway = new EthiopianGatewayService();
+
