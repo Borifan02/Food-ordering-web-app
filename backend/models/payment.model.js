@@ -90,3 +90,4 @@ export const paymentSchema = new Schema(
 );
 
 export const PaymentModel = model("payment", paymentSchema);
+
