@@ -578,12 +578,12 @@ const Cart = () => {
               {loading
                 ? "Placing Order..."
                 : paymentMethod === "Telebirr"
-                ? `${t("payWithTelebirr")} • ${finalTotal.toFixed(2)} ETB ➔`
-                : paymentMethod === "CBE"
-                ? `${t("payWithCbe")} • ${finalTotal.toFixed(2)} ETB ➔`
-                : paymentMethod === "Card"
-                ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
-                : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
+                  ? `${t("payWithTelebirr")} • ${finalTotal.toFixed(2)} ETB ➔`
+                  : paymentMethod === "CBE"
+                    ? `${t("payWithCbe")} • ${finalTotal.toFixed(2)} ETB ➔`
+                    : paymentMethod === "Card"
+                      ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
+                      : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
             </button>
 
             <div className="checkout-trust-badges">

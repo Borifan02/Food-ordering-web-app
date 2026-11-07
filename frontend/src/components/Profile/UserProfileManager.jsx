@@ -1,3 +1,4 @@
+
 import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -143,8 +144,8 @@ const UserProfileManager = () => {
               {role === "admin"
                 ? "👑 Administrator"
                 : role === "deliveryman"
-                ? "🛵 Delivery Courier"
-                : "🛍️ Customer"}
+                  ? "🛵 Delivery Courier"
+                  : "🛍️ Customer"}
             </span>
           </div>
           <p className="profile-hero-email">{user?.email}</p>
