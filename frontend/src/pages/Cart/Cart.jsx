@@ -45,6 +45,8 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
   const [showEthiopianModal, setShowEthiopianModal] = useState(false);
+  const [activeOrderId, setActiveOrderId] = useState("");
+  const [activeOrderAmount, setActiveOrderAmount] = useState(0);
 
   // Free delivery calculation
   const freeDeliveryThreshold = 25;
@@ -116,11 +118,6 @@ const Cart = () => {
       return;
     }
 
-    if (paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "BankTransfer") {
-      setShowEthiopianModal(true);
-      return;
-    }
-
     setLoading(true);
     try {
       const orderPayload = {
@@ -132,19 +129,28 @@ const Cart = () => {
         })),
         deliveryAddress: address,
         orderNotes: orderNotes,
-        paymentMethod: "Cash",
+        paymentMethod: paymentMethod === "Telebirr" || paymentMethod === "CBE" ? paymentMethod : "Cash",
         couponCode: appliedCoupon?.code || "",
       };
 
       const res = await apiClient.post("/orders", orderPayload);
-      triggerConfetti();
-      toast.success("Order placed successfully with Cash on Delivery! 🍕🎉");
-      clearCart();
-      const orderId = res.data.orderId || res.data.order?._id;
-      if (orderId) {
-        navigate(`/orders/${orderId}`);
+      const newOrderId = res.data.orderId || res.data.order?._id;
+      const orderAmount = res.data.order?.totalAmount || finalTotal;
+
+      if (paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "BankTransfer") {
+        setActiveOrderId(newOrderId);
+        setActiveOrderAmount(orderAmount);
+        clearCart();
+        setShowEthiopianModal(true);
       } else {
-        navigate("/orders");
+        triggerConfetti();
+        toast.success("Order placed successfully with Cash on Delivery! 🍕🎉");
+        clearCart();
+        if (newOrderId) {
+          navigate(`/orders/${newOrderId}`);
+        } else {
+          navigate("/orders");
+        }
       }
     } catch (err) {
       console.error("Order error:", err);
@@ -155,41 +161,22 @@ const Cart = () => {
   };
 
   // Ethiopian Local Payment Success Handler (Telebirr, CBE, Banks)
-  const handleEthiopianPaymentSuccess = async (paymentData) => {
-    setLoading(true);
-    try {
-      const orderPayload = {
-        items: cart.map((item) => ({
-          menuItemId: item._id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-        })),
-        deliveryAddress: address,
-        orderNotes: orderNotes,
-        paymentMethod: paymentData.method, // "Telebirr", "CBE", or "BankTransfer"
-        paymentProvider: paymentData.provider,
-        paymentAccount: paymentData.accountNumber,
-        transactionId: paymentData.transactionId,
-        couponCode: appliedCoupon?.code || "",
-      };
+  const handleEthiopianPaymentSuccess = (paymentData) => {
+    setShowEthiopianModal(false);
+    const orderId = paymentData?.orderId || activeOrderId;
+    if (orderId) {
+      navigate(`/orders/${orderId}`);
+    } else {
+      navigate("/orders");
+    }
+  };
 
-      const res = await apiClient.post("/orders", orderPayload);
-      triggerConfetti();
-      toast.success(`${paymentData.provider} verified & Order Placed! 🍕🇪🇹`);
-      clearCart();
-      setShowEthiopianModal(false);
-      const orderId = res.data.orderId || res.data.order?._id;
-      if (orderId) {
-        navigate(`/orders/${orderId}`);
-      } else {
-        navigate("/orders");
-      }
-    } catch (err) {
-      console.error("Order completion error:", err);
-      toast.error(err.response?.data?.message || "Payment verified but order recording failed. Contact support.");
-    } finally {
-      setLoading(false);
+  // Close modal when user opts to pay later
+  const handleCancelEthiopianModal = () => {
+    setShowEthiopianModal(false);
+    if (activeOrderId) {
+      toast.info("Your order is saved with 'Payment Pending'. You can complete payment anytime!");
+      navigate(`/orders/${activeOrderId}`);
     }
   };
 
@@ -597,9 +584,10 @@ const Cart = () => {
       {/* Ethiopian Local Payment Modal (Telebirr, CBE, Banks) */}
       {showEthiopianModal && (
         <EthiopianPaymentModal
-          amount={finalTotal}
+          orderId={activeOrderId}
+          amount={activeOrderAmount || finalTotal}
           onPaymentSuccess={handleEthiopianPaymentSuccess}
-          onCancel={() => setShowEthiopianModal(false)}
+          onCancel={handleCancelEthiopianModal}
         />
       )}
 

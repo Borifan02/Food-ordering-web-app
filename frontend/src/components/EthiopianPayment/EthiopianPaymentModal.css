@@ -1,70 +1,82 @@
 .ethiopian-payment-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 10000;
   padding: 16px;
-  animation: fadeIn 0.2s ease-out;
+  overflow-y: auto;
 }
 
 .ethiopian-payment-modal {
   background: #ffffff;
-  border-radius: 20px;
-  max-width: 580px;
+  border-radius: 18px;
   width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 620px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 24px;
-  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 92vh;
+  overflow-y: auto;
 }
 
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header */
 .ethiopian-payment-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  padding: 18px 24px;
   border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 12px;
+  background: #ffffff;
 }
 
 .flag-badge {
   display: inline-block;
-  background: #f0fdf4;
-  color: #166534;
-  font-size: 0.75rem;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 9999px;
+  border-radius: 20px;
   margin-bottom: 4px;
 }
 
 .header-title-box h3 {
   margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   color: #0f172a;
 }
 
 .modal-close-btn {
   background: #f1f5f9;
   border: none;
-  font-size: 1rem;
+  font-size: 15px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   cursor: pointer;
-  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  color: #64748b;
+  transition: all 0.2s ease;
 }
 
 .modal-close-btn:hover {
@@ -72,272 +84,526 @@
   color: #0f172a;
 }
 
+/* Amount Banner */
 .amount-banner {
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
-  padding: 14px 18px;
-  border-radius: 12px;
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.1rem;
+}
+
+.amount-banner-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-context-id {
+  font-size: 13px;
+  color: #e0f2fe;
+}
+
+.order-context-id strong {
+  color: #ffffff;
+}
+
+.official-merchant-pill {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.amount-banner-price {
+  text-align: right;
 }
 
 .amount-banner-label {
-  font-weight: 500;
-  opacity: 0.9;
-}
-
-.amount-banner-value {
-  font-size: 1.35rem;
-  font-weight: 800;
+  display: block;
+  font-size: 12px;
+  color: #e0f2fe;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
+.amount-banner-value {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+/* Provider Tabs */
 .provider-tabs-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  background: #f8fafc;
+  padding: 8px 16px;
   gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-x: auto;
 }
 
 .provider-tab-btn {
-  background: #f8fafc;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 10px 8px;
-  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  text-align: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
   transition: all 0.2s ease;
 }
 
 .provider-tab-btn:hover {
   background: #f1f5f9;
+  color: #0f172a;
 }
 
 .provider-tab-btn.active {
   background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: #0284c7;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.provider-icon {
-  font-size: 1.5rem;
+.tab-icon {
+  font-size: 16px;
 }
 
-.provider-tab-info strong {
-  display: block;
-  font-size: 0.82rem;
-  color: #0f172a;
+/* Merchant Details Card */
+.merchant-details-card {
+  padding: 20px 24px 16px;
+  background: #ffffff;
 }
 
-.provider-tab-info small {
-  font-size: 0.68rem;
-  color: #64748b;
-}
-
-.provider-detail-card {
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.detail-header-row {
+.merchant-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 14px;
 }
 
-.detail-header-row h4 {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.merchant-name-label {
-  margin: 2px 0 0 0;
-  font-size: 0.8rem;
-  color: #475569;
-}
-
-.provider-qr-badge {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.account-details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.merchant-title-wrap {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-.detail-item {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 12px;
+.provider-icon {
+  font-size: 26px;
 }
 
-.detail-label {
-  display: block;
-  font-size: 0.72rem;
-  color: #64748b;
+.merchant-title-wrap h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.merchant-verified-tag {
+  font-size: 11px;
+  color: #0284c7;
   font-weight: 600;
+}
+
+.merchant-name-pill {
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* Account Number Box */
+.account-number-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+}
+
+.account-field-label {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.account-code-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 1px;
+}
+
+.copy-account-btn {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-account-btn:hover {
+  background: #0369a1;
+}
+
+/* Quick Actions Bar */
+.merchant-quick-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ussd-dial-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.ussd-dial-btn:hover {
+  background: #dcfce7;
+}
+
+.exact-amount-pill {
+  font-size: 12px;
+  color: #475569;
+}
+
+.exact-amount-pill strong {
+  color: #0f172a;
+}
+
+/* Instructions */
+.transfer-instructions-box {
+  background: #eff6ff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+}
+
+.transfer-instructions-box h5 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e40af;
   text-transform: uppercase;
 }
 
-.copyable-field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-}
-
-.copyable-field code {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #0f172a;
-  background: transparent;
-}
-
-.copy-btn {
-  background: #f1f5f9;
-  border: none;
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  color: #0284c7;
-  transition: all 0.15s;
-}
-
-.copy-btn:hover {
-  background: #e2e8f0;
-}
-
-.instructions-callout {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  background: #eff6ff;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  color: #1e40af;
-}
-
-.instructions-callout p {
+.instructions-list {
   margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  color: #1e3a8a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
+/* Verification Form */
 .verification-form {
+  padding: 16px 24px 24px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.ref-label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.form-group-payment label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
 }
 
-.auto-gen-ref-btn {
-  background: transparent;
-  border: none;
-  color: #0284c7;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.pay-input {
+.form-group-payment input {
   width: 100%;
   padding: 10px 14px;
+  border: 1.5px solid #cbd5e1;
   border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  font-size: 0.92rem;
+  font-size: 14px;
+  color: #0f172a;
   box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-.pay-input:focus {
+.form-group-payment input:focus {
   outline: none;
   border-color: #0284c7;
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+.input-ref-code {
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
 .field-hint {
   display: block;
-  font-size: 0.72rem;
+  font-size: 11px;
   color: #64748b;
   margin-top: 4px;
 }
 
-.modal-actions-row {
+.verification-form-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
   margin-top: 8px;
 }
 
-.btn-modal-cancel {
-  flex: 1;
+.btn-cancel-modal {
+  padding: 10px 18px;
   background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  border: none;
   color: #475569;
   font-weight: 600;
-  padding: 12px;
-  border-radius: 10px;
+  font-size: 13px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-modal-cancel:hover {
-  background: #e2e8f0;
-}
-
-.btn-modal-verify {
-  flex: 2;
-  border: none;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  padding: 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
 
-.btn-modal-verify:hover {
-  opacity: 0.92;
-  transform: translateY(-1px);
+.btn-cancel-modal:hover {
+  background: #e2e8f0;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.btn-submit-verification {
+  padding: 10px 22px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
+  transition: all 0.2s ease;
 }
 
-@media (max-width: 540px) {
-  .provider-tabs-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.btn-submit-verification:hover:not(:disabled) {
+  background: #15803d;
 }
 
+.btn-submit-verification:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.verifying-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Digital Tax Receipt Card */
+.receipt-view-card {
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.receipt-success-badge {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.receipt-success-badge .check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #16a34a;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.receipt-success-badge h4 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.receipt-success-badge p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.official-receipt-sheet {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.receipt-header {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed #cbd5e1;
+  margin-bottom: 14px;
+}
+
+.restaurant-brand {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.receipt-tin {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.receipt-type {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  text-transform: uppercase;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.receipt-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #475569;
+}
+
+.receipt-row strong {
+  color: #0f172a;
+}
+
+.receipt-code-highlight {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.receipt-total-row {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1.5px dashed #cbd5e1;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.receipt-total-val {
+  color: #16a34a;
+  font-size: 18px;
+}
+
+.receipt-footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.receipt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-print-receipt {
+  padding: 10px 18px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-print-receipt:hover {
+  background: #e2e8f0;
+}
+
+.btn-go-tracking {
+  padding: 10px 22px;
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-go-tracking:hover {
+  background: #0369a1;
+}
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    box-shadow: none;
+  }
+}

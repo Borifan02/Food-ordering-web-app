@@ -38,6 +38,7 @@ export const orderSchema = Schema(
       },
       provider: { type: String, default: "" },
       accountNumber: { type: String, default: "" },
+      senderPhone: { type: String, default: "" },
       status: {
         type: String,
         enum: ["Pending", "Paid", "Failed"],

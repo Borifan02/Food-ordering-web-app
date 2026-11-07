@@ -620,3 +620,100 @@
 .confirm-assign-btn:hover {
   background: #2563eb;
 }
+
+/* Admin Payment Cell Styles */
+.admin-payment-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-pay-method-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.admin-pay-method-pill.telebirr {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.admin-pay-method-pill.cbe {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.admin-pay-method-pill.cash {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.admin-pay-method-pill.card {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.pay-verified-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pay-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  width: fit-content;
+  text-transform: uppercase;
+}
+
+.pay-status-badge.paid {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.pay-status-badge.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.pay-pending-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-ref-tag {
+  font-family: monospace;
+  font-size: 0.72rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  padding: 1px 4px;
+  border-radius: 4px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-admin-verify-pay {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-admin-verify-pay:hover {
+  background: #15803d;
+}

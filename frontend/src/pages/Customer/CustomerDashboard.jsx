@@ -221,14 +221,19 @@ const CustomerDashboard = () => {
                   <div key={order._id} className="active-order-card">
                     <div className="active-order-header">
                       <div>
-                        <span className="order-num-pill">{t("orderId")}{order._id.slice(-6)}</span>
+                        <span className="order-num-pill">{t("orderId")} #{order._id.slice(-6)}</span>
                         <div className="order-time-snippet">
                           {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </div>
                       </div>
-                      <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
-                        {getStatusLabel(order.status)}
-                      </span>
+                      <div className="header-badges-wrap">
+                        <span className={`payment-pill-small ${order.payment?.status === "Paid" ? "paid" : "pending"}`}>
+                          {order.payment?.status === "Paid" ? "✓ Paid" : "⏳ Pay Pending"}
+                        </span>
+                        <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                          {getStatusLabel(order.status)}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="active-order-items">
@@ -373,12 +378,17 @@ const CustomerDashboard = () => {
                   <div key={order._id} className="active-order-card detailed">
                     <div className="active-order-header">
                       <div>
-                        <h4>{t("orderId")} {order._id}</h4>
+                        <h4>{t("orderId")} #{order._id.slice(-6)}</h4>
                         <small>{new Date(order.createdAt).toLocaleString()}</small>
                       </div>
-                      <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
-                        {getStatusLabel(order.status)}
-                      </span>
+                      <div className="header-badges-wrap">
+                        <span className={`payment-pill-small ${order.payment?.status === "Paid" ? "paid" : "pending"}`}>
+                          {order.payment?.status === "Paid" ? "✓ Paid" : "⏳ Pay Pending"}
+                        </span>
+                        <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                          {getStatusLabel(order.status)}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="order-address-box">

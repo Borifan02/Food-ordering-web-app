@@ -286,6 +286,19 @@ const AdminDashboard = () => {
     }
   };
 
+  // Admin Manual Payment Verification for Offline / SMS Transfers
+  const handleAdminVerifyPayment = async (orderId) => {
+    try {
+      const res = await apiClient.post(`/payments/admin/verify/${orderId}`, {
+        notes: "Verified by restaurant admin after merchant SMS check",
+      });
+      toast.success(res.data.message || "Payment verified successfully!");
+      await fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to verify payment");
+    }
+  };
+
   // Submit Driver Assignment
   const handleConfirmDriverAssign = async () => {
     if (!assignModalOrder) return;
@@ -781,6 +794,7 @@ const AdminDashboard = () => {
                   <th>{t("customer")}</th>
                   <th>{t("address")}</th>
                   <th>{t("items")}</th>
+                  <th>{t("paymentMethod")}</th>
                   <th>{t("statusProgress")}</th>
                   <th>{t("totalAmount")}</th>
                   <th>{t("orderDate")}</th>
@@ -789,7 +803,7 @@ const AdminDashboard = () => {
               <tbody>
                 {pagedOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center">-</td>
+                    <td colSpan={8} className="text-center">-</td>
                   </tr>
                 ) : (
                   pagedOrders.map((o) => (
@@ -812,6 +826,43 @@ const AdminDashboard = () => {
                         <span className="items-count-badge">
                           {o.items?.reduce((s, i) => s + i.quantity, 0) || o.items?.length || 0} {t("items")}
                         </span>
+                      </td>
+                      <td>
+                        <div className="admin-payment-cell">
+                          <span className={`admin-pay-method-pill ${(o.payment?.method || "cash").toLowerCase()}`}>
+                            {o.payment?.method === "Telebirr"
+                              ? "📱 Telebirr"
+                              : o.payment?.method === "CBE"
+                              ? "🏦 CBE Birr"
+                              : o.payment?.method === "Card"
+                              ? "💳 Card"
+                              : "💵 Cash"}
+                          </span>
+                          {o.payment?.status === "Paid" ? (
+                            <div className="pay-verified-wrap">
+                              <span className="pay-status-badge paid">✓ Paid</span>
+                              {o.payment?.transactionId && (
+                                <span className="admin-ref-tag" title={o.payment.transactionId}>
+                                  {o.payment.transactionId}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="pay-pending-wrap">
+                              <span className="pay-status-badge pending">⏳ Pending</span>
+                              {o.payment?.method !== "Cash" && (
+                                <button
+                                  type="button"
+                                  className="btn-admin-verify-pay"
+                                  onClick={() => handleAdminVerifyPayment(o._id)}
+                                  title="Confirm receipt of bank transfer"
+                                >
+                                  Verify Pay
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <select

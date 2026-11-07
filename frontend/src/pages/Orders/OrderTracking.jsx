@@ -3,8 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import apiClient from "../../api/axios";
 import { getSocket } from "../../utils/socket";
 import { useToast } from "../../context/ToastContext";
+import { useLanguage } from "../../context/LanguageContext";
 import ConfirmModal from "../../components/Modal/ConfirmModal";
 import ReviewModal from "../../components/ReviewModal/ReviewModal";
+import EthiopianPaymentModal from "../../components/EthiopianPayment/EthiopianPaymentModal";
 import "./OrderTracking.css";
 
 const statusSteps = [
@@ -18,12 +20,14 @@ const OrderTracking = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedItemForReview, setSelectedItemForReview] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [mapProgress, setMapProgress] = useState(0.15);
 
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const mapCanvasRef = useRef(null);
 
@@ -362,6 +366,37 @@ const OrderTracking = () => {
         </div>
       )}
 
+      {/* Payment Status & Complete Payment Card */}
+      <div className={`tracking-payment-banner ${order.payment?.status === "Paid" ? "paid" : "pending"}`}>
+        <div className="payment-banner-content">
+          <span className="payment-banner-icon">
+            {order.payment?.status === "Paid" ? "✅" : "⚠️"}
+          </span>
+          <div className="payment-banner-text">
+            <h4>
+              {order.payment?.status === "Paid"
+                ? `${t("paymentStatusPaid")} (${order.payment?.provider || order.payment?.method})`
+                : `${t("paymentStatusPending")} (${order.payment?.method || "Telebirr / CBE"})`}
+            </h4>
+            <p>
+              {order.payment?.status === "Paid"
+                ? `${t("transactionRef")}: ${order.payment?.transactionId || "N/A"} • Paid on ${new Date(order.payment?.paidAt || order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : "Your order is placed! Please complete the local mobile transfer so the kitchen can prepare your meal."}
+            </p>
+          </div>
+        </div>
+
+        {order.payment?.status !== "Paid" && order.payment?.method !== "Cash" && (
+          <button
+            type="button"
+            className="btn-complete-payment-now"
+            onClick={() => setShowPaymentModal(true)}
+          >
+            💳 {t("completePaymentNow")}
+          </button>
+        )}
+      </div>
+
       {/* Order Summary & Items List */}
       <div className="order-items-breakdown-card">
         <h3>Order Items ({order.items.length})</h3>
@@ -438,6 +473,19 @@ const OrderTracking = () => {
           orderId={order._id}
           menuItem={selectedItemForReview}
           onClose={() => setSelectedItemForReview(null)}
+        />
+      )}
+
+      {/* Ethiopian Payment Modal for Pending Orders */}
+      {showPaymentModal && (
+        <EthiopianPaymentModal
+          orderId={order._id}
+          amount={order.totalAmount}
+          onPaymentSuccess={() => {
+            setShowPaymentModal(false);
+            fetchOrder();
+          }}
+          onCancel={() => setShowPaymentModal(false)}
         />
       )}
     </div>
