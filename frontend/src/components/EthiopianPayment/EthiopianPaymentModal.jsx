@@ -30,26 +30,43 @@ const PAYMENT_METHODS_DATA = {
     ussdDial: "*127#",
     refPlaceholder: "e.g. TLB20268492 or 10-digit SMS code",
   },
+  cbebirr: {
+    id: "cbebirr",
+    methodKey: "CBEBirr",
+    title: "CBE Birr",
+    titleAm: "ሲቢኢ ብር (CBE Birr)",
+    titleOm: "CBE Birr (Moobaayilaa)",
+    subtitle: "CBE Mobile Money App & USSD *847#",
+    subtitleAm: "የሲቢኢ ብር የሞባይል መተግበሪያ እና *847#",
+    subtitleOm: "Appilikeeshinii Moobaayilaa CBE Birr & *847#",
+    icon: "📱",
+    color: "#7e22ce",
+    badge: "Short Code: 998877",
+    badgeAm: "አጭር ኮድ: 998877",
+    badgeOm: "Koodii Gabaabaa: 998877",
+    merchantName: "Foodie Restaurant PLC",
+    merchantCode: "998877",
+    ussdCode: "*847#",
+    ussdDial: "*847#",
+    refPlaceholder: "e.g. CB260198471 or CBE Birr SMS code",
+  },
   cbe: {
     id: "cbe",
     methodKey: "CBE",
     title: "Commercial Bank of Ethiopia",
-    titleAm: "የኢትዮጵያ ንግድ ባንክ (CBE)",
+    titleAm: "የኢትዮጵያ ንግድ ባንክ (CBE ሂሳብ)",
     titleOm: "Baankii Daldala Itoophiyaa (CBE)",
-    subtitle: "CBE Direct Account Transfer & CBE Birr",
-    subtitleAm: "ቀጥታ የCBE ሂሳብ ዝውውር እና ሲቢኢ ብር",
-    subtitleOm: "Dabarsa Herrega CBE & CBE Birr",
+    subtitle: "Pay with 13-Digit CBE Account via Web Banking",
+    subtitleAm: "በ13 አሃዝ የCBE የሂሳብ ቁጥር በዌብ ባንኪንግ ይክፈሉ",
+    subtitleOm: "Lakkoofsa Herrega CBE Digitii 13n Baankii Weebiitiin kaffalaa",
     icon: "🏦",
     color: "#6b21a8",
-    badge: "Verified Account",
-    badgeAm: "የተረጋገጠ ሂሳብ",
-    badgeOm: "Herrega Mirkanaa'e",
+    badge: "Official Bank Account",
+    badgeAm: "ይፋዊ የባንክ ሂሳብ",
+    badgeOm: "Herrega Baankii Mirkanaa'e",
     merchantName: "Foodie Restaurant PLC",
     accountNumber: "1000234567891",
-    shortCode: "998877",
-    ussdCode: "*847#",
-    ussdDial: "*847#",
-    refPlaceholder: "e.g. FT260198471 or CBE SMS Transaction ID",
+    refPlaceholder: "e.g. FT260198471 or CBE Bank Reference",
   },
   abyssinia: {
     id: "abyssinia",
@@ -76,6 +93,7 @@ const PAYMENT_METHODS_DATA = {
 const resolveMethodKey = (method) => {
   if (!method) return "telebirr";
   const clean = String(method).toLowerCase();
+  if (clean === "cbebirr" || clean === "cbe_birr" || clean.includes("cbe birr") || clean.includes("cbebirr")) return "cbebirr";
   if (clean === "cbe" || clean.includes("cbe")) return "cbe";
   if (clean.includes("abyssinia") || clean.includes("bank")) return "abyssinia";
   return "telebirr";
@@ -120,6 +138,7 @@ const EthiopianPaymentModal = ({
 
   const activeMethod = PAYMENT_METHODS_DATA[activeMethodId] || PAYMENT_METHODS_DATA.telebirr;
   const isTelebirr = activeMethod.id === "telebirr";
+  const isCbeBirr = activeMethod.id === "cbebirr";
   const isCbe = activeMethod.id === "cbe";
 
   const handleCopy = (text, label) => {
@@ -304,7 +323,7 @@ const EthiopianPaymentModal = ({
   return (
     <div className="ethiopian-payment-modal-backdrop" onClick={onCancel}>
       <div
-        className={`ethiopian-payment-sheet ${isTelebirr ? "theme-telebirr" : isCbe ? "theme-cbe" : "theme-default"}`}
+        className={`ethiopian-payment-sheet ${isTelebirr ? "theme-telebirr" : isCbeBirr ? "theme-cbe" : isCbe ? "theme-cbe" : "theme-default"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Clean Modal Header */}
@@ -392,7 +411,7 @@ const EthiopianPaymentModal = ({
                   </div>
                 ) : (
                   <div className="receipt-line">
-                    <span>Telebirr Mobile</span>
+                    <span>{isCbeBirr ? "CBE Birr Mobile" : "Telebirr Mobile"}</span>
                     <strong>{completedPayment.customerPhone || customerPhone}</strong>
                   </div>
                 )}
@@ -438,15 +457,21 @@ const EthiopianPaymentModal = ({
                 <h4>
                   {isCbe
                     ? language === "am"
-                      ? "የCBE ሞባይል ባንኪንግ ሚስጥር ቁጥርዎን ያስገቡ"
+                      ? "የCBE ዌብ ባንኪንግ ሚስጥር ቁጥርዎን ያስገቡ"
                       : language === "om"
                         ? "Koodii PIN Baankii CBE galchaa"
-                        : "Enter your CBE Mobile Banking PIN"
-                    : language === "am"
-                      ? `የ${activeMethod.title} 4-አሃዝ ሚስጥር ቁጥርዎን ያስገቡ`
-                      : language === "om"
-                        ? `Koodii PIN ${activeMethod.title} keessan galchaa`
-                        : `Enter your 4-Digit ${activeMethod.title} PIN`}
+                        : "Enter your CBE Banking PIN"
+                    : isCbeBirr
+                      ? language === "am"
+                        ? "የሲቢኢ ብር 4-አሃዝ ሚስጥር ቁጥርዎን ያስገቡ"
+                        : language === "om"
+                          ? "Koodii PIN CBE Birr keessan galchaa"
+                          : "Enter your 4-Digit CBE Birr PIN"
+                      : language === "am"
+                        ? `የ${activeMethod.title} 4-አሃዝ ሚስጥር ቁጥርዎን ያስገቡ`
+                        : language === "om"
+                          ? `Koodii PIN ${activeMethod.title} keessan galchaa`
+                          : `Enter your 4-Digit ${activeMethod.title} PIN`}
                 </h4>
                 <p>
                   {isCbe
@@ -455,15 +480,21 @@ const EthiopianPaymentModal = ({
                       : language === "om"
                         ? `Herrega CBE ${customerAccount} irraa kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
                         : `Authorizing transfer of ${Number(amount).toFixed(2)} ETB from CBE Account ${customerAccount} to Foodie Restaurant PLC.`
-                    : language === "am"
-                      ? `የ ${Number(amount).toFixed(2)} ብር ክፍያን በስልክ ቁጥር ${customerPhone} ለማረጋገጥ ሚስጥር ቁጥርዎን ያስገቡ።`
-                      : language === "om"
-                        ? `Bilbila ${customerPhone} irraa kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
-                        : `Confirm the payment of ${Number(amount).toFixed(2)} ETB to Foodie Restaurant PLC.`}
+                    : isCbeBirr
+                      ? language === "am"
+                        ? `በሲቢኢ ብር ስልክ ቁጥር ${customerPhone} የ ${Number(amount).toFixed(2)} ብር ክፍያን ለማረጋገጥ ሚስጥር ቁጥርዎን ያስገቡ።`
+                        : language === "om"
+                          ? `Bilbila CBE Birr ${customerPhone} irraa kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
+                          : `Confirm payment of ${Number(amount).toFixed(2)} ETB from CBE Birr wallet ${customerPhone} to Foodie Restaurant PLC.`
+                      : language === "am"
+                        ? `የ ${Number(amount).toFixed(2)} ብር ክፍያን በስልክ ቁጥር ${customerPhone} ለማረጋገጥ ሚስጥር ቁጥርዎን ያስገቡ።`
+                        : language === "om"
+                          ? `Bilbila ${customerPhone} irraa kaffaltii ${Number(amount).toFixed(2)} ETB mirkaneessuuf PIN galchaa.`
+                          : `Confirm the payment of ${Number(amount).toFixed(2)} ETB to Foodie Restaurant PLC.`}
                 </p>
 
                 <div className="pin-input-group">
-                  <label>{isCbe ? "CBE Banking PIN" : "Telebirr PIN"}</label>
+                  <label>{isCbe ? "CBE Banking PIN" : isCbeBirr ? "CBE Birr PIN" : "Telebirr PIN"}</label>
                   <input
                     type="password"
                     maxLength={4}
@@ -506,7 +537,7 @@ const EthiopianPaymentModal = ({
             <div className="sheet-prompt-view">
               <div className="primary-wallet-form">
                 {isCbe ? (
-                  /* CBE: Customer enters their 13-Digit CBE Account Number */
+                  /* CBE Account: Customer enters their 13-Digit CBE Account Number */
                   <div className="field-group">
                     <label className="field-label">
                       {language === "am"
@@ -529,10 +560,39 @@ const EthiopianPaymentModal = ({
                     </div>
                     <span className="field-helper">
                       {language === "am"
-                        ? `የ ${Number(amount).toFixed(2)} ብር ክፍያ ከዚህ የCBE ሂሳብ ቁጥር ይቀነሳል`
+                        ? `የ ${Number(amount).toFixed(2)} ብር ክፍያ ከዚህ የCBE ሂሳብ ቁጥር በዌብ ባንኪንግ ይተላለፋል`
                         : language === "om"
                           ? `Kaffaltiin ${Number(amount).toFixed(2)} ETB herrega CBE kana irraa kaffalama`
                           : `Payment of ${Number(amount).toFixed(2)} ETB will be transferred from this CBE account`}
+                    </span>
+                  </div>
+                ) : isCbeBirr ? (
+                  /* CBE Birr: Customer enters their Mobile Phone Number for the CBE Birr app */
+                  <div className="field-group">
+                    <label className="field-label">
+                      {language === "am"
+                        ? "የሲቢኢ ብር ስልክ ቁጥርዎ (+251) *"
+                        : language === "om"
+                          ? "Lakkoofsa Bilbila CBE Birr (+251) *"
+                          : "Your CBE Birr Mobile Number (+251) *"}
+                    </label>
+                    <div className="phone-input-wrap">
+                      <span className="phone-flag">📱</span>
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder={ETHIOPIAN_PHONE_PLACEHOLDER}
+                        className="sheet-phone-input"
+                        autoFocus
+                      />
+                    </div>
+                    <span className="field-helper">
+                      {language === "am"
+                        ? "የክፍያ ጥያቄ ወደዚህ የሲቢኢ ብር የሞባይል መተግበሪያ ይላካል"
+                        : language === "om"
+                          ? "Gaaffiin kaffaltii gara bilbila CBE Birr kanaatti ergama"
+                          : "Payment request will be authorized directly from this CBE Birr wallet"}
                     </span>
                   </div>
                 ) : (
@@ -579,9 +639,11 @@ const EthiopianPaymentModal = ({
                     <span>
                       {isTelebirr
                         ? `${t("payWithTelebirr") || "Pay with Telebirr"} • ${Number(amount).toFixed(2)} ETB ➔`
-                        : isCbe
-                          ? `${t("payWithCbe") || "Pay via CBE Account"} • ${Number(amount).toFixed(2)} ETB ➔`
-                          : `Pay ${Number(amount).toFixed(2)} ETB ➔`}
+                        : isCbeBirr
+                          ? `${t("payWithCbeBirr") || "Pay with CBE Birr"} • ${Number(amount).toFixed(2)} ETB ➔`
+                          : isCbe
+                            ? `${t("payWithCbeAccount") || t("payWithCbe") || "Pay via CBE Account"} • ${Number(amount).toFixed(2)} ETB ➔`
+                            : `Pay ${Number(amount).toFixed(2)} ETB ➔`}
                     </span>
                   )}
                 </button>
@@ -604,9 +666,11 @@ const EthiopianPaymentModal = ({
                     {showManualSection ? "▾" : "▸"}{" "}
                     {isTelebirr
                       ? "Or pay manually via Telebirr App / *127#"
-                      : isCbe
-                        ? "Or transfer to CBE Restaurant Account / *847#"
-                        : "Or transfer manually to bank account"}
+                      : isCbeBirr
+                        ? "Or pay manually via CBE Birr App / *847#"
+                        : isCbe
+                          ? "Or transfer to CBE Restaurant Account (Web Banking)"
+                          : "Or transfer manually to bank account"}
                   </span>
                   <span className="toggle-sub">Offline / Reference confirmation</span>
                 </button>
@@ -630,38 +694,39 @@ const EthiopianPaymentModal = ({
                         </div>
                       )}
 
-                      {isCbe && (
-                        <>
-                          <div className="account-row-card">
-                            <div>
-                              <span className="acc-label">Restaurant CBE Account (Foodie Restaurant PLC)</span>
-                              <strong className="acc-value">{activeMethod.accountNumber}</strong>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn-acc-copy"
-                              onClick={() => handleCopy(activeMethod.accountNumber, "Restaurant Account")}
-                            >
-                              📋 Copy
-                            </button>
+                      {isCbeBirr && (
+                        <div className="account-row-card">
+                          <div>
+                            <span className="acc-label">CBE Birr Merchant Shortcode</span>
+                            <strong className="acc-value">{activeMethod.merchantCode}</strong>
                           </div>
-                          <div className="account-row-card">
-                            <div>
-                              <span className="acc-label">CBE Birr Shortcode</span>
-                              <strong className="acc-value">{activeMethod.shortCode}</strong>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn-acc-copy"
-                              onClick={() => handleCopy(activeMethod.shortCode, "CBE Birr Shortcode")}
-                            >
-                              📋 Copy
-                            </button>
-                          </div>
-                        </>
+                          <button
+                            type="button"
+                            className="btn-acc-copy"
+                            onClick={() => handleCopy(activeMethod.merchantCode, "CBE Birr Shortcode")}
+                          >
+                            📋 Copy
+                          </button>
+                        </div>
                       )}
 
-                      {!isTelebirr && !isCbe && (
+                      {isCbe && (
+                        <div className="account-row-card">
+                          <div>
+                            <span className="acc-label">Restaurant CBE Account (Foodie Restaurant PLC)</span>
+                            <strong className="acc-value">{activeMethod.accountNumber}</strong>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-acc-copy"
+                            onClick={() => handleCopy(activeMethod.accountNumber, "Restaurant Account")}
+                          >
+                            📋 Copy
+                          </button>
+                        </div>
+                      )}
+
+                      {!isTelebirr && !isCbeBirr && !isCbe && (
                         <div className="account-row-card">
                           <div>
                             <span className="acc-label">{activeMethod.title} Account</span>

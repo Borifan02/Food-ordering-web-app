@@ -16,7 +16,7 @@ export const paymentSchema = new Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["Telebirr", "CBE", "BankTransfer", "Card", "Cash"],
+      enum: ["Telebirr", "CBE", "CBEBirr", "BankTransfer", "Card", "Cash"],
       required: true,
     },
     providerName: {

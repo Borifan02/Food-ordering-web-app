@@ -737,6 +737,7 @@ const findOrRestoreSession = async (sessionId) => {
         const order = await OrderModel.findById(payment.orderId).populate("userId");
         if (order) {
           const isTelebirr = payment.paymentMethod === "Telebirr";
+          const isCbeBirr = payment.paymentMethod === "CBEBirr";
           const isCbe = payment.paymentMethod === "CBE";
           session = {
             sessionId,
@@ -745,12 +746,20 @@ const findOrRestoreSession = async (sessionId) => {
             amount: Number(payment.amount || order.totalAmount),
             currency: "ETB",
             paymentMethod: payment.paymentMethod,
-            provider: payment.providerName || (isTelebirr ? "Telebirr (Ethio Telecom)" : "Commercial Bank of Ethiopia (CBE)"),
+            provider:
+              payment.providerName ||
+              (isTelebirr
+                ? "Telebirr (Ethio Telecom)"
+                : isCbeBirr
+                  ? "CBE Birr (Mobile Wallet)"
+                  : isCbe
+                    ? "Commercial Bank of Ethiopia (CBE Account)"
+                    : "Bank Transfer"),
             merchantName: "Foodie Restaurant PLC",
-            merchantCode: isTelebirr ? "554433" : "998877",
+            merchantCode: isTelebirr ? "554433" : isCbeBirr ? "998877" : undefined,
             accountNumber: isCbe ? "1000234567891" : undefined,
             merchantPhone: isTelebirr ? "+251911223344" : undefined,
-            ussdCode: isTelebirr ? "*127#" : isCbe ? "*847#" : undefined,
+            ussdCode: isTelebirr ? "*127#" : isCbeBirr ? "*847#" : undefined,
             customerPhone: payment.senderPhone || order.userId?.phone || "0911223344",
             customerAccount: payment.senderAccount || (isCbe ? "1000123456789" : ""),
             customerName: `${order.userId?.firstName || ""} ${order.userId?.lastName || ""}`.trim() || order.userId?.name || "Customer",

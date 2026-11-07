@@ -56,7 +56,8 @@ export class EthiopianGatewayService {
   }) {
     const cleanMethod = String(paymentMethod).toLowerCase();
     const isTelebirr = cleanMethod === "telebirr";
-    const isCbe = cleanMethod === "cbe";
+    const isCbeBirr = cleanMethod === "cbebirr" || cleanMethod === "cbe_birr" || cleanMethod.includes("cbe birr") || cleanMethod.includes("cbebirr");
+    const isCbe = (cleanMethod === "cbe" || cleanMethod.includes("cbe")) && !isCbeBirr;
 
     const sessionId = `GWS-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
     const outTradeNo = `FOODIE-${orderId.toString().slice(-8)}-${Date.now().toString().slice(-4)}`;
@@ -95,7 +96,7 @@ export class EthiopianGatewayService {
               sessionId,
               outTradeNo,
               checkoutUrl: data.data.checkout_url,
-              provider: isTelebirr ? "Telebirr" : isCbe ? "CBE" : "Chapa",
+              provider: isTelebirr ? "Telebirr" : isCbeBirr ? "CBEBirr" : isCbe ? "CBE" : "Chapa",
               mode: "live",
             };
           }
@@ -114,13 +115,19 @@ export class EthiopianGatewayService {
       orderId,
       amount: Number(amount),
       currency: "ETB",
-      paymentMethod: isTelebirr ? "Telebirr" : isCbe ? "CBE" : "BankTransfer",
-      provider: isTelebirr ? "Telebirr (Ethio Telecom)" : isCbe ? "Commercial Bank of Ethiopia (CBE)" : "Bank Transfer",
+      paymentMethod: isTelebirr ? "Telebirr" : isCbeBirr ? "CBEBirr" : isCbe ? "CBE" : "BankTransfer",
+      provider: isTelebirr
+        ? "Telebirr (Ethio Telecom)"
+        : isCbeBirr
+          ? "CBE Birr (Mobile Wallet)"
+          : isCbe
+            ? "Commercial Bank of Ethiopia (CBE Account)"
+            : "Bank Transfer",
       merchantName: "Foodie Restaurant PLC",
-      merchantCode: isTelebirr ? "554433" : "998877",
+      merchantCode: isTelebirr ? "554433" : isCbeBirr ? "998877" : undefined,
       accountNumber: isCbe ? "1000234567891" : undefined,
       merchantPhone: isTelebirr ? "+251911223344" : undefined,
-      ussdCode: isTelebirr ? "*127#" : isCbe ? "*847#" : undefined,
+      ussdCode: isTelebirr ? "*127#" : isCbeBirr ? "*847#" : undefined,
       customerPhone: customerInfo.phone || "0911223344",
       customerAccount: customerInfo.accountNumber || (isCbe ? "1000123456789" : ""),
       customerName: customerInfo.name || "Customer",

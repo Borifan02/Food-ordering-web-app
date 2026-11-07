@@ -33,7 +33,7 @@ export const orderSchema = Schema(
     payment: {
       method: { 
         type: String, 
-        enum: ["Cash", "Card", "Telebirr", "CBE", "BankTransfer"], 
+        enum: ["Cash", "Card", "Telebirr", "CBE", "CBEBirr", "BankTransfer"], 
         default: "Cash" 
       },
       provider: { type: String, default: "" },

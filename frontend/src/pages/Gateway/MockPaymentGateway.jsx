@@ -118,7 +118,13 @@ const MockPaymentGateway = () => {
   }
 
   const isTelebirr = session.paymentMethod === "Telebirr";
-  const brandTitle = isTelebirr ? "Telebirr SuperApp Web Checkout" : "CBE Birr Online Payment Portal";
+  const isCbeBirr = session.paymentMethod === "CBEBirr";
+  const isCbe = session.paymentMethod === "CBE";
+  const brandTitle = isTelebirr
+    ? "Telebirr SuperApp Web Checkout"
+    : isCbeBirr
+      ? "CBE Birr Mobile Payment Gateway"
+      : "Commercial Bank of Ethiopia (CBE) Web Banking";
   const brandThemeClass = isTelebirr ? "theme-telebirr" : "theme-cbe";
 
   return (
@@ -127,7 +133,7 @@ const MockPaymentGateway = () => {
         {/* Gateway Brand Header */}
         <div className="gateway-header">
           <div className="gateway-brand-badge">
-            <span className="gateway-brand-logo">{isTelebirr ? "📱" : "🏦"}</span>
+            <span className="gateway-brand-logo">{isTelebirr || isCbeBirr ? "📱" : "🏦"}</span>
             <div>
               <h2>{brandTitle}</h2>
               <span className="gateway-ssl-tag">🔒 256-Bit SSL Encrypted • NBE Licensed</span>
@@ -156,9 +162,13 @@ const MockPaymentGateway = () => {
               <span className="merchant-code-text">
                 Telebirr Short Code: <strong>554433</strong> • Phone: <strong>+251 911 223 344</strong>
               </span>
+            ) : isCbeBirr ? (
+              <span className="merchant-code-text">
+                CBE Birr Shortcode: <strong>998877</strong> • USSD: <strong>*847#</strong>
+              </span>
             ) : (
               <span className="merchant-code-text">
-                CBE Account: <strong>1000234567891</strong> • CBE Birr Code: <strong>998877</strong>
+                CBE Restaurant Account: <strong>1000234567891</strong> (Foodie Restaurant PLC)
               </span>
             )}
           </div>
@@ -188,18 +198,7 @@ const MockPaymentGateway = () => {
 
         {/* Authentication Simulation Form */}
         <div className="gateway-auth-box">
-          {isTelebirr ? (
-            <div className="auth-field-group">
-              <label>Customer Telebirr Mobile Number (+251)</label>
-              <input
-                type="text"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="gateway-input"
-                placeholder="0911223344"
-              />
-            </div>
-          ) : (
+          {isCbe ? (
             <div className="auth-field-group">
               <label>Customer CBE Bank Account Number (13 Digits)</label>
               <input
@@ -211,11 +210,39 @@ const MockPaymentGateway = () => {
                 placeholder="1000123456789"
               />
             </div>
+          ) : isCbeBirr ? (
+            <div className="auth-field-group">
+              <label>Customer CBE Birr Mobile Number (+251)</label>
+              <input
+                type="text"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="gateway-input"
+                placeholder="0911223344"
+              />
+            </div>
+          ) : (
+            <div className="auth-field-group">
+              <label>Customer Telebirr Mobile Number (+251)</label>
+              <input
+                type="text"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="gateway-input"
+                placeholder="0911223344"
+              />
+            </div>
           )}
 
           <div className="auth-field-row">
             <div className="auth-field-group">
-              <label>{isTelebirr ? "Telebirr 4-Digit PIN" : "CBE Mobile / Internet Banking 4-Digit PIN"}</label>
+              <label>
+                {isCbe
+                  ? "CBE Web Banking PIN"
+                  : isCbeBirr
+                    ? "CBE Birr 4-Digit PIN"
+                    : "Telebirr 4-Digit PIN"}
+              </label>
               <input
                 type="password"
                 maxLength={4}

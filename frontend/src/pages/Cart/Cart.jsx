@@ -39,7 +39,7 @@ const Cart = () => {
   const isDriver = userRole === "deliveryman";
 
   const [address, setAddress] = useState(user?.address || "");
-  const [paymentMethod, setPaymentMethod] = useState("Cash"); // "Cash", "Telebirr", "CBE", "Card"
+  const [paymentMethod, setPaymentMethod] = useState("Cash"); // "Cash", "Telebirr", "CBE", "CBEBirr", "Card"
   const [couponInput, setCouponInput] = useState("");
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -131,7 +131,10 @@ const Cart = () => {
         })),
         deliveryAddress: address,
         orderNotes: orderNotes,
-        paymentMethod: paymentMethod === "Telebirr" || paymentMethod === "CBE" ? paymentMethod : "Cash",
+        paymentMethod:
+          paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "CBEBirr"
+            ? paymentMethod
+            : "Cash",
         couponCode: appliedCoupon?.code || "",
       };
 
@@ -139,7 +142,12 @@ const Cart = () => {
       const newOrderId = res.data.orderId || res.data.order?._id;
       const orderAmount = res.data.order?.totalAmount || finalTotal;
 
-      if (paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "BankTransfer") {
+      if (
+        paymentMethod === "Telebirr" ||
+        paymentMethod === "CBE" ||
+        paymentMethod === "CBEBirr" ||
+        paymentMethod === "BankTransfer"
+      ) {
         setActiveOrderId(newOrderId);
         setActiveOrderAmount(orderAmount);
         setActivePaymentMethod(paymentMethod);
@@ -520,8 +528,25 @@ const Cart = () => {
                   />
                   <span className="option-icon">🏦</span>
                   <div>
-                    <div className="option-title">{t("cbeBirr")}</div>
-                    <div className="option-sub">{t("cbeDesc")}</div>
+                    <div className="option-title">{t("cbeAccount") || "Commercial Bank of Ethiopia (CBE Account)"}</div>
+                    <div className="option-sub">{t("cbeAccountDesc") || "Pay with 13-digit CBE Account Number via Web Banking"}</div>
+                  </div>
+                </label>
+
+                <label
+                  className={`payment-option-card ${paymentMethod === "CBEBirr" ? "selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="CBEBirr"
+                    checked={paymentMethod === "CBEBirr"}
+                    onChange={() => setPaymentMethod("CBEBirr")}
+                  />
+                  <span className="option-icon">📱</span>
+                  <div>
+                    <div className="option-title">{t("cbeBirr") || "CBE Birr (Mobile App)"}</div>
+                    <div className="option-sub">{t("cbeBirrDesc") || "Instant mobile payment via CBE Birr App or USSD *847#"}</div>
                   </div>
                 </label>
 
@@ -571,11 +596,13 @@ const Cart = () => {
                 ? "Placing Order..."
                 : paymentMethod === "Telebirr"
                   ? `${t("payWithTelebirr")} • ${finalTotal.toFixed(2)} ETB ➔`
-                  : paymentMethod === "CBE"
-                    ? `${t("payWithCbe")} • ${finalTotal.toFixed(2)} ETB ➔`
-                    : paymentMethod === "Card"
-                      ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
-                      : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
+                  : paymentMethod === "CBEBirr"
+                    ? `${t("payWithCbeBirr")} • ${finalTotal.toFixed(2)} ETB ➔`
+                    : paymentMethod === "CBE"
+                      ? `${t("payWithCbeAccount") || t("payWithCbe")} • ${finalTotal.toFixed(2)} ETB ➔`
+                      : paymentMethod === "Card"
+                        ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
+                        : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
             </button>
 
             <div className="checkout-trust-badges">
