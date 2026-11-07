@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useToast } from "../../context/ToastContext";
@@ -108,6 +109,7 @@ const EthiopianPaymentModal = ({
   const { user } = useContext(AuthContext);
   const { t } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [selectedMethodId, setSelectedMethodId] = useState("telebirr");
   const [senderPhone, setSenderPhone] = useState(user?.phone || "");
@@ -115,6 +117,34 @@ const EthiopianPaymentModal = ({
   const [notes, setNotes] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verifiedReceipt, setVerifiedReceipt] = useState(null);
+  const [openingGateway, setOpeningGateway] = useState(false);
+
+  const handleLaunchGateway = async () => {
+    setOpeningGateway(true);
+    try {
+      const res = await apiClient.post("/payments/gateway/session", {
+        orderId,
+        paymentMethod: activeOption.methodKey,
+      });
+      if (res.data?.sessionId) {
+        const checkoutUrl = res.data.checkoutUrl;
+        if (
+          checkoutUrl &&
+          (checkoutUrl.startsWith("http://") || checkoutUrl.startsWith("https://")) &&
+          !checkoutUrl.includes(window.location.host)
+        ) {
+          window.location.href = checkoutUrl;
+        } else {
+          navigate(`/gateway/checkout/${res.data.sessionId}`);
+        }
+      }
+    } catch (err) {
+      console.error("Gateway launch error:", err);
+      toast.error(err.response?.data?.message || "Failed to open gateway portal.");
+    } finally {
+      setOpeningGateway(false);
+    }
+  };
 
   useEffect(() => {
     if (user?.phone && !senderPhone) {
@@ -335,6 +365,25 @@ const EthiopianPaymentModal = ({
                   {Number(amount).toFixed(2)} ETB
                 </strong>
               </div>
+            </div>
+
+            {/* Quick Online Gateway Banner */}
+            <div className="gateway-quick-switch-banner">
+              <div className="gateway-switch-info">
+                <span className="gateway-badge-pill">🇪🇹 NEW</span>
+                <div>
+                  <strong>Online Payment Gateway</strong>
+                  <p>Pay or test via Telebirr SuperApp / CBE Web Portal</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-launch-gateway-portal"
+                onClick={handleLaunchGateway}
+                disabled={openingGateway}
+              >
+                {openingGateway ? "Launching..." : "Open Gateway Portal ➔"}
+              </button>
             </div>
 
             {/* Provider Tabs */}

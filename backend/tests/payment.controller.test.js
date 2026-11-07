@@ -6,6 +6,10 @@ const {
   initializeEthiopianPayment,
   verifyEthiopianPayment,
   adminVerifyPayment,
+  createGatewaySession,
+  getGatewaySessionDetails,
+  processMockGatewayPayment,
+  verifyGatewaySession,
   ETHIOPIAN_ACCOUNTS
 } = await import('../controllers/payment.controller.js');
 
@@ -124,6 +128,20 @@ describe('Ethiopian Payment Controller - Production Suite', () => {
           message: expect.stringContaining('valid 10-digit Ethiopian mobile number')
         })
       );
+    });
+  });
+
+  describe('Gateway Session & Mock Integration', () => {
+    it('should reject gateway session creation without orderId', async () => {
+      req.body = {};
+      await createGatewaySession(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 404 for nonexistent gateway session details', async () => {
+      req.params = { sessionId: 'NONEXISTENT-SESSION-123' };
+      await getGatewaySessionDetails(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
     });
   });
 });

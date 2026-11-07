@@ -137,7 +137,37 @@ const Cart = () => {
       const newOrderId = res.data.orderId || res.data.order?._id;
       const orderAmount = res.data.order?.totalAmount || finalTotal;
 
-      if (paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "BankTransfer") {
+      if (paymentMethod === "Telebirr" || paymentMethod === "CBE") {
+        setActiveOrderId(newOrderId);
+        setActiveOrderAmount(orderAmount);
+        clearCart();
+        toast.info("Connecting to payment gateway...");
+        try {
+          const gatewayRes = await apiClient.post("/payments/gateway/session", {
+            orderId: newOrderId,
+            paymentMethod,
+          });
+
+          if (gatewayRes.data?.sessionId) {
+            const checkoutUrl = gatewayRes.data.checkoutUrl;
+            if (
+              checkoutUrl &&
+              (checkoutUrl.startsWith("http://") || checkoutUrl.startsWith("https://")) &&
+              !checkoutUrl.includes(window.location.host)
+            ) {
+              window.location.href = checkoutUrl;
+            } else {
+              navigate(`/gateway/checkout/${gatewayRes.data.sessionId}`);
+            }
+            return;
+          }
+        } catch (gwErr) {
+          console.error("Gateway session creation failed:", gwErr);
+          toast.warning("Online gateway redirect unavailable. Opening manual verification.");
+          setShowEthiopianModal(true);
+          return;
+        }
+      } else if (paymentMethod === "BankTransfer") {
         setActiveOrderId(newOrderId);
         setActiveOrderAmount(orderAmount);
         clearCart();

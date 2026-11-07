@@ -1,0 +1,217 @@
+.callback-page-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  background: #f8fafc;
+}
+
+.callback-card {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 540px;
+  width: 100%;
+  padding: 36px 30px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.callback-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.success-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.failure-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.callback-card h2 {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.callback-subtitle {
+  margin: 0 0 22px 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Receipt Sheet */
+.callback-receipt-box {
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.receipt-brand-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+}
+
+.receipt-tin-num {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.receipt-tagline {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 4px 0 14px 0;
+  letter-spacing: 0.5px;
+}
+
+.receipt-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.receipt-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #475569;
+}
+
+.receipt-line strong {
+  color: #0f172a;
+}
+
+.receipt-tx-code {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #0284c7;
+}
+
+.receipt-amount-text {
+  font-size: 16px;
+  color: #16a34a;
+}
+
+.auto-redirect-note {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.auto-redirect-note strong {
+  color: #0284c7;
+}
+
+.callback-actions-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.callback-btn {
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.callback-btn.primary {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.callback-btn.primary:hover {
+  background: #0369a1;
+}
+
+.callback-btn.secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.callback-btn.secondary:hover {
+  background: #e2e8f0;
+}
+
+.callback-order-ref-note {
+  font-size: 13px;
+  color: #475569;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.callback-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-callback-receipt,
+  #printable-callback-receipt * {
+    visibility: visible;
+  }
+  #printable-callback-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

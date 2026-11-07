@@ -12,6 +12,8 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import DeliveryDashboard from "./pages/Delivery/DeliveryDashboard";
 import CustomerDashboard from "./pages/Customer/CustomerDashboard";
 import About from "./pages/About/About";
+import MockPaymentGateway from "./pages/Gateway/MockPaymentGateway";
+import PaymentCallback from "./pages/Gateway/PaymentCallback";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
 import { AuthContext } from "./context/AuthContext";
@@ -122,6 +124,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/gateway/checkout/:sessionId" element={<MockPaymentGateway />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<Navigate to="/menu" replace />} />
         </Routes>

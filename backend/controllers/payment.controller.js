@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { OrderModel } from "../models/order.model.js";
 import { PaymentModel } from "../models/payment.model.js";
+import { ethiopianGateway } from "../services/ethiopianGateway.service.js";
 import logger from "../utils/logger.js";
 
 let stripeClient = null;
@@ -650,3 +651,236 @@ export const paymentWebhook = async (req, res) => {
     res.status(500).json({ code: -1, message: "Webhook error" });
   }
 };
+
+/**
+ * POST /api/payments/gateway/session
+ * Creates an official checkout session URL for Telebirr / CBE / Chapa
+ */
+export const createGatewaySession = async (req, res) => {
+  try {
+    const { orderId, paymentMethod = "Telebirr" } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    if (!orderId) {
+      return res.status(400).json({ message: "Order ID is required to initiate gateway session" });
+    }
+
+    const order = await OrderModel.findById(orderId).populate("userId");
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const clientOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+    const sessionResult = await ethiopianGateway.createCheckoutSession({
+      orderId: order._id,
+      amount: order.totalAmount,
+      currency: "ETB",
+      paymentMethod,
+      customerInfo: {
+        name: `${order.userId?.firstName || ""} ${order.userId?.lastName || ""}`.trim() || order.userId?.name,
+        phone: order.userId?.phone,
+        email: order.userId?.email,
+      },
+      returnUrl: `${clientOrigin}/payment/callback?order_id=${order._id}`,
+      notifyUrl: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/payments/gateway/webhook`,
+    });
+
+    // Also record / update pending payment record
+    let paymentRecord = await PaymentModel.findOne({ orderId: order._id });
+    if (!paymentRecord) {
+      paymentRecord = new PaymentModel({
+        orderId: order._id,
+        userId: order.userId,
+        paymentMethod: paymentMethod === "CBE" ? "CBE" : "Telebirr",
+        providerName: sessionResult.provider,
+        amount: order.totalAmount,
+        currency: "ETB",
+        status: "PENDING",
+        merchantCode: sessionResult.merchantCode || "",
+        gatewayCheckoutId: sessionResult.sessionId,
+        verificationChannel: "WEB_GATEWAY",
+      });
+    } else {
+      paymentRecord.gatewayCheckoutId = sessionResult.sessionId;
+      paymentRecord.providerName = sessionResult.provider;
+      paymentRecord.paymentMethod = paymentMethod === "CBE" ? "CBE" : "Telebirr";
+    }
+    await paymentRecord.save();
+
+    res.status(200).json({
+      success: true,
+      orderId: order._id,
+      sessionId: sessionResult.sessionId,
+      checkoutUrl: sessionResult.checkoutUrl,
+      amount: sessionResult.amount,
+      currency: sessionResult.currency,
+      provider: sessionResult.provider,
+      mode: sessionResult.mode,
+      expiresAt: sessionResult.expiresAt,
+    });
+  } catch (error) {
+    logger.error("Error creating gateway session:", error);
+    res.status(500).json({ message: "Could not create payment gateway session", error: error.message });
+  }
+};
+
+/**
+ * GET /api/payments/gateway/session/:sessionId
+ * Retrieves session details for rendering the Gateway Checkout Portal
+ */
+export const getGatewaySessionDetails = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = ethiopianGateway.getSession(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Gateway payment session expired or not found" });
+    }
+
+    const order = await OrderModel.findById(session.orderId).select("items totalAmount deliveryAddress status");
+
+    res.status(200).json({
+      success: true,
+      session,
+      orderItems: order?.items || [],
+      orderStatus: order?.status || "pending",
+      gatewayMode: ethiopianGateway.mode,
+    });
+  } catch (error) {
+    logger.error("Error fetching gateway session:", error);
+    res.status(500).json({ message: "Error fetching gateway session" });
+  }
+};
+
+/**
+ * POST /api/payments/gateway/mock-process
+ * Called by the Gateway Checkout Portal when the tester confirms, fails, or cancels
+ */
+export const processMockGatewayPayment = async (req, res) => {
+  try {
+    const { sessionId, action = "confirm", customerPin, otpCode } = req.body;
+    const result = await ethiopianGateway.processMockAuthorization({
+      sessionId,
+      action,
+      customerPin,
+      otpCode,
+    });
+
+    const session = result.session;
+    const clientOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+
+    if (result.success) {
+      // Update Payment Model
+      const payment = await PaymentModel.findOne({ orderId: session.orderId });
+      if (payment) {
+        payment.status = "COMPLETED";
+        payment.transactionReference = result.transactionReference;
+        payment.paidAt = result.paidAt;
+        payment.senderPhone = session.customerPhone;
+        payment.verificationChannel = "WEB_GATEWAY";
+        await payment.save();
+      }
+
+      // Update Order Model
+      const order = await OrderModel.findById(session.orderId);
+      if (order) {
+        order.payment = {
+          method: session.paymentMethod,
+          provider: session.provider,
+          accountNumber: session.merchantCode,
+          senderPhone: session.customerPhone,
+          status: "Paid",
+          transactionId: result.transactionReference,
+          paidAt: result.paidAt,
+        };
+        order.timeline.push({
+          status: order.status,
+          timestamp: new Date(),
+          note: `Payment of ${Number(order.totalAmount).toFixed(2)} ETB authorized via ${session.provider} Gateway (Ref: ${result.transactionReference})`,
+        });
+        await order.save();
+
+        // Socket.IO real-time emission
+        const io = req.app?.get?.("io");
+        if (io) {
+          io.to(`order-${order._id}`).emit("status-update", {
+            orderId: order._id,
+            status: order.status,
+            paymentStatus: "Paid",
+            transactionId: result.transactionReference,
+          });
+          io.emit("payment-verified", {
+            orderId: order._id,
+            amount: order.totalAmount,
+            provider: session.provider,
+            transactionId: result.transactionReference,
+          });
+        }
+      }
+
+      const redirectUrl = `${clientOrigin}/payment/callback?status=success&session_id=${sessionId}&order_id=${session.orderId}&tx_ref=${result.transactionReference}`;
+
+      return res.status(200).json({
+        success: true,
+        status: "SUCCESS",
+        transactionReference: result.transactionReference,
+        redirectUrl,
+      });
+    } else {
+      const redirectUrl = `${clientOrigin}/payment/callback?status=${result.status.toLowerCase()}&session_id=${sessionId}&order_id=${session.orderId}&message=${encodeURIComponent(result.message)}`;
+      return res.status(200).json({
+        success: false,
+        status: result.status,
+        message: result.message,
+        redirectUrl,
+      });
+    }
+  } catch (error) {
+    logger.error("Mock gateway processing error:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+/**
+ * GET /api/payments/gateway/verify/:sessionId
+ * Verifies gateway session upon redirecting back to returnUrl
+ */
+export const verifyGatewaySession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = ethiopianGateway.getSession(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Gateway session not found or expired" });
+    }
+
+    const order = await OrderModel.findById(session.orderId);
+
+    res.status(200).json({
+      success: true,
+      sessionStatus: session.status,
+      orderId: session.orderId,
+      orderStatus: order?.status || "pending",
+      paymentStatus: order?.payment?.status || "Pending",
+      transactionId: order?.payment?.transactionId || session.transactionReference || "",
+      amount: session.amount,
+      currency: session.currency,
+      provider: session.provider,
+      merchantName: session.merchantName,
+      paidAt: order?.payment?.paidAt || session.paidAt || null,
+      receipt: {
+        receiptNumber: `REC-${sessionId.slice(-8)}`,
+        orderId: session.orderId,
+        amount: Number(session.amount).toFixed(2),
+        currency: "ETB",
+        provider: session.provider,
+        merchantName: session.merchantName,
+        transactionId: order?.payment?.transactionId || session.transactionReference,
+        paidAt: order?.payment?.paidAt || session.paidAt,
+        status: order?.payment?.status || session.status,
+      },
+    });
+  } catch (error) {
+    logger.error("Error verifying gateway session:", error);
+    res.status(500).json({ message: "Verification failed" });
+  }
+};
+
