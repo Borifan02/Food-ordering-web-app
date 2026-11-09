@@ -451,3 +451,124 @@ export const changePassword = async (req, res) => {
         res.status(500).json({ message: error.message || "Failed to change password" });
     }
 };
+
+/**
+ * GET /api/auth/addresses
+ * Retrieve all saved addresses for the authenticated user
+ */
+export const getSavedAddresses = async (req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id).select("savedAddresses address phone");
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.status(200).json(user.savedAddresses || []);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * POST /api/auth/addresses
+ * Add a new delivery address to the user's saved addresses
+ */
+export const addSavedAddress = async (req, res) => {
+    try {
+        const { label = "Home", subCity = "Bole", address, phone = "", isDefault = false } = req.body;
+        if (!address || !address.trim()) {
+            return res.status(400).json({ message: "Address details are required" });
+        }
+
+        const user = await userModel.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (!Array.isArray(user.savedAddresses)) {
+            user.savedAddresses = [];
+        }
+
+        const shouldBeDefault = Boolean(isDefault || user.savedAddresses.length === 0);
+        if (shouldBeDefault) {
+            user.savedAddresses.forEach((a) => (a.isDefault = false));
+            user.address = address.trim();
+        }
+
+        const newAddr = {
+            label: label.trim() || "Home",
+            subCity: subCity.trim() || "Bole",
+            address: address.trim(),
+            phone: phone.trim() || user.phone || "",
+            isDefault: shouldBeDefault,
+        };
+
+        user.savedAddresses.push(newAddr);
+        await user.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Address saved successfully! 📍",
+            savedAddresses: user.savedAddresses,
+            newAddress: newAddr,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * DELETE /api/auth/addresses/:addressId
+ * Delete an address from saved addresses
+ */
+export const deleteSavedAddress = async (req, res) => {
+    try {
+        const { addressId } = req.params;
+        const user = await userModel.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.savedAddresses = (user.savedAddresses || []).filter(
+            (a) => a._id?.toString() !== addressId
+        );
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Address removed",
+            savedAddresses: user.savedAddresses,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * PATCH /api/auth/addresses/:addressId/default
+ * Set a saved address as the primary default delivery address
+ */
+export const setDefaultAddress = async (req, res) => {
+    try {
+        const { addressId } = req.params;
+        const user = await userModel.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        let found = false;
+        user.savedAddresses.forEach((a) => {
+            if (a._id?.toString() === addressId) {
+                a.isDefault = true;
+                user.address = a.address;
+                found = true;
+            } else {
+                a.isDefault = false;
+            }
+        });
+
+        if (!found) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: "Default delivery address updated",
+            savedAddresses: user.savedAddresses,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

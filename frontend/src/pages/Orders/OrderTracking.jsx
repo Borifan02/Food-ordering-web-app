@@ -27,6 +27,14 @@ const OrderTracking = () => {
   const [cancelling, setCancelling] = useState(false);
   const [mapProgress, setMapProgress] = useState(0.15);
 
+  // Live Order Chat & GPS state
+  const [messages, setMessages] = useState([]);
+  const [newMessageText, setNewMessageText] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [liveDriverLocation, setLiveDriverLocation] = useState(null);
+  const chatBottomRef = useRef(null);
+
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -45,6 +53,40 @@ const OrderTracking = () => {
     }
   };
 
+  // Fetch initial chat messages
+  useEffect(() => {
+    if (id) {
+      apiClient
+        .get(`/orders/${id}/messages`)
+        .then((res) => {
+          if (Array.isArray(res.data)) setMessages(res.data);
+        })
+        .catch(() => {});
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (chatOpen && chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, chatOpen]);
+
+  const handleSendMessage = async (textToSend) => {
+    const text = (textToSend || newMessageText).trim();
+    if (!text) return;
+    setSendingMsg(true);
+    try {
+      const res = await apiClient.post(`/orders/${id}/messages`, { text });
+      if (res.data?.success) {
+        setNewMessageText("");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not send message");
+    } finally {
+      setSendingMsg(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrder();
 
@@ -59,6 +101,22 @@ const OrderTracking = () => {
           fetchOrder(true);
         }
       });
+
+      socket.on("driver-location", ({ orderId, coords }) => {
+        if (orderId === id && coords) {
+          setLiveDriverLocation(coords);
+          setMapProgress(0.72);
+        }
+      });
+
+      socket.on("order-message", ({ orderId, message }) => {
+        if (orderId === id && message) {
+          setMessages((prev) => {
+            if (message._id && prev.some((m) => m._id === message._id)) return prev;
+            return [...prev, message];
+          });
+        }
+      });
     }
 
     // Polling fallback every 8 seconds
@@ -71,6 +129,8 @@ const OrderTracking = () => {
       if (socket) {
         socket.emit("leave-order", id);
         socket.off("status-update");
+        socket.off("driver-location");
+        socket.off("order-message");
       }
     };
   }, [id]);
@@ -312,9 +372,14 @@ const OrderTracking = () => {
 
       {/* Simulated Live Route Map */}
       <div className="tracking-map-container">
+        {liveDriverLocation && (
+          <div className="live-gps-badge-overlay animate-pulse">
+            🟢 {t("liveCourierTracker") || "Live GPS Tracking"} • Speed: 28 km/h • {t("distanceAway") || "Distance"}: 1.1 km
+          </div>
+        )}
         <canvas ref={mapCanvasRef} className="tracking-map-canvas"></canvas>
         <div className="map-legend-bar">
-          <span>📍 From: Kitchen</span>
+          <span>📍 From: Foodie Bole Kitchen</span>
           <span>🛵 Driver: {order.deliveryManId?.name || "Assigning driver"}</span>
           <span>🏠 To: {order.deliveryAddress}</span>
         </div>
@@ -367,14 +432,143 @@ const OrderTracking = () => {
               Vehicle: {order.deliveryManId.vehicleType || "Scooter"} • Rating: ★ {order.deliveryManId.rating || "4.9"}
             </p>
           </div>
-          {order.deliveryManId.phone && (
-            <a
-              href={`tel:${order.deliveryManId.phone}`}
-              className="driver-call-btn"
+          <div className="driver-actions-cluster">
+            {order.deliveryManId.phone && (
+              <a
+                href={`tel:${order.deliveryManId.phone}`}
+                className="driver-call-btn"
+              >
+                📞 Call Driver
+              </a>
+            )}
+            <button
+              type="button"
+              className="driver-chat-pill-btn"
+              onClick={() => setChatOpen(!chatOpen)}
             >
-              📞 Call Driver
-            </a>
-          )}
+              💬 {t("orderChatTitle") || "Chat"}
+              {messages.length > 0 && <span className="chat-counter-badge">{messages.length}</span>}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Live In-App Chat Toggle Bar (when driver not yet assigned) */}
+      {!isCancelled && !order.deliveryManId && (
+        <div className="order-chat-bar-card">
+          <div className="chat-bar-info">
+            <span className="chat-bar-icon">💬</span>
+            <div>
+              <strong>{t("orderChatTitle") || "Live Order Chat"}</strong>
+              <p>{t("orderChatSub") || "Coordinate directly with kitchen & delivery courier"}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={`btn-open-order-chat ${chatOpen ? "active" : ""}`}
+            onClick={() => setChatOpen(!chatOpen)}
+          >
+            {chatOpen ? "▲ Hide Chat" : "💬 Open Chat"}
+            {messages.length > 0 && <span className="chat-badge">{messages.length}</span>}
+          </button>
+        </div>
+      )}
+
+      {/* Live Order Chat Box Drawer */}
+      {chatOpen && !isCancelled && (
+        <div className="order-chat-box animate-pop-in">
+          <div className="chat-box-header">
+            <h4>💬 {t("orderChatTitle") || "Order Live Chat"} (Order #{order._id.substring(0, 8)})</h4>
+            <button type="button" className="close-chat-btn" onClick={() => setChatOpen(false)}>✕</button>
+          </div>
+
+          <div className="chat-messages-container">
+            {messages.length === 0 ? (
+              <div className="chat-empty-state">
+                <span className="empty-chat-icon">💬</span>
+                <p>No messages yet. Send instructions for the kitchen or courier!</p>
+              </div>
+            ) : (
+              messages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`chat-bubble-row ${
+                    m.senderRole === "customer"
+                      ? "mine"
+                      : m.senderRole === "deliveryman"
+                      ? "courier"
+                      : "kitchen"
+                  }`}
+                >
+                  <div className="chat-bubble">
+                    <div className="chat-sender-line">
+                      <strong className="sender-name">{m.senderName}</strong>
+                      <span className={`sender-role-pill role-${m.senderRole}`}>
+                        {m.senderRole === "customer"
+                          ? "You"
+                          : m.senderRole === "deliveryman"
+                          ? "🛵 Courier"
+                          : "👨‍🍳 Kitchen"}
+                      </span>
+                    </div>
+                    <p className="chat-text">{m.text}</p>
+                    <span className="chat-time">
+                      {new Date(m.timestamp || Date.now()).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={chatBottomRef} />
+          </div>
+
+          {/* Quick Suggestion Chips */}
+          <div className="chat-quick-chips">
+            <button
+              type="button"
+              className="quick-chip"
+              onClick={() => handleSendMessage(t("quickNoteGate") || "Please call when at the gate")}
+            >
+              📞 At the gate
+            </button>
+            <button
+              type="button"
+              className="quick-chip"
+              onClick={() => handleSendMessage(t("quickNoteAwaze") || "Please include extra Awaze / Mitmita")}
+            >
+              🌶️ Extra Awaze
+            </button>
+            <button
+              type="button"
+              className="quick-chip"
+              onClick={() => handleSendMessage(t("quickNoteCutlery") || "Please include napkins & utensils")}
+            >
+              🍴 Utensils
+            </button>
+          </div>
+
+          {/* Message Input Bar */}
+          <form
+            className="chat-input-bar"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+          >
+            <input
+              type="text"
+              value={newMessageText}
+              onChange={(e) => setNewMessageText(e.target.value)}
+              placeholder={t("typeMessage") || "Type a message for kitchen or courier..."}
+              disabled={sendingMsg}
+            />
+            <button type="submit" disabled={sendingMsg || !newMessageText.trim()}>
+              {sendingMsg ? "..." : (t("sendMsg") || "Send ➔")}
+            </button>
+          </form>
         </div>
       )}
 
@@ -611,6 +805,12 @@ const OrderTracking = () => {
                   <span>Delivery Fee</span>
                   <span>{order.deliveryFee ? `${Number(order.deliveryFee).toFixed(2)} ETB` : "FREE"}</span>
                 </div>
+                {order.tipAmount > 0 && (
+                  <div className="breakdown-line tip">
+                    <span>🛵 Courier Gursha (Tip)</span>
+                    <span>+{Number(order.tipAmount).toFixed(2)} ETB</span>
+                  </div>
+                )}
                 {order.discountAmount > 0 && (
                   <div className="breakdown-line discount">
                     <span>Discount Applied</span>

@@ -4,6 +4,7 @@ jest.unstable_mockModule('../models/order.model.js', () => {
     const mockModel = jest.fn();
     mockModel.aggregate = jest.fn();
     mockModel.countDocuments = jest.fn();
+    mockModel.find = jest.fn();
     return { OrderModel: mockModel };
 });
 
@@ -20,7 +21,7 @@ jest.unstable_mockModule('pdfkit', () => {
     };
 });
 
-const { getDashboardStats, exportDashboardStatsPDF } = await import('../controllers/report.controller.js');
+const { getDashboardStats, exportDashboardStatsPDF, exportOrdersCSV } = await import('../controllers/report.controller.js');
 const { OrderModel } = await import('../models/order.model.js');
 const PDFDocument = (await import('pdfkit')).default;
 
@@ -127,6 +128,37 @@ describe('Report Controller', () => {
             expect(res.json).toHaveBeenCalledWith({ message: "Failed to generate PDF report" });
 
             consoleSpy.mockRestore();
+        });
+    });
+
+    describe('exportOrdersCSV', () => {
+        it('should stream CSV content with proper headers', async () => {
+            res.send = jest.fn();
+            const mockChain = {
+                populate: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockResolvedValue([
+                    {
+                        _id: 'ord_123',
+                        createdAt: new Date('2026-11-09'),
+                        userId: { firstName: 'Abebe', lastName: 'Bikila', phone: '0911223344' },
+                        deliveryAddress: 'Bole Medhanialem',
+                        payment: { method: 'Telebirr', provider: 'Telebirr', transactionId: 'TX123', status: 'Paid' },
+                        subtotal: 200,
+                        deliveryFee: 0,
+                        tipAmount: 20,
+                        totalAmount: 220,
+                        status: 'delivered',
+                    }
+                ]),
+            };
+            OrderModel.find.mockReturnValue(mockChain);
+
+            await exportOrdersCSV(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv; charset=utf-8');
+            expect(res.send).toHaveBeenCalledWith(expect.stringContaining('Order ID'));
+            expect(res.send).toHaveBeenCalledWith(expect.stringContaining('Abebe Bikila'));
         });
     });
 });

@@ -26,6 +26,10 @@ const deliveryManSchema = new Schema(
       type: Number,
       default: 0,
     },
+    totalTips: {
+      type: Number,
+      default: 0,
+    },
     currentOrderId: {
       type: Schema.Types.ObjectId,
       ref: "order",

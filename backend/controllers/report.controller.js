@@ -133,3 +133,84 @@ export const exportDashboardStatsPDF = async (req, res) => {
     }
 };
 
+/**
+ * GET /api/reports/export-csv
+ * Export orders and financial records as CSV for accounting/audit
+ */
+export const exportOrdersCSV = async (req, res) => {
+    try {
+        const orders = await OrderModel.find()
+            .populate("userId", "firstName lastName phone email")
+            .populate("deliveryManId", "name phone")
+            .sort({ createdAt: -1 });
+
+        const headers = [
+            "Order ID",
+            "Date",
+            "Customer Name",
+            "Customer Phone",
+            "Delivery Address",
+            "Courier",
+            "Payment Method",
+            "Payment Provider",
+            "Transaction Ref",
+            "Payment Status",
+            "Subtotal (ETB)",
+            "15% VAT (ETB)",
+            "Delivery Fee (ETB)",
+            "Gursha/Tip (ETB)",
+            "Total Amount (ETB)",
+            "Order Status",
+        ];
+
+        const escapeCSV = (val) => {
+            if (val === null || val === undefined) return '""';
+            const str = String(val).replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = orders.map((o) => {
+            const customerName = o.userId ? `${o.userId.firstName || ""} ${o.userId.lastName || ""}`.trim() : "Guest/Deleted";
+            const phone = o.userId?.phone || o.payment?.senderPhone || "";
+            const courier = o.deliveryManId?.name || "Unassigned";
+            const subtotal = Number(o.subtotal || o.totalAmount || 0);
+            const vat = Math.round(subtotal * 0.15 * 100) / 100;
+            const deliveryFee = Number(o.deliveryFee || 0);
+            const tip = Number(o.tipAmount || 0);
+            const total = Number(o.totalAmount || 0);
+
+            return [
+                escapeCSV(o._id?.toString() || ""),
+                escapeCSV(new Date(o.createdAt).toISOString().split("T")[0]),
+                escapeCSV(customerName),
+                escapeCSV(phone),
+                escapeCSV(o.deliveryAddress || ""),
+                escapeCSV(courier),
+                escapeCSV(o.payment?.method || "Cash"),
+                escapeCSV(o.payment?.provider || ""),
+                escapeCSV(o.payment?.transactionId || ""),
+                escapeCSV(o.payment?.status || "Pending"),
+                escapeCSV(subtotal.toFixed(2)),
+                escapeCSV(vat.toFixed(2)),
+                escapeCSV(deliveryFee.toFixed(2)),
+                escapeCSV(tip.toFixed(2)),
+                escapeCSV(total.toFixed(2)),
+                escapeCSV(o.status || "pending"),
+            ].join(",");
+        });
+
+        const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n"); // UTF-8 BOM for Excel
+
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="Foodie_Orders_Report_${new Date().toISOString().split("T")[0]}.csv"`
+        );
+
+        res.status(200).send(csvContent);
+    } catch (error) {
+        logger.error("CSV Export Error:", error);
+        res.status(500).json({ message: "Failed to generate CSV export", error: error.message });
+    }
+};
+

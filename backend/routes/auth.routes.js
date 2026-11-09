@@ -8,7 +8,11 @@ import {
     getFavorites,
     forgotPassword,
     resetPassword,
-    changePassword
+    changePassword,
+    getSavedAddresses,
+    addSavedAddress,
+    deleteSavedAddress,
+    setDefaultAddress,
 } from "../controllers/auth.controller.js";
 import { userModel } from "../models/user.model.js"; 
 import { verifyToken, verifyAdmin } from "../middleware/authMiddleware.js";
@@ -27,6 +31,10 @@ router.put("/profile", verifyToken, updateProfile);
 router.put("/change-password", verifyToken, changePassword);
 router.post("/favorites/:itemId", verifyToken, toggleFavorite);
 router.get("/favorites", verifyToken, getFavorites);
+router.get("/addresses", verifyToken, getSavedAddresses);
+router.post("/addresses", verifyToken, addSavedAddress);
+router.delete("/addresses/:addressId", verifyToken, deleteSavedAddress);
+router.patch("/addresses/:addressId/default", verifyToken, setDefaultAddress);
 
 // Admin Routes - promote user to admin
 router.put("/make-admin", verifyAdmin, async (req, res) => {

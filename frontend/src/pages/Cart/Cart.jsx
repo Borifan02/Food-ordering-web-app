@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
@@ -12,6 +12,19 @@ import { formatCurrency, CURRENCY } from "../../utils/currency";
 import "./Cart.css";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150";
+
+const ADDIS_NEIGHBORHOODS = [
+  "Bole Medhanialem",
+  "Kazanchis",
+  "Piassa",
+  "Sarbet",
+  "CMC Michael",
+  "Hayahulet",
+  "Mexico Square",
+  "Gerji",
+  "Summit",
+  "Lebu",
+];
 
 const Cart = () => {
   const {
@@ -54,6 +67,50 @@ const Cart = () => {
   const [isScheduled, setIsScheduled] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState("today");
   const [deliveryTimeSlot, setDeliveryTimeSlot] = useState("12:30 PM");
+
+  // Saved Addresses state
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+
+  // Courier Gursha (Tip) state
+  const [selectedTip, setSelectedTip] = useState(0); // 0, 20, 50, 100, "custom"
+  const [customTip, setCustomTip] = useState("");
+
+  // Load user saved addresses
+  useEffect(() => {
+    if (user) {
+      apiClient
+        .get("/auth/addresses")
+        .then((res) => {
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            setSavedAddresses(res.data);
+            const def = res.data.find((a) => a.isDefault) || res.data[0];
+            if (def && !address) {
+              setAddress(def.address);
+              setSelectedAddressId(def._id);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
+  const handleSelectSavedAddress = (addr) => {
+    setSelectedAddressId(addr._id);
+    setAddress(addr.address);
+    toast.info(`Selected: ${addr.label} (${addr.address})`);
+  };
+
+  const handleAddNeighborhood = (nh) => {
+    if (address.includes(nh)) return;
+    setAddress((prev) => (prev ? `${prev}, ${nh}` : nh));
+  };
+
+  const tipAmount =
+    selectedTip === "custom"
+      ? Math.max(0, Number(customTip) || 0)
+      : Number(selectedTip);
+  const grandTotal = Math.max(0, Math.round((finalTotal + tipAmount) * 100) / 100);
 
   const TIME_SLOTS = [
     "11:30 AM",
@@ -168,6 +225,7 @@ const Cart = () => {
         orderNotes: orderNotes,
         isScheduled,
         scheduledDeliveryTime,
+        tipAmount,
         paymentMethod:
           paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "CBEBirr"
             ? paymentMethod
@@ -177,7 +235,7 @@ const Cart = () => {
 
       const res = await apiClient.post("/orders", orderPayload);
       const newOrderId = res.data.orderId || res.data.order?._id;
-      const orderAmount = res.data.order?.totalAmount || finalTotal;
+      const orderAmount = res.data.order?.totalAmount || grandTotal;
 
       if (
         paymentMethod === "Telebirr" ||
@@ -245,6 +303,7 @@ const Cart = () => {
         orderNotes: orderNotes,
         paymentMethod: "Card",
         paymentIntentId: paymentIntent.id,
+        tipAmount,
         couponCode: appliedCoupon?.code || "",
       };
 
@@ -407,13 +466,57 @@ const Cart = () => {
 
           {/* Delivery & Cooking Notes Card */}
           <div className="delivery-details-card">
-            <h3 className="column-title">{t("deliveryAddress")}</h3>
+            <h3 className="column-title">📍 {t("deliveryAddress")}</h3>
+
+            {/* Saved Addresses Selector (if user has saved addresses) */}
+            {savedAddresses.length > 0 && (
+              <div className="saved-addresses-selector">
+                <span className="saved-addr-label">🏷️ {t("useSavedAddress") || "Select a saved address"}:</span>
+                <div className="saved-addr-pills">
+                  {savedAddresses.map((sa) => (
+                    <button
+                      key={sa._id}
+                      type="button"
+                      className={`saved-addr-chip ${selectedAddressId === sa._id ? "active" : ""}`}
+                      onClick={() => handleSelectSavedAddress(sa)}
+                    >
+                      <span className="addr-chip-icon">
+                        {sa.label?.toLowerCase() === "work" ? "🏢" : "🏠"}
+                      </span>
+                      <strong>{sa.label}</strong>
+                      {sa.subCity && <small className="addr-chip-subcity">{sa.subCity}</small>}
+                      {sa.isDefault && <span className="addr-chip-default-tag">{t("defaultBadge") || "Default"}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Popular Addis Ababa Neighborhood Chips */}
+            <div className="neighborhood-chips-row">
+              <span className="neighborhood-chips-label">🏙️ {t("addisNeighborhoods") || "Addis Neighborhoods"}:</span>
+              <div className="neighborhood-chips-list">
+                {ADDIS_NEIGHBORHOODS.map((nh) => (
+                  <button
+                    key={nh}
+                    type="button"
+                    className="neighborhood-chip-btn"
+                    onClick={() => handleAddNeighborhood(nh)}
+                  >
+                    + {nh}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="input-group">
               <label>{t("deliveryAddress")} *</label>
               <textarea
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setSelectedAddressId("");
+                }}
                 placeholder={t("deliveryAddressPlaceholder")}
                 rows={3}
                 required
@@ -560,6 +663,55 @@ const Cart = () => {
               )}
             </div>
 
+            {/* Courier Gursha (Tip) Selector */}
+            <div className="gursha-tip-card">
+              <div className="gursha-card-header">
+                <span className="gursha-icon">🛵</span>
+                <div>
+                  <h4 className="gursha-title">{t("gurshaTitle") || "Courier Gursha / Tip"}</h4>
+                  <p className="gursha-sub">{t("gurshaSub") || "Support your courier with an optional tip"}</p>
+                </div>
+              </div>
+
+              <div className="gursha-pills-row">
+                {[0, 20, 50, 100].map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    className={`gursha-pill-btn ${selectedTip === amount ? "active" : ""}`}
+                    onClick={() => {
+                      setSelectedTip(amount);
+                      setCustomTip("");
+                    }}
+                  >
+                    {amount === 0 ? (t("noGursha") || "No Tip") : `+${amount} ETB`}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`gursha-pill-btn ${selectedTip === "custom" ? "active" : ""}`}
+                  onClick={() => setSelectedTip("custom")}
+                >
+                  {t("customGursha") || "Custom"}
+                </button>
+              </div>
+
+              {selectedTip === "custom" && (
+                <div className="custom-gursha-input-row">
+                  <input
+                    type="number"
+                    min="1"
+                    step="5"
+                    value={customTip}
+                    onChange={(e) => setCustomTip(e.target.value)}
+                    placeholder="Enter custom ETB tip..."
+                    className="custom-gursha-input"
+                  />
+                  <span className="currency-tag">ETB</span>
+                </div>
+              )}
+            </div>
+
             {/* Price Calculations */}
             <div className="summary-rows-box">
               <div className="summary-row">
@@ -585,9 +737,16 @@ const Cart = () => {
                 </div>
               )}
 
+              {tipAmount > 0 && (
+                <div className="summary-row tip-row">
+                  <span>🛵 {t("courierGurshaFee") || "Courier Gursha (Tip)"}</span>
+                  <span>+{tipAmount.toFixed(2)} ETB</span>
+                </div>
+              )}
+
               <div className="summary-row total-row">
                 <span>{t("totalAmount")}</span>
-                <span>{finalTotal.toFixed(2)} ETB</span>
+                <span>{grandTotal.toFixed(2)} ETB</span>
               </div>
             </div>
 
@@ -692,14 +851,14 @@ const Cart = () => {
               {loading
                 ? "Placing Order..."
                 : paymentMethod === "Telebirr"
-                  ? `${t("payWithTelebirr")} • ${finalTotal.toFixed(2)} ETB ➔`
+                  ? `${t("payWithTelebirr")} • ${grandTotal.toFixed(2)} ETB ➔`
                   : paymentMethod === "CBEBirr"
-                    ? `${t("payWithCbeBirr")} • ${finalTotal.toFixed(2)} ETB ➔`
+                    ? `${t("payWithCbeBirr")} • ${grandTotal.toFixed(2)} ETB ➔`
                     : paymentMethod === "CBE"
-                      ? `${t("payWithCbeAccount") || t("payWithCbe")} • ${finalTotal.toFixed(2)} ETB ➔`
+                      ? `${t("payWithCbeAccount") || t("payWithCbe")} • ${grandTotal.toFixed(2)} ETB ➔`
                       : paymentMethod === "Card"
-                        ? `${t("proceedPayment")} • ${finalTotal.toFixed(2)} ETB`
-                        : `${t("placeOrderCash")} • ${finalTotal.toFixed(2)} ETB ➔`}
+                        ? `${t("proceedPayment")} • ${grandTotal.toFixed(2)} ETB`
+                        : `${t("placeOrderCash")} • ${grandTotal.toFixed(2)} ETB ➔`}
             </button>
 
             <div className="checkout-trust-badges">
@@ -714,7 +873,7 @@ const Cart = () => {
       {showEthiopianModal && (
         <EthiopianPaymentModal
           orderId={activeOrderId}
-          amount={activeOrderAmount || finalTotal}
+          amount={activeOrderAmount || grandTotal}
           initialMethod={activePaymentMethod || paymentMethod}
           orderItems={activeOrderItems.length > 0 ? activeOrderItems : cart}
           onPaymentSuccess={handleEthiopianPaymentSuccess}
@@ -731,7 +890,7 @@ const Cart = () => {
           ></div>
           <div className="payment-content">
             <StripePayment
-              amount={finalTotal}
+              amount={grandTotal}
               onSuccess={handleCardPaymentSuccess}
               onCancel={() => setShowCardModal(false)}
             />

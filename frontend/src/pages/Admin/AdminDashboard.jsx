@@ -516,6 +516,28 @@ const AdminDashboard = () => {
     }
   };
 
+  // CSV / Excel Report Download
+  const handleDownloadCSV = async () => {
+    try {
+      toast.info("Generating official CSV/Excel orders report...");
+      const response = await apiClient.get("/reports/export-csv", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "text/csv;charset=utf-8;" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `foodie_orders_audit_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("CSV/Excel report exported successfully! 📊");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to export CSV report");
+    }
+  };
+
   // Delivery Men Add / Edit / Delete
   const handleAddDeliveryMan = async (e) => {
     e.preventDefault();
@@ -615,9 +637,18 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        <button className="download-report-top-btn" onClick={handleDownloadPDF}>
-          📄 {t("exportPdfReport")}
-        </button>
+        <div className="admin-header-actions" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button className="download-report-top-btn" onClick={handleDownloadPDF}>
+            📄 {t("exportPdfReport")}
+          </button>
+          <button
+            className="download-report-top-btn btn-export-csv"
+            style={{ background: "#10b981", borderColor: "#059669" }}
+            onClick={handleDownloadCSV}
+          >
+            {t("exportCsvBtn")}
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -786,15 +817,26 @@ const AdminDashboard = () => {
               ))}
             </div>
 
-            <input
-              className="admin-search-input"
-              placeholder={t("searchPlaceholderAdmin")}
-              value={orderSearch}
-              onChange={(e) => {
-                setOrderSearch(e.target.value);
-                setOrderPage(1);
-              }}
-            />
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                className="admin-search-input"
+                placeholder={t("searchPlaceholderAdmin")}
+                value={orderSearch}
+                onChange={(e) => {
+                  setOrderSearch(e.target.value);
+                  setOrderPage(1);
+                }}
+              />
+              <button
+                type="button"
+                className="download-report-top-btn btn-export-csv"
+                style={{ background: "#10b981", borderColor: "#059669", padding: "8px 14px", fontSize: "0.85rem" }}
+                onClick={handleDownloadCSV}
+                title="Export all orders with Ethiopian TIN and VAT details to CSV/Excel"
+              >
+                {t("exportCsvBtn")}
+              </button>
+            </div>
           </div>
 
           <div className="table-responsive-box">

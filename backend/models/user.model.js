@@ -50,7 +50,10 @@ export const userSchema = Schema(
     savedAddresses: [
       {
         label: { type: String, default: "Home" },
+        subCity: { type: String, default: "Bole" },
         address: { type: String, required: true },
+        phone: { type: String, default: "" },
+        isDefault: { type: Boolean, default: false },
       },
     ],
     avatar: {

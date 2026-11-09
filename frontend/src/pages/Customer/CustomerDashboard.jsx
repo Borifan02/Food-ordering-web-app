@@ -16,24 +16,41 @@ const CustomerDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("overview"); // "overview", "active-orders", "reorder", "profile"
+  const [activeTab, setActiveTab] = useState("overview"); // "overview", "active-orders", "reorder", "addresses", "profile"
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [favoritesList, setFavoritesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch customer orders, menu items, and favorites
+  // Saved Addresses State
+  const [addresses, setAddresses] = useState([]);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    label: "Home",
+    address: "",
+    subCity: "Bole",
+    phone: "",
+    isDefault: false
+  });
+  const [addressSubmitting, setAddressSubmitting] = useState(false);
+
+  // Fetch customer orders, menu items, favorites, and saved addresses
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersRes, menuRes, favRes] = await Promise.all([
+        const [ordersRes, menuRes, favRes, addrRes] = await Promise.all([
           apiClient.get("/orders"),
           apiClient.get("/menu"),
           apiClient.get("/auth/favorites").catch(() => ({ data: [] })),
+          apiClient.get("/auth/addresses").catch(() => ({ data: { addresses: [] } })),
         ]);
         setOrders(ordersRes.data || []);
         setMenuItems(menuRes.data || []);
         setFavoritesList(favRes.data || []);
+        setAddresses(addrRes.data?.addresses || []);
+        if (user?.phone) {
+          setAddressForm((prev) => ({ ...prev, phone: user.phone }));
+        }
       } catch (err) {
         console.error("Error loading customer dashboard data:", err);
       } finally {
@@ -41,7 +58,54 @@ const CustomerDashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
+
+  const handleAddAddress = async (e) => {
+    e.preventDefault();
+    if (!addressForm.address.trim()) {
+      toast.warning("Please enter a street, building, or landmark address");
+      return;
+    }
+    setAddressSubmitting(true);
+    try {
+      const res = await apiClient.post("/auth/addresses", addressForm);
+      setAddresses(res.data.addresses || []);
+      toast.success("Delivery address saved successfully! 📍");
+      setIsAddressModalOpen(false);
+      setAddressForm({
+        label: "Home",
+        address: "",
+        subCity: "Bole",
+        phone: user?.phone || "",
+        isDefault: false
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to add address");
+    } finally {
+      setAddressSubmitting(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm("Are you sure you want to delete this delivery address?")) return;
+    try {
+      const res = await apiClient.delete(`/auth/addresses/${addressId}`);
+      setAddresses(res.data.addresses || []);
+      toast.success("Address removed successfully");
+    } catch (err) {
+      toast.error("Failed to delete address");
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId) => {
+    try {
+      const res = await apiClient.patch(`/auth/addresses/${addressId}/default`);
+      setAddresses(res.data.addresses || []);
+      toast.success("Default delivery address updated! ⭐");
+    } catch (err) {
+      toast.error("Failed to set default address");
+    }
+  };
 
   // Real-time socket updates for order status transitions
   useEffect(() => {
@@ -194,12 +258,21 @@ const CustomerDashboard = () => {
           </div>
         </div>
 
-        <div className="cust-kpi-card">
+        <div
+          className="cust-kpi-card"
+          onClick={() => setActiveTab("addresses")}
+          style={{ cursor: "pointer" }}
+          title="Click to view & manage saved addresses"
+        >
           <span className="cust-kpi-icon">📍</span>
           <div className="cust-kpi-body">
-            <span className="cust-kpi-label">{t("deliveryAddress")}</span>
-            <h3 className="cust-kpi-val address-val">{user?.address ? user.address.slice(0, 18) + "..." : "Addis Ababa"}</h3>
-            <small>{user?.phone || "+251..."}</small>
+            <span className="cust-kpi-label">{t("savedAddressesTitle")} ({addresses.length})</span>
+            <h3 className="cust-kpi-val address-val">
+              {addresses.find((a) => a.isDefault)?.label
+                ? `${addresses.find((a) => a.isDefault).label}: ${addresses.find((a) => a.isDefault).subCity}`
+                : (user?.address ? user.address.slice(0, 18) + "..." : "Addis Ababa")}
+            </h3>
+            <small>Manage addresses ➔</small>
           </div>
         </div>
       </div>
@@ -223,6 +296,12 @@ const CustomerDashboard = () => {
           onClick={() => setActiveTab("reorder")}
         >
           ↺ {t("quickReorder")}
+        </button>
+        <button
+          className={`cust-tab-btn ${activeTab === "addresses" ? "active" : ""}`}
+          onClick={() => setActiveTab("addresses")}
+        >
+          📍 {t("savedAddressesTitle")} ({addresses.length})
         </button>
         <button
           className={`cust-tab-btn ${activeTab === "profile" ? "active" : ""}`}
@@ -542,6 +621,232 @@ const CustomerDashboard = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: SAVED ADDRESSES */}
+      {activeTab === "addresses" && (
+        <div className="customer-tab-pane">
+          <div className="cust-section-box">
+            <div className="cust-section-header">
+              <div>
+                <h3>📍 {t("savedAddressesTitle")} ({addresses.length})</h3>
+                <p className="section-subtitle-text" style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.9rem" }}>
+                  Save and manage delivery locations across Addis Ababa with neighborhood landmarks.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="cust-primary-btn"
+                onClick={() => setIsAddressModalOpen(true)}
+              >
+                {t("addNewAddress")}
+              </button>
+            </div>
+
+            {/* Address Modal / Drawer */}
+            {isAddressModalOpen && (
+              <div className="cust-address-modal-overlay">
+                <div className="cust-address-modal-card">
+                  <div className="modal-header-row">
+                    <h4>📍 {t("addNewAddress")}</h4>
+                    <button
+                      type="button"
+                      className="modal-close-icon"
+                      onClick={() => setIsAddressModalOpen(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAddAddress} className="cust-address-form">
+                    <div className="form-group-custom">
+                      <label style={{ display: "block", fontWeight: 700, marginBottom: "6px", fontSize: "0.85rem", color: "#334155" }}>
+                        Label
+                      </label>
+                      <div className="label-selector-pills">
+                        {["Home", "Work", "Family", "Other"].map((lbl) => (
+                          <button
+                            type="button"
+                            key={lbl}
+                            className={`label-pill-btn ${addressForm.label === lbl ? "active" : ""}`}
+                            onClick={() => setAddressForm({ ...addressForm, label: lbl })}
+                          >
+                            {lbl === "Home" && "🏠 "}
+                            {lbl === "Work" && "💼 "}
+                            {lbl === "Family" && "👨‍👩‍👧 "}
+                            {lbl === "Other" && "📍 "}
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-group-custom">
+                      <label style={{ display: "block", fontWeight: 700, marginBottom: "6px", fontSize: "0.85rem", color: "#334155" }}>
+                        {t("subCityLabel")}
+                      </label>
+                      <select
+                        className="cust-select-input"
+                        value={addressForm.subCity}
+                        onChange={(e) => setAddressForm({ ...addressForm, subCity: e.target.value })}
+                      >
+                        <option value="Bole">Bole (ቦሌ)</option>
+                        <option value="Kirkos">Kirkos (ቂርቆስ)</option>
+                        <option value="Yeka">Yeka (የካ)</option>
+                        <option value="Arada">Arada (አራዳ)</option>
+                        <option value="Lideta">Lideta (ልደታ)</option>
+                        <option value="Nifas Silk-Lafto">Nifas Silk-Lafto (ንፋስ ስልክ ላፍቶ)</option>
+                        <option value="Kolfe Keranio">Kolfe Keranio (ኮልፌ ቀራኒዮ)</option>
+                        <option value="Gullele">Gullele (ጉለሌ)</option>
+                        <option value="Akaky Kaliti">Akaky Kaliti (አቃቂ ቃሊቲ)</option>
+                        <option value="Addis Ketema">Addis Ketema (አዲስ ከተማ)</option>
+                        <option value="Lemi Kura">Lemi Kura (ለሚ ኩራ)</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group-custom">
+                      <label style={{ display: "block", fontWeight: 700, marginBottom: "6px", fontSize: "0.85rem", color: "#334155" }}>
+                        {t("deliveryAddress")} (Street, House No, or Landmark)
+                      </label>
+                      <input
+                        type="text"
+                        className="cust-text-input"
+                        placeholder="e.g., Behind Edna Mall, Bole Medhanialem, House 452"
+                        value={addressForm.address}
+                        onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                        required
+                      />
+                      <div className="quick-neighborhood-chips" style={{ marginTop: "8px" }}>
+                        <span className="chips-title" style={{ fontSize: "0.8rem", color: "#64748b", marginRight: "6px" }}>
+                          {t("addisNeighborhoods")}:
+                        </span>
+                        {[
+                          "Bole Medhanialem",
+                          "Atlas Hotel area",
+                          "Kazanchis UNECA",
+                          "CMC Michael",
+                          "Sarbet AU HQ",
+                          "Gerji Imperial"
+                        ].map((nh) => (
+                          <button
+                            key={nh}
+                            type="button"
+                            className="nh-chip-btn"
+                            onClick={() =>
+                              setAddressForm((prev) => ({
+                                ...prev,
+                                address: prev.address ? `${prev.address}, ${nh}` : nh
+                              }))
+                            }
+                          >
+                            + {nh}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-group-custom">
+                      <label style={{ display: "block", fontWeight: 700, marginBottom: "6px", fontSize: "0.85rem", color: "#334155" }}>
+                        {t("phoneNumber")}
+                      </label>
+                      <input
+                        type="tel"
+                        className="cust-text-input"
+                        placeholder="0911234567 or +251911234567"
+                        value={addressForm.phone}
+                        onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-checkbox-custom" style={{ margin: "14px 0" }}>
+                      <label className="checkbox-label-flex" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={addressForm.isDefault}
+                          onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
+                        />
+                        <span style={{ fontSize: "0.9rem", color: "#1e293b", fontWeight: 600 }}>{t("setDefaultAddressBtn")}</span>
+                      </label>
+                    </div>
+
+                    <div className="modal-actions-row">
+                      <button
+                        type="button"
+                        className="cust-btn-cancel"
+                        onClick={() => setIsAddressModalOpen(false)}
+                      >
+                        {t("cancel") || "Cancel"}
+                      </button>
+                      <button
+                        type="submit"
+                        className="cust-primary-btn"
+                        disabled={addressSubmitting}
+                      >
+                        {addressSubmitting ? "Saving..." : "Save Address"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Addresses Cards Grid */}
+            {addresses.length === 0 ? (
+              <div className="empty-state-box">
+                <span className="empty-icon">📍</span>
+                <h4>No saved delivery addresses yet</h4>
+                <p>Save home, office, and frequent delivery locations in Addis Ababa for 1-click checkout.</p>
+                <button
+                  type="button"
+                  className="cust-primary-btn"
+                  onClick={() => setIsAddressModalOpen(true)}
+                >
+                  {t("addNewAddress")}
+                </button>
+              </div>
+            ) : (
+              <div className="cust-addresses-grid">
+                {addresses.map((addr) => (
+                  <div key={addr._id} className={`cust-address-card ${addr.isDefault ? "is-default" : ""}`}>
+                    <div className="addr-card-top">
+                      <div className="addr-label-wrap">
+                        <span className="addr-icon">
+                          {addr.label === "Home" ? "🏠" : addr.label === "Work" ? "💼" : addr.label === "Family" ? "👨‍👩‍👧" : "📍"}
+                        </span>
+                        <strong>{addr.label || "Delivery Location"}</strong>
+                        {addr.isDefault && <span className="default-pill-badge">⭐ {t("defaultBadge")}</span>}
+                      </div>
+                      <span className="subcity-tag">{addr.subCity}</span>
+                    </div>
+
+                    <p className="addr-text">{addr.address}</p>
+                    {addr.phone && <div className="addr-phone">📞 {addr.phone}</div>}
+
+                    <div className="addr-card-actions">
+                      {!addr.isDefault && (
+                        <button
+                          type="button"
+                          className="btn-set-default"
+                          onClick={() => handleSetDefaultAddress(addr._id)}
+                        >
+                          ⭐ {t("setDefaultAddressBtn")}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn-delete-addr"
+                        onClick={() => handleDeleteAddress(addr._id)}
+                        title="Remove address"
+                      >
+                        🗑️ {t("delete")}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -76,6 +76,10 @@ export const orderSchema = Schema(
       type: Number,
       required: true,
     },
+    tipAmount: {
+      type: Number,
+      default: 0,
+    },
     items: [
       {
         menuItemId: { type: Types.ObjectId, ref: "menuItem" },
@@ -91,6 +95,25 @@ export const orderSchema = Schema(
         note: { type: String, default: "" },
       },
     ],
+    messages: [
+      {
+        senderId: { type: Types.ObjectId },
+        senderName: { type: String, required: true },
+        senderRole: {
+          type: String,
+          enum: ["customer", "admin", "deliveryman", "system"],
+          required: true,
+        },
+        text: { type: String, required: true, trim: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    driverLocation: {
+      latitude: { type: Number, default: null },
+      longitude: { type: Number, default: null },
+      heading: { type: Number, default: null },
+      updatedAt: { type: Date, default: null },
+    },
     cancellationReason: {
       type: String,
       default: "",

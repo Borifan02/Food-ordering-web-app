@@ -197,7 +197,7 @@ export const markAsDelivered = async (req, res) => {
     await DeliveryManModel.findByIdAndUpdate(deliveryManId, {
       status: "available",
       currentOrderId: null,
-      $inc: { totalDeliveries: 1 }
+      $inc: { totalDeliveries: 1, totalTips: Math.max(0, Number(order.tipAmount || 0)) }
     });
 
     // Socket.IO notification
@@ -324,20 +324,28 @@ export const getMyActiveOrder = async (req, res) => {
 export const getMyDeliveryHistory = async (req, res) => {
   try {
     const deliveryManId = req.user.id;
-    const orders = await OrderModel.find({
-      deliveryManId: deliveryManId,
-      status: "delivered"
-    })
-      .populate("userId", "firstName lastName phone")
-      .sort({ updatedAt: -1 })
-      .limit(50);
+    const { DeliveryManModel } = await import("../models/deliveryMan.model.js");
+    const [orders, deliveryMan] = await Promise.all([
+      OrderModel.find({
+        deliveryManId: deliveryManId,
+        status: "delivered"
+      })
+        .populate("userId", "firstName lastName phone")
+        .sort({ updatedAt: -1 })
+        .limit(50),
+      DeliveryManModel.findById(deliveryManId)
+    ]);
 
     const totalEarned = orders.reduce((sum, order) => sum + (order.deliveryFee || 3.99), 0);
+    const totalTips = (deliveryMan && deliveryMan.totalTips !== undefined)
+      ? deliveryMan.totalTips
+      : orders.reduce((sum, order) => sum + (order.tipAmount || 0), 0);
 
     res.status(200).json({
       orders,
       totalCompleted: orders.length,
-      totalEarned: Math.round(totalEarned * 100) / 100
+      totalEarned: Math.round(totalEarned * 100) / 100,
+      totalTips: Math.round(totalTips * 100) / 100
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -470,7 +478,7 @@ export const completeDelivery = async (req, res) => {
       await DeliveryManModel.findByIdAndUpdate(order.deliveryManId, {
         status: "available",
         currentOrderId: null,
-        $inc: { totalDeliveries: 1 }
+        $inc: { totalDeliveries: 1, totalTips: Math.max(0, Number(order.tipAmount || 0)) }
       });
     }
 

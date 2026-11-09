@@ -6,7 +6,10 @@ import {
     updateOrderStatus, 
     getAllOrders, 
     cancelOrder, 
-    validateCoupon 
+    validateCoupon,
+    getOrderMessages,
+    sendOrderMessage,
+    updateDriverLocation,
 } from "../controllers/order.controller.js";
 import { verifyToken, verifyAdmin, verifyCustomer } from "../middleware/authMiddleware.js";
 
@@ -19,5 +22,8 @@ router.post("/validate-coupon", verifyCustomer, validateCoupon);
 router.get("/:id", verifyToken, getOrderById);
 router.put("/:id/status", verifyAdmin, updateOrderStatus);
 router.post("/:id/cancel", verifyToken, cancelOrder);
+router.get("/:id/messages", verifyToken, getOrderMessages);
+router.post("/:id/messages", verifyToken, sendOrderMessage);
+router.post("/:id/location", verifyToken, updateDriverLocation);
 
 export default router;

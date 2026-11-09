@@ -137,6 +137,40 @@ export const translations = {
     closeInvoice: "Close",
     issuedBy: "Foodie Restaurant PLC • Addis Ababa, Ethiopia",
 
+    // Saved Addresses & Delivery
+    savedAddressesTitle: "Saved Delivery Addresses",
+    useSavedAddress: "Use a saved address",
+    addNewAddress: "+ New Address",
+    addisNeighborhoods: "Popular Addis Neighborhoods",
+    subCityLabel: "Sub-City / Kifle Ketema",
+    setDefaultAddressBtn: "Set as Default",
+    defaultBadge: "Default",
+
+    // Courier Gursha (Tip)
+    gurshaTitle: "Courier Gursha / Tip 🛵",
+    gurshaSub: "Reward your delivery driver with a voluntary tip",
+    noGursha: "No Tip",
+    customGursha: "Custom",
+    courierGurshaFee: "Courier Gursha (Tip)",
+
+    // Live Order Chat
+    orderChatTitle: "Live Order Chat",
+    orderChatSub: "Chat directly with restaurant kitchen & delivery courier",
+    typeMessage: "Type instructions (e.g. Extra Awaze, gate code)...",
+    sendMsg: "Send",
+    quickNoteGate: "Please call when at the gate",
+    quickNoteAwaze: "Please include extra Awaze / Mitmita",
+    quickNoteCutlery: "Please include napkins & utensils",
+
+    // Live GPS Tracking & Reports
+    liveCourierTracker: "Live Courier GPS Tracking",
+    courierOnRoute: "Courier is in transit to your address",
+    distanceAway: "Distance remaining",
+    startGpsSimulation: "📍 Broadcast GPS / Simulate Route",
+    stopGpsSimulation: "⏹️ Stop GPS Simulation",
+    exportCsvBtn: "📊 Export Orders (CSV / Excel)",
+    totalTipsEarned: "Total Gursha Tips",
+
     // Customer Dashboard
     welcomeGreeting: "Welcome to your Customer Hub",
     welcomeSubtitle: "Track active food deliveries, re-order favorites, and manage your account",
@@ -450,6 +484,40 @@ export const translations = {
     closeInvoice: "Cufi",
     issuedBy: "Foodie Restaurant PLC • Finfinnee, Itoophiyaa",
 
+    // Saved Addresses & Delivery
+    savedAddressesTitle: "Teessoowwan Geejjibaa Qusataman",
+    useSavedAddress: "Teessoo qusatame filadhu",
+    addNewAddress: "+ Teessoo Haaraa",
+    addisNeighborhoods: "Naannoolee Finfinnee Beekamoo",
+    subCityLabel: "Kifla Katamaa",
+    setDefaultAddressBtn: "Durtii Godhi",
+    defaultBadge: "Durtii",
+
+    // Courier Gursha (Tip)
+    gurshaTitle: "Gurshaa Geessituu 🛵",
+    gurshaSub: "Geessituu keessan badhaasa fedhiin jajjabeessaa",
+    noGursha: "Homaa",
+    customGursha: "Gatii Biraa",
+    courierGurshaFee: "Gurshaa Geessituu",
+
+    // Live Order Chat
+    orderChatTitle: "Haasaa Ajajaa Kallattii",
+    orderChatSub: "Kushinaa fi geessituu waliin kallattiin haasa'aa",
+    typeMessage: "Qajeelfama barreessaa (fkn Awazee dabalataa)...",
+    sendMsg: "Ergi",
+    quickNoteGate: "Mootummaa yoo geessan bilbilaa",
+    quickNoteAwaze: "Awazee / Mitmiixaa dabalataa nuuf godhaa",
+    quickNoteCutlery: "Mancuruuraa fi waraantoo nuuf kennaa",
+
+    // Live GPS Tracking & Reports
+    liveCourierTracker: "Hordoffii GPS Geessituu Kallattii",
+    courierOnRoute: "Geessituun gara teessoo keessaniitti adeemaa jira",
+    distanceAway: "Fageenya hafe",
+    startGpsSimulation: "📍 GPS Eegali / Fageenya Hordofi",
+    stopGpsSimulation: "⏹️ GPS Dhaabi",
+    exportCsvBtn: "📊 Ajajoota Baasi (CSV / Excel)",
+    totalTipsEarned: "Ida'ama Gurshaa",
+
     // Customer Dashboard
     welcomeGreeting: "Baga gara Giddugala Maamilaatti Nagaan Dhuftan",
     welcomeSubtitle: "Ajajoota nyaataa adeemsarra jiran hordofaa, kan jaallattan deebisaa ajajaa",
@@ -762,6 +830,40 @@ export const translations = {
     printInvoice: "🖨️ አትም / በPDF አስቀምጥ",
     closeInvoice: "ዝጋ",
     issuedBy: "ፉዲ ሬስቶራንት ኃ/የተ/የግ/ማህበር • አዲስ አበባ፣ ኢትዮጵያ",
+
+    // Saved Addresses & Delivery
+    savedAddressesTitle: "የተቀመጡ የማድረሻ አድራሻዎች",
+    useSavedAddress: "ከተቀመጡ አድራሻዎች ይምረጡ",
+    addNewAddress: "+ አዲስ አድራሻ",
+    addisNeighborhoods: "ታዋቂ የአዲስ አበባ አካባቢዎች",
+    subCityLabel: "ክፍለ ከተማ",
+    setDefaultAddressBtn: "ዋና አድራሻ አድርግ",
+    defaultBadge: "ዋና አድራሻ",
+
+    // Courier Gursha (Tip)
+    gurshaTitle: "የአሽከርካሪ ጉርሻ 🛵",
+    gurshaSub: "አድራሽ ሹፌሩን በፈቃደኝነት ጉርሻ ያበረታቱ",
+    noGursha: "ያለ ጉርሻ",
+    customGursha: "ሌላ መጠን",
+    courierGurshaFee: "የአሽከርካሪ ጉርሻ",
+
+    // Live Order Chat
+    orderChatTitle: "የትዕዛዝ የቀጥታ መልእክት",
+    orderChatSub: "ከማብሰያ ክፍሉ እና ከአድራሹ ጋር በቀጥታ ይነጋገሩ",
+    typeMessage: "ልዩ መመሪያ ይጻፉ (ለምሳሌ ተጨማሪ አዋዜ፣ የበሩን ደወል ይደውሉ)...",
+    sendMsg: "ላክ",
+    quickNoteGate: "በር ላይ ሲደርሱ ይደውሉ",
+    quickNoteAwaze: "እባክዎን ተጨማሪ አዋዜ / ሚጥሚጣ ያካቱ",
+    quickNoteCutlery: "ማንኪያ እና ሶፍት ያካቱ",
+
+    // Live GPS Tracking & Reports
+    liveCourierTracker: "የአሽከርካሪ የቀጥታ GPS መከታተያ",
+    courierOnRoute: "አድራሹ ወደ አድራሻዎ በመጓዝ ላይ ነው",
+    distanceAway: "የቀረው ርቀት",
+    startGpsSimulation: "📍 የቀጥታ GPS አሳይ / እንቅስቃሴ ጀምር",
+    stopGpsSimulation: "⏹️ GPS አቁም",
+    exportCsvBtn: "📊 ሪፖርት በCSV / Excel አውርድ",
+    totalTipsEarned: "አጠቃላይ የተገኘ ጉርሻ",
 
     // Customer Dashboard
     welcomeGreeting: "እንኳን ወደ ደንበኛ ማዕከልዎ በደህና መጡ",

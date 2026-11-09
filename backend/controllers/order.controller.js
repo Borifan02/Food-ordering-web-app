@@ -18,6 +18,7 @@ export const createOrder = async (req, res) => {
             couponCode = "",
             isScheduled = false,
             scheduledDeliveryTime = null,
+            tipAmount = 0,
         } = req.body;
         const userId = req.user.id; // JWT uses 'id' field
         const userRole = (req.user?.role || "").trim().toLowerCase();
@@ -63,7 +64,8 @@ export const createOrder = async (req, res) => {
             }
         }
 
-        totalAmount = Math.max(0, Math.round((subtotal + deliveryFee - discountAmount) * 100) / 100);
+        const parsedTip = Math.max(0, Math.round(Number(tipAmount || 0) * 100) / 100);
+        totalAmount = Math.max(0, Math.round((subtotal + deliveryFee - discountAmount + parsedTip) * 100) / 100);
 
         // 2. Create Order
         const newOrder = new OrderModel({
@@ -73,6 +75,7 @@ export const createOrder = async (req, res) => {
             deliveryFee,
             discountAmount,
             couponCode: appliedCouponCode,
+            tipAmount: parsedTip,
             totalAmount,
             deliveryAddress,
             orderNotes,
@@ -490,6 +493,131 @@ export const getAllOrders = async (req, res) => {
             .sort({ createdAt: -1 });
         if (!orders) return res.status(404).json({ message: "No orders found" });
         res.status(200).json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * GET /api/orders/:id/messages
+ * Retrieve live in-app chat messages for a specific order
+ */
+export const getOrderMessages = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await OrderModel.findById(id).select("messages userId deliveryManId");
+        if (!order) return res.status(404).json({ message: "Order not found" });
+
+        const userId = (req.user?.id || req.user?._id || "").toString();
+        const role = (req.user?.role || "").toLowerCase();
+        const isOwner = order.userId?.toString() === userId;
+        const isDriver = order.deliveryManId?.toString() === userId;
+        const isAdmin = role === "admin";
+
+        if (!isOwner && !isDriver && !isAdmin) {
+            return res.status(403).json({ message: "Access denied to order messages" });
+        }
+
+        res.status(200).json(order.messages || []);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * POST /api/orders/:id/messages
+ * Send a live in-app chat message on an order thread
+ */
+export const sendOrderMessage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { text } = req.body;
+        if (!text || !text.trim()) {
+            return res.status(400).json({ message: "Message text cannot be empty" });
+        }
+
+        const order = await OrderModel.findById(id);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+
+        const userId = (req.user?.id || req.user?._id || "").toString();
+        const role = (req.user?.role || "customer").toLowerCase();
+        const isOwner = order.userId?.toString() === userId;
+        const isDriver = order.deliveryManId?.toString() === userId;
+        const isAdmin = role === "admin";
+
+        if (!isOwner && !isDriver && !isAdmin) {
+            return res.status(403).json({ message: "Access denied to order messages" });
+        }
+
+        const senderRole = isAdmin ? "admin" : isDriver ? "deliveryman" : "customer";
+        const senderName =
+            req.user?.firstName ||
+            req.user?.name ||
+            (isAdmin ? "Restaurant Kitchen" : isDriver ? "Delivery Courier" : "Customer");
+
+        const newMessage = {
+            senderId: userId,
+            senderName,
+            senderRole,
+            text: text.trim(),
+            timestamp: new Date(),
+        };
+
+        if (!Array.isArray(order.messages)) {
+            order.messages = [];
+        }
+        order.messages.push(newMessage);
+        await order.save();
+
+        const io = req.app?.get?.("io");
+        if (io) {
+            io.to(`order-${id}`).emit("order-message", {
+                orderId: id,
+                message: newMessage,
+            });
+        }
+
+        res.status(201).json({ success: true, message: newMessage });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * POST /api/orders/:id/location
+ * Driver streams current GPS coordinates for real-time order map tracking
+ */
+export const updateDriverLocation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { latitude, longitude, heading = 0 } = req.body;
+
+        if (typeof latitude !== "number" || typeof longitude !== "number") {
+            return res.status(400).json({ message: "Valid latitude and longitude required" });
+        }
+
+        const order = await OrderModel.findById(id);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+
+        const coords = {
+            latitude,
+            longitude,
+            heading,
+            updatedAt: new Date(),
+        };
+
+        order.driverLocation = coords;
+        await order.save();
+
+        const io = req.app?.get?.("io");
+        if (io) {
+            io.to(`order-${id}`).emit("driver-location", {
+                orderId: id,
+                coords,
+            });
+        }
+
+        res.status(200).json({ success: true, coords });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
