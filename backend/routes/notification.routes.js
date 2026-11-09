@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyToken } from "../middleware/auth.middleware.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 import {
   getUserNotifications,
   markNotificationAsRead,
@@ -17,3 +17,4 @@ router.patch("/:id/read", markNotificationAsRead);
 router.delete("/:id", deleteNotification);
 
 export default router;
+

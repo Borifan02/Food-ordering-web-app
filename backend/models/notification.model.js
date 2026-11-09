@@ -46,3 +46,4 @@ export const notificationSchema = new Schema(
 );
 
 export const NotificationModel = model("notification", notificationSchema);
+
