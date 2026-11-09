@@ -1,7 +1,11 @@
 import { OrderModel } from "../models/order.model.js";
 import { ItemModel } from "../models/menuItem.model.js";
 import { CouponModel } from "../models/coupon.model.js";
-import { sendInAppNotification } from "./notification.controller.js";
+import {
+    sendInAppNotification,
+    notifyAdmins,
+    notifyDeliveryDrivers,
+} from "./notification.controller.js";
 import logger from "../utils/logger.js";
 
 export const createOrder = async (req, res) => {
@@ -125,6 +129,32 @@ export const createOrder = async (req, res) => {
             // Non-blocking in tests or when unmocked
         }
 
+        // Notify admins about new incoming order
+        try {
+            notifyAdmins({
+                title: "🔔 New Order Received!",
+                message: `Order #${newOrder._id?.toString?.().slice(-6) || "ID"} (${totalAmount.toFixed(2)} ETB, ${items.length} items) placed.`,
+                type: "order_placed",
+                orderId: newOrder._id,
+                link: "/admin?tab=orders",
+                icon: "📋",
+                io
+            }).catch(e => logger.error("Admin order notification err:", e));
+        } catch (e) {}
+
+        // Notify available delivery drivers about delivery opportunity
+        try {
+            notifyDeliveryDrivers({
+                title: "🛵 New Order Available",
+                message: `Order #${newOrder._id?.toString?.().slice(-6) || "ID"} (${items.length} items) is available for delivery.`,
+                type: "delivery",
+                orderId: newOrder._id,
+                link: "/delivery",
+                icon: "🛵",
+                io
+            }).catch(e => logger.error("Delivery drivers notification err:", e));
+        } catch (e) {}
+
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id, order: newOrder });
     } catch (error) {
         logger.error("Order creation error:", error);
@@ -213,20 +243,51 @@ export const updateOrderStatus = async (req, res) => {
             const statusIcons = {
                 confirmed: "✅",
                 preparing: "👨‍🍳",
+                onTheWay: "🚚",
                 on_delivery: "🚚",
                 delivered: "🎉",
                 cancelled: "❌",
             };
+            const statusLabels = {
+                confirmed: "Order Confirmed",
+                preparing: "Kitchen Cooking",
+                onTheWay: "Courier On The Way",
+                on_delivery: "Out for Delivery",
+                delivered: "Order Delivered!",
+                cancelled: "Order Cancelled",
+            };
+            const statusMessages = {
+                confirmed: "The restaurant has confirmed your order.",
+                preparing: "Your delicious dishes are being prepared fresh in the kitchen.",
+                onTheWay: "Courier has picked up your food and is heading to your address.",
+                on_delivery: "Your food is out for delivery and will arrive shortly.",
+                delivered: "Your order has been delivered! Enjoy your meal.",
+                cancelled: "Your order has been cancelled.",
+            };
+
             sendInAppNotification({
                 userId: order.userId,
-                title: `Order Status: ${String(status).replace('_', ' ').toUpperCase()}`,
-                message: `Your order #${req.params.id.slice(-6)} is now ${String(status).replace('_', ' ')}.`,
+                title: statusLabels[status] || `Order Status: ${String(status).replace('_', ' ').toUpperCase()}`,
+                message: statusMessages[status] || `Your order #${req.params.id.slice(-6)} is now ${String(status).replace('_', ' ')}.`,
                 type: "order_status",
                 orderId: req.params.id,
                 link: `/orders/${req.params.id}`,
                 icon: statusIcons[status] || "📦",
                 io
             }).catch(e => logger.error("In-app status notification err:", e));
+
+            // Alert couriers when order is ready for delivery
+            if (status === "preparing" || status === "confirmed" || status === "ready") {
+                notifyDeliveryDrivers({
+                    title: "🛵 Delivery Order Update",
+                    message: `Order #${req.params.id.slice(-6)} status updated to ${status}. Be ready for pickup!`,
+                    type: "delivery",
+                    orderId: req.params.id,
+                    link: "/delivery",
+                    icon: "🛵",
+                    io
+                }).catch(e => logger.error("Driver status notification err:", e));
+            }
         } catch (e) {
             // Non-blocking
         }
@@ -289,6 +350,48 @@ export const cancelOrder = async (req, res) => {
             });
             io.emit('order-cancelled', { orderId: id, reason });
         }
+
+        // Notify stakeholders of order cancellation
+        try {
+            if (isOwner) {
+                // Cancelled by customer -> notify all restaurant admins
+                notifyAdmins({
+                    title: "⚠️ Order Cancelled by Customer",
+                    message: `Order #${id.slice(-6)} was cancelled by customer. Reason: ${reason}`,
+                    type: "order_status",
+                    orderId: id,
+                    link: "/admin?tab=orders",
+                    icon: "⚠️",
+                    io
+                }).catch(e => logger.error("Admin cancel notification err:", e));
+            } else {
+                // Cancelled by admin -> notify customer
+                sendInAppNotification({
+                    userId: order.userId,
+                    title: "❌ Order Cancelled by Restaurant",
+                    message: `Order #${id.slice(-6)} was cancelled. Reason: ${reason}`,
+                    type: "order_status",
+                    orderId: id,
+                    link: `/orders/${id}`,
+                    icon: "❌",
+                    io
+                }).catch(e => logger.error("Customer cancel notification err:", e));
+            }
+
+            // If driver was assigned -> notify driver
+            if (order.deliveryManId) {
+                sendInAppNotification({
+                    userId: order.deliveryManId,
+                    title: "⚠️ Assigned Delivery Cancelled",
+                    message: `Order #${id.slice(-6)} has been cancelled. No delivery required.`,
+                    type: "delivery",
+                    orderId: id,
+                    link: "/delivery",
+                    icon: "⚠️",
+                    io
+                }).catch(e => logger.error("Driver cancel notification err:", e));
+            }
+        } catch (e) {}
 
         res.status(200).json({ message: "Order cancelled successfully", order: updatedOrder });
     } catch (error) {

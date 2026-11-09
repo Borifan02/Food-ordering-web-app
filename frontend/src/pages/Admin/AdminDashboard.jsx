@@ -194,6 +194,15 @@ const AdminDashboard = () => {
         fetchOrders();
         fetchStats();
       });
+      socket.on("payment-verified", (data) => {
+        toast.success(`💰 Payment verified for order! (${data?.amount ? data.amount + " ETB" : ""})`);
+        fetchOrders();
+        fetchStats();
+      });
+      socket.on("order-cancelled", () => {
+        fetchOrders();
+        fetchStats();
+      });
       socket.on("delivery-completed", () => {
         toast.success("📦 A delivery has been completed!");
         fetchOrders();
@@ -206,6 +215,8 @@ const AdminDashboard = () => {
       if (socket) {
         socket.off("new-order");
         socket.off("order-status-changed");
+        socket.off("payment-verified");
+        socket.off("order-cancelled");
         socket.off("delivery-completed");
       }
     };

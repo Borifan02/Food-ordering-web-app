@@ -54,12 +54,23 @@ const DeliveryDashboard = () => {
           socket.on("new-order", () => {
             fetchPendingOrders();
           });
+
+          socket.on("order-cancelled", () => {
+            fetchPendingOrders();
+            fetchActiveDelivery();
+          });
+
+          socket.on("order-status-changed", () => {
+            fetchPendingOrders();
+          });
         }
 
         return () => {
           if (socket) {
             socket.off("delivery-assigned");
             socket.off("new-order");
+            socket.off("order-cancelled");
+            socket.off("order-status-changed");
           }
         };
       }

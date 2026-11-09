@@ -1,6 +1,7 @@
 import { userModel } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { sendInAppNotification, notifyAdmins } from "./notification.controller.js";
 
 export const register = async (req, res) => {
     try {
@@ -59,6 +60,31 @@ export const register = async (req, res) => {
         });
 
         await newUser.save();
+
+        const io = req.app?.get?.("io");
+        try {
+            // Welcome notification to new user
+            sendInAppNotification({
+                userId: newUser._id,
+                title: "👋 Welcome to Foodie!",
+                message: "Welcome to Foodie! Explore authentic Ethiopian dishes and enjoy fast delivery to your door.",
+                type: "system",
+                link: "/menu",
+                icon: "🇪🇹",
+                io,
+            }).catch(() => {});
+
+            // Admin alert for new registration
+            notifyAdmins({
+                title: "👤 New User Registered",
+                message: `${firstName} ${lastName} (${normalizedEmail}) created a new account.`,
+                type: "system",
+                link: "/admin?tab=users",
+                icon: "👤",
+                io,
+            }).catch(() => {});
+        } catch (e) {}
+
         res.status(201).json({ message: "User registered successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });

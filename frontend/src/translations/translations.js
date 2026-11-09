@@ -98,6 +98,12 @@ export const translations = {
     markAllAsRead: "Mark all as read",
     viewOrder: "View Order",
     newNotification: "New Notification",
+    notifAll: "All",
+    notifOrders: "Orders",
+    notifPayments: "Payments",
+    notifDeliveries: "Deliveries",
+    soundOn: "Sound On",
+    soundOff: "Mute",
 
     // Dietary & Cultural Filtering
     dietaryAll: "All Dishes",
@@ -405,6 +411,12 @@ export const translations = {
     markAllAsRead: "Hunda akka dubbifametti mallatteessi",
     viewOrder: "Ajaja Ilaali",
     newNotification: "Beeksisa Haaraa",
+    notifAll: "Hunda",
+    notifOrders: "Ajajoota",
+    notifPayments: "Kaffaltii",
+    notifDeliveries: "Geessituu",
+    soundOn: "Sagalee banaa",
+    soundOff: "Sagalee cufaa",
 
     // Dietary & Cultural Filtering
     dietaryAll: "Nyaata Hunda",
@@ -712,6 +724,12 @@ export const translations = {
     markAllAsRead: "ሁሉንም እንደተነበበ ምልክት አድርግ",
     viewOrder: "ትዕዛዙን ይመልከቱ",
     newNotification: "አዲስ ማሳወቂያ",
+    notifAll: "ሁሉም",
+    notifOrders: "ትዕዛዞች",
+    notifPayments: "ክፍያዎች",
+    notifDeliveries: "ማድረሻዎች",
+    soundOn: "ድምፅ በርቷል",
+    soundOff: "ድምፅ አጥፋ",
 
     // Dietary & Cultural Filtering
     dietaryAll: "ሁሉም ምግቦች",

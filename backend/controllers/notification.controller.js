@@ -38,6 +38,150 @@ export const sendInAppNotification = async ({
 };
 
 /**
+ * Broadcast notifications to all users of a specific role (e.g. 'admin', 'deliveryMan')
+ */
+export const notifyUsersByRole = async (
+  role,
+  {
+    title,
+    message,
+    type = "system",
+    orderId = null,
+    link = "",
+    icon = "🔔",
+    io = null,
+  }
+) => {
+  try {
+    const normalizedRole = (role || "").trim().toLowerCase();
+    let targetUserIds = [];
+
+    if (normalizedRole === "admin") {
+      try {
+        const { userModel } = await import("../models/user.model.js");
+        if (typeof userModel?.find === "function") {
+          const admins = await userModel.find({ role: "admin" }).select("_id").lean();
+          targetUserIds = admins.map((a) => a._id);
+        }
+      } catch (err) {
+        logger.error("Error finding admin users for notification:", err);
+      }
+    } else if (normalizedRole === "deliveryman" || normalizedRole === "delivery") {
+      try {
+        const { DeliveryManModel } = await import("../models/deliveryMan.model.js");
+        const { userModel } = await import("../models/user.model.js");
+        const promises = [];
+        if (typeof DeliveryManModel?.find === "function") {
+          promises.push(DeliveryManModel.find({}).select("_id").lean());
+        }
+        if (typeof userModel?.find === "function") {
+          promises.push(userModel.find({ role: "deliveryMan" }).select("_id").lean());
+        }
+        const results = await Promise.all(promises);
+        const set = new Set();
+        results.flat().forEach((doc) => {
+          if (doc?._id) set.add(doc._id.toString());
+        });
+        targetUserIds = Array.from(set);
+      } catch (err) {
+        logger.error("Error finding delivery couriers for notification:", err);
+      }
+    }
+
+    const createdNotifications = [];
+    for (const uId of targetUserIds) {
+      try {
+        const notification = await NotificationModel.create({
+          userId: uId,
+          title,
+          message,
+          type,
+          orderId,
+          link,
+          icon,
+        });
+        createdNotifications.push(notification);
+
+        if (io) {
+          io.to(`user-${uId}`).emit("new-notification", notification);
+        }
+      } catch (e) {
+        // Continue creating for other users
+      }
+    }
+
+    // Role-wide WebSocket Channel Broadcasts
+    if (io) {
+      const broadcastPayload = {
+        title,
+        message,
+        type,
+        orderId,
+        link,
+        icon,
+        createdAt: new Date(),
+      };
+      if (normalizedRole === "admin") {
+        io.to("admin-channel").emit("new-notification", broadcastPayload);
+      } else if (normalizedRole === "deliveryman" || normalizedRole === "delivery") {
+        io.to("delivery-channel").emit("new-notification", broadcastPayload);
+      }
+    }
+
+    return createdNotifications;
+  } catch (error) {
+    logger.error(`Error broadcasting notification to role ${role}:`, error);
+    return [];
+  }
+};
+
+/**
+ * Convenient shortcut to notify all restaurant administrators
+ */
+export const notifyAdmins = async ({
+  title,
+  message,
+  type = "system",
+  orderId = null,
+  link = "/admin",
+  icon = "👑",
+  io = null,
+}) => {
+  return notifyUsersByRole("admin", {
+    title,
+    message,
+    type,
+    orderId,
+    link,
+    icon,
+    io,
+  });
+};
+
+/**
+ * Convenient shortcut to notify all active delivery couriers
+ */
+export const notifyDeliveryDrivers = async ({
+  title,
+  message,
+  type = "delivery",
+  orderId = null,
+  link = "/delivery",
+  icon = "🛵",
+  io = null,
+}) => {
+  return notifyUsersByRole("deliveryMan", {
+    title,
+    message,
+    type,
+    orderId,
+    link,
+    icon,
+    io,
+  });
+};
+
+/**
  * GET /api/notifications
  * Get authenticated user's notifications + unread count
  */

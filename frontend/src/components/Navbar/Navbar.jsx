@@ -286,8 +286,9 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Right Cluster (Cart + Hamburger) */}
+          {/* Mobile Right Cluster (Notifications + Cart + Hamburger) */}
           <div className="mobile-right-cluster mobile-only">
+            {user && <NotificationCenter />}
             {isCustomer && (
               <Link to="/cart" className="mobile-cart-btn" aria-label="Cart">
                 <span>🛒</span>

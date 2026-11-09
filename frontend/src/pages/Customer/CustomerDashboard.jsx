@@ -5,6 +5,7 @@ import { CartContext } from "../../context/CartContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useToast } from "../../context/ToastContext";
 import apiClient from "../../api/axios";
+import { getSocket } from "../../utils/socket";
 import UserProfileManager from "../../components/Profile/UserProfileManager";
 import "./CustomerDashboard.css";
 
@@ -41,6 +42,29 @@ const CustomerDashboard = () => {
     };
     fetchData();
   }, []);
+
+  // Real-time socket updates for order status transitions
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket || !user) return;
+
+    const refreshOrders = async () => {
+      try {
+        const ordersRes = await apiClient.get("/orders");
+        setOrders(ordersRes.data || []);
+      } catch {}
+    };
+
+    socket.on("order-status-changed", refreshOrders);
+    socket.on("delivery-status-changed", refreshOrders);
+    socket.on("delivery-completed", refreshOrders);
+
+    return () => {
+      socket.off("order-status-changed", refreshOrders);
+      socket.off("delivery-status-changed", refreshOrders);
+      socket.off("delivery-completed", refreshOrders);
+    };
+  }, [user]);
 
   // Compute Customer KPI Metrics
   const totalOrders = orders.length;

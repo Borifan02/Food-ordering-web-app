@@ -1,5 +1,9 @@
 import { DeliveryManModel } from "../models/deliveryMan.model.js";
 import { OrderModel } from "../models/order.model.js";
+import {
+  sendInAppNotification,
+  notifyAdmins,
+} from "./notification.controller.js";
 
 // Add a new delivery man
 export const createDeliveryMan = async (req, res) => {
@@ -118,6 +122,41 @@ export const acceptOrder = async (req, res) => {
       io.emit("delivery-status-changed", { orderId, status: "onTheWay", deliveryManId });
     }
 
+    // In-app notifications for Customer, Driver, and Admin
+    try {
+      sendInAppNotification({
+        userId: order.userId?._id || order.userId,
+        title: "🛵 Courier On The Way!",
+        message: `${deliveryMan.name || "A courier"} accepted Order #${orderId.slice(-6)} and is on the way to you!`,
+        type: "delivery",
+        orderId: order._id,
+        link: `/orders/${order._id}`,
+        icon: "🛵",
+        io
+      }).catch(() => {});
+
+      sendInAppNotification({
+        userId: deliveryManId,
+        title: "🚀 Delivery Started",
+        message: `You accepted Order #${orderId.slice(-6)}. Navigate safely to customer address!`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/delivery",
+        icon: "🚚",
+        io
+      }).catch(() => {});
+
+      notifyAdmins({
+        title: "🛵 Order Picked Up",
+        message: `Order #${orderId.slice(-6)} picked up by ${deliveryMan.name || "courier"}.`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/admin?tab=orders",
+        icon: "🛵",
+        io
+      }).catch(() => {});
+    } catch (e) {}
+
     res.status(200).json({ message: "Order accepted", order });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -171,6 +210,41 @@ export const markAsDelivered = async (req, res) => {
       });
       io.emit("delivery-completed", { orderId, deliveryManId });
     }
+
+    // In-app notifications for Customer, Driver, and Admin
+    try {
+      sendInAppNotification({
+        userId: order.userId?._id || order.userId,
+        title: "🎉 Order Delivered!",
+        message: `Your order #${orderId.slice(-6)} has arrived safely. Enjoy your meal!`,
+        type: "order_status",
+        orderId: order._id,
+        link: `/orders/${order._id}`,
+        icon: "🎉",
+        io
+      }).catch(() => {});
+
+      sendInAppNotification({
+        userId: deliveryManId,
+        title: "🎉 Delivery Completed!",
+        message: `Awesome work! Order #${orderId.slice(-6)} completed. +1 delivery added to your record.`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/delivery",
+        icon: "✅",
+        io
+      }).catch(() => {});
+
+      notifyAdmins({
+        title: "✅ Order Successfully Delivered",
+        message: `Order #${orderId.slice(-6)} was completed and marked as delivered.`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/admin?tab=orders",
+        icon: "✅",
+        io
+      }).catch(() => {});
+    } catch (e) {}
 
     res.status(200).json({ message: "Order marked as delivered", order });
   } catch (error) {
@@ -326,6 +400,41 @@ export const assignDelivery = async (req, res) => {
       io.emit("delivery-assigned", { orderId, deliveryManId: deliveryMan._id });
     }
 
+    // Notifications for Customer, Driver, and Admin
+    try {
+      sendInAppNotification({
+        userId: order.userId?._id || order.userId,
+        title: "🛵 Courier Assigned!",
+        message: `${deliveryMan.name} has been assigned to deliver Order #${orderId.slice(-6)}.`,
+        type: "delivery",
+        orderId: order._id,
+        link: `/orders/${order._id}`,
+        icon: "🛵",
+        io
+      }).catch(() => {});
+
+      sendInAppNotification({
+        userId: deliveryMan._id,
+        title: "📦 New Delivery Assigned",
+        message: `You have been assigned Order #${orderId.slice(-6)}. Address: ${order.deliveryAddress || "Addis Ababa"}`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/delivery",
+        icon: "📦",
+        io
+      }).catch(() => {});
+
+      notifyAdmins({
+        title: "🛵 Driver Assigned",
+        message: `${deliveryMan.name} assigned to Order #${orderId.slice(-6)}.`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/admin?tab=orders",
+        icon: "🛵",
+        io
+      }).catch(() => {});
+    } catch (e) {}
+
     res.status(200).json({ message: "Delivery assigned", order, deliveryMan });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -372,7 +481,45 @@ export const completeDelivery = async (req, res) => {
         status: "delivered",
         timestamp: new Date()
       });
+      io.emit("delivery-completed", { orderId, deliveryManId: order.deliveryManId });
     }
+
+    // Notifications for Customer, Driver, and Admin
+    try {
+      sendInAppNotification({
+        userId: order.userId?._id || order.userId,
+        title: "🎉 Order Delivered!",
+        message: `Your order #${orderId.slice(-6)} has arrived. Enjoy your meal!`,
+        type: "order_status",
+        orderId: order._id,
+        link: `/orders/${order._id}`,
+        icon: "🎉",
+        io
+      }).catch(() => {});
+
+      if (order.deliveryManId) {
+        sendInAppNotification({
+          userId: order.deliveryManId,
+          title: "🎉 Delivery Completed!",
+          message: `Order #${orderId.slice(-6)} completed. +1 delivery recorded.`,
+          type: "delivery",
+          orderId: order._id,
+          link: "/delivery",
+          icon: "✅",
+          io
+        }).catch(() => {});
+      }
+
+      notifyAdmins({
+        title: "✅ Order Marked as Delivered",
+        message: `Order #${orderId.slice(-6)} was completed.`,
+        type: "delivery",
+        orderId: order._id,
+        link: "/admin?tab=orders",
+        icon: "✅",
+        io
+      }).catch(() => {});
+    } catch (e) {}
 
     res.status(200).json({ message: "Order delivered successfully", order });
   } catch (error) {

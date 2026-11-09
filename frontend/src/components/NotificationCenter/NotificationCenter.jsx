@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -17,16 +17,59 @@ const NotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'orders' | 'payments' | 'deliveries'
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem("foodie_sound_enabled");
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
   const dropdownRef = useRef(null);
 
   const userId = user?._id || user?.id;
+  const role = (user?.role || "").trim().toLowerCase();
 
-  // Fetch initial notifications
+  const toggleSound = (e) => {
+    e.stopPropagation();
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    try {
+      localStorage.setItem("foodie_sound_enabled", JSON.stringify(next));
+    } catch {}
+    toast.info(next ? (t("soundOn") || "Sound on 🔊") : (t("soundOff") || "Sound muted 🔇"));
+  };
+
+  // Synthesized Web Audio chime (safe across browsers)
+  const playNotificationChime = () => {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    } catch {
+      // Audio autoplay policy until user gesture
+    }
+  };
+
+  // Fetch initial notifications from database
   const fetchNotifications = async () => {
     if (!userId) return;
     try {
       setLoading(true);
-      const res = await apiClient.get("/notifications?limit=25");
+      const res = await apiClient.get("/notifications?limit=30");
       if (res.data?.success) {
         setNotifications(res.data.notifications || []);
         setUnreadCount(res.data.unreadCount || 0);
@@ -44,16 +87,35 @@ const NotificationCenter = () => {
     }
   }, [userId]);
 
-  // Connect socket for real-time notifications
+  // Connect socket rooms for real-time notifications for ALL user roles
   useEffect(() => {
     if (!userId) return;
     const socket = getSocket();
+    if (!socket) return;
+
+    // 1. Join personal user room
     socket.emit("join-user", userId);
 
+    // 2. Join role-specific channels
+    if (role === "admin") {
+      socket.emit("join-admin");
+    } else if (role === "deliveryman" || role === "delivery") {
+      socket.emit("join-delivery");
+    }
+
     const handleNewNotification = (notif) => {
-      setNotifications((prev) => [notif, ...prev]);
+      if (!notif) return;
+      // Deduplicate in case message received from both channel & direct room
+      setNotifications((prev) => {
+        if (notif._id && prev.some((n) => n._id === notif._id)) {
+          return prev;
+        }
+        return [notif, ...prev];
+      });
       setUnreadCount((prev) => prev + 1);
-      toast.info(`🔔 ${notif.title}: ${notif.message}`);
+
+      playNotificationChime();
+      toast.info(`${notif.icon || "🔔"} ${notif.title}: ${notif.message}`);
     };
 
     socket.on("new-notification", handleNewNotification);
@@ -61,7 +123,7 @@ const NotificationCenter = () => {
     return () => {
       socket.off("new-notification", handleNewNotification);
     };
-  }, [userId]);
+  }, [userId, role, soundEnabled]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -89,6 +151,19 @@ const NotificationCenter = () => {
     }
   };
 
+  const handleDeleteNotification = async (id, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await apiClient.delete(`/notifications/${id}`);
+      if (res.data?.success) {
+        setNotifications((prev) => prev.filter((n) => n._id !== id));
+        setUnreadCount(res.data.unreadCount ?? unreadCount);
+      }
+    } catch (err) {
+      console.warn("Error deleting notification:", err.message);
+    }
+  };
+
   const handleMarkAllAsRead = async () => {
     try {
       const res = await apiClient.patch("/notifications/read-all");
@@ -102,17 +177,32 @@ const NotificationCenter = () => {
     }
   };
 
+  // Role-aware navigation on click
   const handleNotificationClick = async (notif) => {
-    if (!notif.isRead) {
+    if (!notif.isRead && notif._id) {
       await handleMarkAsRead(notif._id);
     }
     setIsOpen(false);
 
     if (notif.link) {
       navigate(notif.link);
-    } else if (notif.orderId) {
-      navigate(`/orders/${notif.orderId}`);
+      return;
     }
+
+    if (notif.orderId) {
+      if (role === "admin") {
+        navigate(`/admin?tab=orders&orderId=${notif.orderId}`);
+      } else if (role === "deliveryman" || role === "delivery") {
+        navigate("/delivery");
+      } else {
+        navigate(`/orders/${notif.orderId}`);
+      }
+      return;
+    }
+
+    if (role === "admin") navigate("/admin");
+    else if (role === "deliveryman" || role === "delivery") navigate("/delivery");
+    else navigate("/customer");
   };
 
   const formatTimeAgo = (dateStr) => {
@@ -126,6 +216,22 @@ const NotificationCenter = () => {
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
+
+  // Category filter
+  const filteredNotifications = useMemo(() => {
+    if (activeTab === "orders") {
+      return notifications.filter(
+        (n) => n.type === "order_placed" || n.type === "order_status"
+      );
+    }
+    if (activeTab === "payments") {
+      return notifications.filter((n) => n.type === "payment");
+    }
+    if (activeTab === "deliveries") {
+      return notifications.filter((n) => n.type === "delivery");
+    }
+    return notifications;
+  }, [notifications, activeTab]);
 
   if (!user) return null;
 
@@ -158,15 +264,59 @@ const NotificationCenter = () => {
               )}
             </div>
 
-            {unreadCount > 0 && (
+            <div className="notif-header-actions">
               <button
                 type="button"
-                className="mark-all-read-btn"
-                onClick={handleMarkAllAsRead}
+                className={`notif-sound-btn ${soundEnabled ? "on" : "muted"}`}
+                onClick={toggleSound}
+                title={soundEnabled ? "Sound enabled (Click to mute)" : "Sound muted (Click to enable)"}
+                aria-label="Toggle notification sound"
               >
-                {t("markAllAsRead") || "Mark all read"}
+                {soundEnabled ? "🔊" : "🔇"}
               </button>
-            )}
+
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  className="mark-all-read-btn"
+                  onClick={handleMarkAllAsRead}
+                >
+                  {t("markAllAsRead") || "Mark all read"}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="notif-tabs-bar">
+            <button
+              type="button"
+              className={`notif-tab-btn ${activeTab === "all" ? "active" : ""}`}
+              onClick={() => setActiveTab("all")}
+            >
+              {t("notifAll") || "All"} ({notifications.length})
+            </button>
+            <button
+              type="button"
+              className={`notif-tab-btn ${activeTab === "orders" ? "active" : ""}`}
+              onClick={() => setActiveTab("orders")}
+            >
+              🍕 {t("notifOrders") || "Orders"}
+            </button>
+            <button
+              type="button"
+              className={`notif-tab-btn ${activeTab === "payments" ? "active" : ""}`}
+              onClick={() => setActiveTab("payments")}
+            >
+              💳 {t("notifPayments") || "Payments"}
+            </button>
+            <button
+              type="button"
+              className={`notif-tab-btn ${activeTab === "deliveries" ? "active" : ""}`}
+              onClick={() => setActiveTab("deliveries")}
+            >
+              🛵 {t("notifDeliveries") || "Deliveries"}
+            </button>
           </div>
 
           {/* List */}
@@ -176,15 +326,15 @@ const NotificationCenter = () => {
                 <span className="empty-spinner">⏳</span>
                 <p>Loading notifications...</p>
               </div>
-            ) : notifications.length === 0 ? (
+            ) : filteredNotifications.length === 0 ? (
               <div className="notif-empty-state">
                 <span className="empty-bell-icon">🔕</span>
                 <p>{t("noNotifications") || "No new notifications right now."}</p>
-                <small>Updates regarding your orders and deliveries will appear here.</small>
+                <small>Real-time updates regarding orders, payments, and deliveries appear here.</small>
               </div>
             ) : (
               <div className="notif-items-list">
-                {notifications.map((notif) => (
+                {filteredNotifications.map((notif) => (
                   <div
                     key={notif._id}
                     className={`notif-item-row ${notif.isRead ? "read" : "unread"}`}
@@ -195,11 +345,28 @@ const NotificationCenter = () => {
                     <div className="notif-content-col">
                       <div className="notif-title-row">
                         <strong className="notif-item-title">{notif.title}</strong>
-                        {!notif.isRead && <span className="unread-dot"></span>}
+                        {!notif.isRead && <span className="unread-dot" title="Unread"></span>}
                       </div>
                       <p className="notif-item-msg">{notif.message}</p>
-                      <span className="notif-time-ago">{formatTimeAgo(notif.createdAt)}</span>
+                      <div className="notif-meta-row">
+                        <span className="notif-time-ago">{formatTimeAgo(notif.createdAt)}</span>
+                        {notif.type && (
+                          <span className={`notif-category-chip type-${notif.type}`}>
+                            {notif.type.replace('_', ' ')}
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    <button
+                      type="button"
+                      className="notif-delete-btn"
+                      onClick={(e) => handleDeleteNotification(notif._id, e)}
+                      title="Delete notification"
+                      aria-label="Delete notification"
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))}
               </div>
@@ -212,4 +379,3 @@ const NotificationCenter = () => {
 };
 
 export default NotificationCenter;
-

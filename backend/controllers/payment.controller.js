@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { OrderModel } from "../models/order.model.js";
 import { PaymentModel } from "../models/payment.model.js";
 import { ethiopianGateway } from "../services/ethiopianGateway.service.js";
-import { sendInAppNotification } from "./notification.controller.js";
+import { sendInAppNotification, notifyAdmins } from "./notification.controller.js";
 import logger from "../utils/logger.js";
 
 let stripeClient = null;
@@ -433,6 +433,30 @@ export const verifyEthiopianPayment = async (req, res) => {
       });
     }
 
+    // Notifications for Customer and Admins
+    try {
+      sendInAppNotification({
+        userId: order.userId,
+        title: "💳 Payment Verified! 🎉",
+        message: `Your payment of ${Number(order.totalAmount).toFixed(2)} ETB via ${accountInfo.name} was verified successfully (Ref: ${cleanRef}).`,
+        type: "payment",
+        orderId: order._id,
+        link: `/orders/${order._id}`,
+        icon: "💳",
+        io,
+      }).catch(() => {});
+
+      notifyAdmins({
+        title: "💰 Payment Received",
+        message: `${Number(order.totalAmount).toFixed(2)} ETB verified for Order #${order._id.toString().slice(-6)} via ${accountInfo.name} (Ref: ${cleanRef}).`,
+        type: "payment",
+        orderId: order._id,
+        link: "/admin?tab=orders",
+        icon: "💰",
+        io,
+      }).catch(() => {});
+    } catch (e) {}
+
     res.status(200).json({
       success: true,
       message: `Payment of ${Number(order.totalAmount).toFixed(2)} ETB verified successfully via ${accountInfo.name}! 🎉`,
@@ -517,6 +541,30 @@ export const adminVerifyPayment = async (req, res) => {
         paymentStatus: "Paid",
       });
     }
+
+    // Notifications for Customer and Admins
+    try {
+      sendInAppNotification({
+        userId: order.userId,
+        title: "💳 Payment Confirmed by Store Admin",
+        message: `Restaurant admin confirmed your payment of ${Number(order.totalAmount).toFixed(2)} ETB for Order #${order._id.toString().slice(-6)} (Ref: ${cleanRef}).`,
+        type: "payment",
+        orderId: order._id,
+        link: `/orders/${order._id}`,
+        icon: "💳",
+        io,
+      }).catch(() => {});
+
+      notifyAdmins({
+        title: "✅ Payment Manually Verified",
+        message: `Payment for Order #${order._id.toString().slice(-6)} (${Number(order.totalAmount).toFixed(2)} ETB) verified manually (Ref: ${cleanRef}).`,
+        type: "payment",
+        orderId: order._id,
+        link: "/admin?tab=orders",
+        icon: "✅",
+        io,
+      }).catch(() => {});
+    } catch (e) {}
 
     res.status(200).json({
       success: true,
@@ -893,6 +941,16 @@ export const processMockGatewayPayment = async (req, res) => {
             icon: "💳",
             io,
           }).catch((err) => logger.error("Payment notification error:", err));
+
+          notifyAdmins({
+            title: "💰 Gateway Payment Received",
+            message: `${Number(order.totalAmount).toFixed(2)} ETB verified for Order #${order._id.toString().slice(-6)} via ${session.provider} (Ref: ${result.transactionReference}).`,
+            type: "payment",
+            orderId: order._id,
+            link: "/admin?tab=orders",
+            icon: "💰",
+            io,
+          }).catch(() => {});
         } catch (e) {
           // Non-blocking
         }
