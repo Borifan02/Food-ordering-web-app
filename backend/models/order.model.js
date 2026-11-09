@@ -30,6 +30,14 @@ export const orderSchema = Schema(
       type: Date,
       default: () => new Date(Date.now() + 45 * 60 * 1000), // 45 minutes from now
     },
+    isScheduled: {
+      type: Boolean,
+      default: false,
+    },
+    scheduledDeliveryTime: {
+      type: Date,
+      default: null,
+    },
     payment: {
       method: { 
         type: String, 

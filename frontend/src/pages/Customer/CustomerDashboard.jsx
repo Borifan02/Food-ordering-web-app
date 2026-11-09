@@ -18,18 +18,21 @@ const CustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview"); // "overview", "active-orders", "reorder", "profile"
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
+  const [favoritesList, setFavoritesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch customer orders and menu items
+  // Fetch customer orders, menu items, and favorites
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersRes, menuRes] = await Promise.all([
+        const [ordersRes, menuRes, favRes] = await Promise.all([
           apiClient.get("/orders"),
           apiClient.get("/menu"),
+          apiClient.get("/auth/favorites").catch(() => ({ data: [] })),
         ]);
         setOrders(ordersRes.data || []);
         setMenuItems(menuRes.data || []);
+        setFavoritesList(favRes.data || []);
       } catch (err) {
         console.error("Error loading customer dashboard data:", err);
       } finally {
@@ -227,6 +230,11 @@ const CustomerDashboard = () => {
                         </div>
                       </div>
                       <div className="header-badges-wrap">
+                        {order.isScheduled && order.scheduledDeliveryTime && (
+                          <span className="scheduled-order-badge">
+                            🕒 {new Date(order.scheduledDeliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        )}
                         <span className={`payment-pill-small ${order.payment?.status === "Paid" ? "paid" : "pending"}`}>
                           {order.payment?.status === "Paid" ? "✓ Paid" : "⏳ Pay Pending"}
                         </span>
@@ -313,6 +321,46 @@ const CustomerDashboard = () => {
             )}
           </div>
 
+          {/* Favorite Dishes Section */}
+          {favoritesList.length > 0 && (
+            <div className="cust-section-box">
+              <div className="cust-section-header">
+                <h3>❤️ {t("myFavoriteDishes") || "My Favorite Dishes"} ({favoritesList.length})</h3>
+                <button className="view-all-link-btn" onClick={() => navigate("/menu")}>
+                  {t("exploreMenuBtn")}
+                </button>
+              </div>
+
+              <div className="featured-menu-grid">
+                {favoritesList.map((dish) => (
+                  <div key={dish._id} className="cust-dish-card">
+                    <img
+                      src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300"}
+                      alt={dish.name}
+                      className="cust-dish-img"
+                    />
+                    <div className="cust-dish-content">
+                      <h4>{dish.name}</h4>
+                      <p className="cust-dish-desc">{dish.description?.slice(0, 60)}...</p>
+                      <div className="cust-dish-footer">
+                        <strong>{Number(dish.price).toFixed(2)} ETB</strong>
+                        <button
+                          className="btn-dish-add"
+                          onClick={() => {
+                            addToCart(dish, 1);
+                            toast.success(`Added ${dish.name} to cart! 🛒`);
+                          }}
+                        >
+                          + {t("addToCart")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Featured Dishes Section */}
           {menuItems.length > 0 && (
             <div className="cust-section-box">
@@ -382,6 +430,11 @@ const CustomerDashboard = () => {
                         <small>{new Date(order.createdAt).toLocaleString()}</small>
                       </div>
                       <div className="header-badges-wrap">
+                        {order.isScheduled && order.scheduledDeliveryTime && (
+                          <span className="scheduled-order-badge">
+                            🕒 {new Date(order.scheduledDeliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        )}
                         <span className={`payment-pill-small ${order.payment?.status === "Paid" ? "paid" : "pending"}`}>
                           {order.payment?.status === "Paid" ? "✓ Paid" : "⏳ Pay Pending"}
                         </span>

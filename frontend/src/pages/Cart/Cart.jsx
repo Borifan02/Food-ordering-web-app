@@ -50,6 +50,26 @@ const Cart = () => {
   const [activePaymentMethod, setActivePaymentMethod] = useState("Telebirr");
   const [activeOrderItems, setActiveOrderItems] = useState([]);
 
+  // Delivery Scheduling state
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState("today");
+  const [deliveryTimeSlot, setDeliveryTimeSlot] = useState("12:30 PM");
+
+  const TIME_SLOTS = [
+    "11:30 AM",
+    "12:00 PM",
+    "12:30 PM",
+    "1:00 PM",
+    "1:30 PM",
+    "2:00 PM",
+    "6:00 PM",
+    "6:30 PM",
+    "7:00 PM",
+    "7:30 PM",
+    "8:00 PM",
+    "8:30 PM",
+  ];
+
   // Free delivery calculation
   const freeDeliveryThreshold = 25;
   const amountToFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
@@ -122,6 +142,21 @@ const Cart = () => {
 
     setLoading(true);
     try {
+      // Compute scheduled delivery time if selected
+      let scheduledDeliveryTime = null;
+      if (isScheduled) {
+        const targetDate = new Date();
+        if (deliveryDate === "tomorrow") {
+          targetDate.setDate(targetDate.getDate() + 1);
+        }
+        const [timePart, modifier] = deliveryTimeSlot.split(" ");
+        let [hours, minutes] = timePart.split(":").map(Number);
+        if (modifier === "PM" && hours < 12) hours += 12;
+        if (modifier === "AM" && hours === 12) hours = 0;
+        targetDate.setHours(hours, minutes, 0, 0);
+        scheduledDeliveryTime = targetDate.toISOString();
+      }
+
       const orderPayload = {
         items: cart.map((item) => ({
           menuItemId: item._id,
@@ -131,6 +166,8 @@ const Cart = () => {
         })),
         deliveryAddress: address,
         orderNotes: orderNotes,
+        isScheduled,
+        scheduledDeliveryTime,
         paymentMethod:
           paymentMethod === "Telebirr" || paymentMethod === "CBE" || paymentMethod === "CBEBirr"
             ? paymentMethod
@@ -391,6 +428,66 @@ const Cart = () => {
                 onChange={(e) => setOrderNotes(e.target.value)}
                 placeholder={t("notesPlaceholder")}
               />
+            </div>
+
+            {/* Delivery Timing & Scheduling */}
+            <div className="delivery-timing-section">
+              <label className="timing-section-label">🕒 {t("deliveryTiming") || "Delivery Timing"}</label>
+              <div className="timing-toggle-group">
+                <button
+                  type="button"
+                  className={`timing-pill-btn ${!isScheduled ? "selected" : ""}`}
+                  onClick={() => setIsScheduled(false)}
+                >
+                  <span className="timing-icon">⚡</span>
+                  <div>
+                    <strong>{t("asapDelivery") || "ASAP Delivery"}</strong>
+                    <small>{t("asapDeliverySub") || "30-45 mins"}</small>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={`timing-pill-btn ${isScheduled ? "selected" : ""}`}
+                  onClick={() => setIsScheduled(true)}
+                >
+                  <span className="timing-icon">🕒</span>
+                  <div>
+                    <strong>{t("scheduleDelivery") || "Schedule Later"}</strong>
+                    <small>{t("scheduleDeliverySub") || "Choose date & time"}</small>
+                  </div>
+                </button>
+              </div>
+
+              {isScheduled && (
+                <div className="scheduled-slots-box animate-pop-in">
+                  <div className="slot-field">
+                    <label>{t("deliveryDate") || "Delivery Date"}</label>
+                    <select
+                      value={deliveryDate}
+                      onChange={(e) => setDeliveryDate(e.target.value)}
+                      className="slot-select"
+                    >
+                      <option value="today">📅 {t("today") || "Today"}</option>
+                      <option value="tomorrow">📅 {t("tomorrow") || "Tomorrow"}</option>
+                    </select>
+                  </div>
+
+                  <div className="slot-field">
+                    <label>{t("deliveryTimeSlot") || "Delivery Time Slot"}</label>
+                    <select
+                      value={deliveryTimeSlot}
+                      onChange={(e) => setDeliveryTimeSlot(e.target.value)}
+                      className="slot-select"
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          ⏰ {slot}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ const OrderTracking = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [selectedItemForReview, setSelectedItemForReview] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -251,9 +252,18 @@ const OrderTracking = () => {
         <button className="back-btn" onClick={() => navigate("/orders")}>
           &larr; Back to Orders
         </button>
-        <span className="live-status-indicator">
-          <span className="live-pulse"></span> Live Real-Time Tracking
-        </span>
+        <div className="nav-actions-right">
+          <button
+            type="button"
+            className="official-invoice-btn"
+            onClick={() => setShowInvoiceModal(true)}
+          >
+            📄 {t("officialInvoiceBtn") || "Official Receipt / Invoice"}
+          </button>
+          <span className="live-status-indicator">
+            <span className="live-pulse"></span> Live Real-Time Tracking
+          </span>
+        </div>
       </div>
 
       <div className="tracking-header-card">
@@ -277,12 +287,27 @@ const OrderTracking = () => {
           </p>
         </div>
 
-        {!isCancelled && order.status !== "delivered" && (
+        {order.isScheduled && order.scheduledDeliveryTime ? (
+          <div className="eta-badge-card scheduled-card">
+            <span className="eta-label">🕒 {t("scheduledForBadge") || "Scheduled Delivery"}</span>
+            <span className="eta-time">
+              {new Date(order.scheduledDeliveryTime).toLocaleDateString([], {
+                month: "short",
+                day: "numeric",
+              })}{" "}
+              at{" "}
+              {new Date(order.scheduledDeliveryTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+        ) : !isCancelled && order.status !== "delivered" ? (
           <div className="eta-badge-card">
             <span className="eta-label">Estimated Delivery</span>
             <span className="eta-time">~25 - 35 mins</span>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Simulated Live Route Map */}
@@ -489,6 +514,155 @@ const OrderTracking = () => {
           }}
           onCancel={() => setShowPaymentModal(false)}
         />
+      )}
+
+      {/* Official Ethiopian Tax Invoice & Receipt Modal */}
+      {showInvoiceModal && (
+        <div className="invoice-modal-backdrop" onClick={() => setShowInvoiceModal(false)}>
+          <div className="invoice-modal-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="invoice-modal-header no-print">
+              <h3>{t("officialTaxInvoice") || "Official Tax Invoice & Receipt"}</h3>
+              <div className="invoice-header-actions">
+                <button
+                  type="button"
+                  className="invoice-print-btn"
+                  onClick={() => window.print()}
+                >
+                  🖨️ {t("printInvoice") || "Print / Save PDF"}
+                </button>
+                <button
+                  type="button"
+                  className="invoice-close-btn"
+                  onClick={() => setShowInvoiceModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Print Container */}
+            <div className="official-tax-receipt-content" id="official-tax-receipt">
+              <div className="receipt-restaurant-header">
+                <div className="receipt-logo-row">
+                  <span className="receipt-brand-icon">🍽️</span>
+                  <div>
+                    <h2 className="receipt-restaurant-name">Foodie Restaurant PLC</h2>
+                    <p className="receipt-sub-addr">Bole Sub-City, Addis Ababa, Ethiopia</p>
+                  </div>
+                </div>
+                <div className="receipt-tin-tag">
+                  <strong>TIN: 0049281726</strong>
+                  <span>VAT Reg: 15% Inclusive</span>
+                </div>
+              </div>
+
+              <div className="receipt-meta-grid">
+                <div>
+                  <span className="meta-lbl">Invoice / Receipt No:</span>
+                  <strong>INV-{order._id.substring(0, 10).toUpperCase()}</strong>
+                </div>
+                <div>
+                  <span className="meta-lbl">Date & Time:</span>
+                  <span>{new Date(order.createdAt).toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="meta-lbl">Customer:</span>
+                  <strong>
+                    {order.userId?.firstName
+                      ? `${order.userId.firstName} ${order.userId.lastName || ""}`
+                      : "Customer"}
+                  </strong>
+                </div>
+                <div>
+                  <span className="meta-lbl">Delivery Address:</span>
+                  <span>{order.deliveryAddress}</span>
+                </div>
+              </div>
+
+              <table className="receipt-items-table">
+                <thead>
+                  <tr>
+                    <th>Item Description</th>
+                    <th>Qty</th>
+                    <th>Unit Price (ETB)</th>
+                    <th style={{ textAlign: "right" }}>Total (ETB)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items?.map((item, idx) => (
+                    <tr key={idx}>
+                      <td><strong>{item.name}</strong></td>
+                      <td>{item.quantity}</td>
+                      <td>{Number(item.price).toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        {(item.price * item.quantity).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="receipt-summary-breakdown">
+                <div className="breakdown-line">
+                  <span>Subtotal</span>
+                  <span>{Number(order.subtotal || order.totalAmount).toFixed(2)} ETB</span>
+                </div>
+                <div className="breakdown-line">
+                  <span>Delivery Fee</span>
+                  <span>{order.deliveryFee ? `${Number(order.deliveryFee).toFixed(2)} ETB` : "FREE"}</span>
+                </div>
+                {order.discountAmount > 0 && (
+                  <div className="breakdown-line discount">
+                    <span>Discount Applied</span>
+                    <span>-{Number(order.discountAmount).toFixed(2)} ETB</span>
+                  </div>
+                )}
+                <div className="breakdown-line vat">
+                  <span>VAT (15% inclusive)</span>
+                  <span>{((Number(order.totalAmount) * 15) / 115).toFixed(2)} ETB</span>
+                </div>
+                <div className="breakdown-grand-total">
+                  <strong>Grand Total Paid</strong>
+                  <strong>{Number(order.totalAmount).toFixed(2)} ETB</strong>
+                </div>
+              </div>
+
+              <div className="receipt-payment-info-box">
+                <div>
+                  <span className="pay-label">Payment Method:</span>
+                  <strong>{order.payment?.method || "Cash"}</strong>
+                </div>
+                <div>
+                  <span className="pay-label">Status:</span>
+                  <span className="pay-status-paid">{order.payment?.status || "Paid ✓"}</span>
+                </div>
+                {order.payment?.senderAccount && (
+                  <div>
+                    <span className="pay-label">Debited CBE Account:</span>
+                    <strong>{order.payment.senderAccount}</strong>
+                  </div>
+                )}
+                {order.payment?.senderPhone && (
+                  <div>
+                    <span className="pay-label">Sender Mobile:</span>
+                    <strong>{order.payment.senderPhone}</strong>
+                  </div>
+                )}
+                {order.payment?.transactionId && (
+                  <div>
+                    <span className="pay-label">Transaction Ref:</span>
+                    <code className="tx-ref-code">{order.payment.transactionId}</code>
+                  </div>
+                )}
+              </div>
+
+              <div className="receipt-footer-notes">
+                <p>Thank you for choosing Foodie Restaurant PLC! Amesegenalehu! (እናመሰግናለን!)</p>
+                <small>Official Computer Generated Ethiopian Commercial Receipt • Licensed by NBE & ERCA</small>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -664,3 +664,110 @@
   color: #1e293b;
 }
 
+/* Delivery Timing & Scheduling */
+.delivery-timing-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.timing-section-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.timing-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.timing-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.timing-pill-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.timing-pill-btn.selected {
+  border-color: #ff6b35;
+  background: #fff8f5;
+  box-shadow: 0 0 0 1px #ff6b35;
+}
+
+.timing-pill-btn .timing-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.timing-pill-btn strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.timing-pill-btn small {
+  display: block;
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.scheduled-slots-box {
+  margin-top: 14px;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.slot-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.slot-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.slot-select:focus {
+  border-color: #ff6b35;
+}
+
+@media (max-width: 640px) {
+  .timing-toggle-group,
+  .scheduled-slots-box {
+    grid-template-columns: 1fr;
+  }
+}
+

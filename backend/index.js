@@ -28,6 +28,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import deliveryRoutes from "./routes/delivery.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 const app = express();
 const server = createServer(app);
@@ -124,6 +125,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Join user personal notification channel
+  socket.on('join-user', (userId) => {
+    if (userId) {
+      socket.join(`user-${userId}`);
+      logger.info(`Socket ${socket.id} joined user channel: user-${userId}`);
+    }
+  });
+
   // Join admin notifications channel
   socket.on('join-admin', () => {
     socket.join('admin-channel');
@@ -177,6 +186,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/delivery", deliveryRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 404 handler for unknown API routes
 app.use("/api", (req, res) => {

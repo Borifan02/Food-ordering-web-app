@@ -412,6 +412,10 @@
   background: #10b981;
 }
 
+.meat-badge {
+  background: #b45309;
+}
+
 .card-category-pill {
   position: absolute;
   bottom: 10px;

@@ -9,16 +9,8 @@ import "./Menu.css";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
 
-const DIETARY_FILTERS = [
-  { id: "all", label: "All Items", icon: "🍽️" },
-  { id: "popular", label: "Popular", icon: "🔥" },
-  { id: "veg", label: "Vegetarian", icon: "🌱" },
-  { id: "spicy", label: "Spicy", icon: "🌶️" },
-  { id: "special", label: "Chef's Special", icon: "⭐" },
-  { id: "budget", label: "Budget Friendly", icon: "🏷️" },
-];
-
 const Menu = () => {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +27,15 @@ const Menu = () => {
     }
   });
 
+  const DIETARY_FILTERS = [
+    { id: "all", label: t("dietaryAll") || "All Items", icon: "🍽️" },
+    { id: "fasting", label: t("dietaryFasting") || "🌱 Fasting / Vegan (የፆም)", icon: "🌱" },
+    { id: "meat", label: t("dietaryMeat") || "🥩 Meat Dishes (የፍስክ)", icon: "🥩" },
+    { id: "spicy", label: t("dietarySpicy") || "🌶️ Spicy", icon: "🌶️" },
+    { id: "popular", label: t("popularDishes") || "Popular", icon: "🔥" },
+    { id: "favorites", label: t("dietaryFavorites") || "❤️ My Favorites", icon: "❤️" },
+  ];
+
   // Food Item Quick View Modal state
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalQuantity, setModalQuantity] = useState(1);
@@ -45,7 +46,6 @@ const Menu = () => {
     useContext(CartContext);
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
-  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Compute base asset URL without hardcoding localhost:5000
@@ -70,6 +70,19 @@ const Menu = () => {
         ]);
         setItems(menuRes.data || []);
         setCategories(catRes.data || []);
+
+        if (user) {
+          try {
+            const favRes = await apiClient.get("/auth/favorites");
+            if (Array.isArray(favRes.data)) {
+              const favIds = favRes.data.map((f) => (typeof f === "object" ? f._id : f));
+              setFavorites(favIds);
+              localStorage.setItem("foodie_favorites", JSON.stringify(favIds));
+            }
+          } catch {
+            // Local fallback
+          }
+        }
       } catch (error) {
         console.error("Fetch error:", error);
         toast.error("Could not load menu items. Please check backend connection.");
@@ -78,10 +91,10 @@ const Menu = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
-  // Sync favorites
-  const toggleFavorite = (itemId, e) => {
+  // Sync favorites with optimistic UI + backend sync
+  const toggleFavorite = async (itemId, e) => {
     e?.stopPropagation?.();
     setFavorites((prev) => {
       let updated;
@@ -95,6 +108,14 @@ const Menu = () => {
       localStorage.setItem("foodie_favorites", JSON.stringify(updated));
       return updated;
     });
+
+    if (user) {
+      try {
+        await apiClient.post(`/auth/favorites/${itemId}`);
+      } catch (err) {
+        console.warn("Backend favorite sync notice:", err.message);
+      }
+    }
   };
 
   // Open food quick view modal & fetch reviews
@@ -127,24 +148,31 @@ const Menu = () => {
 
     // Dietary & Tag filter
     if (activeDietary !== "all") {
-      if (activeDietary === "popular") {
+      if (activeDietary === "fasting") {
         result = result.filter(
-          (i) => i.isFeatured || (i.tags && i.tags.includes("Popular"))
+          (i) =>
+            i.dietaryType === "fasting" ||
+            i.tags?.some((t) => t.toLowerCase().includes("fast") || t.toLowerCase().includes("veg"))
         );
-      } else if (activeDietary === "veg") {
+      } else if (activeDietary === "meat") {
         result = result.filter(
-          (i) => i.tags && i.tags.some((t) => t.toLowerCase().includes("veg"))
+          (i) =>
+            i.dietaryType === "non-fasting" ||
+            i.tags?.some((t) => t.toLowerCase().includes("traditional") || t.toLowerCase().includes("beef") || t.toLowerCase().includes("chicken"))
         );
       } else if (activeDietary === "spicy") {
         result = result.filter(
-          (i) => i.tags && i.tags.some((t) => t.toLowerCase().includes("spicy"))
+          (i) =>
+            i.spiceLevel === "hot" ||
+            i.spiceLevel === "medium" ||
+            i.tags?.some((t) => t.toLowerCase().includes("spicy"))
         );
-      } else if (activeDietary === "special") {
+      } else if (activeDietary === "popular") {
         result = result.filter(
-          (i) => i.isFeatured || (i.tags && i.tags.includes("ChefSpecial"))
+          (i) => i.isFeatured || (i.tags && i.tags.includes("Popular"))
         );
-      } else if (activeDietary === "budget") {
-        result = result.filter((i) => Number(i.price) < 25);
+      } else if (activeDietary === "favorites") {
+        result = result.filter((i) => favorites.includes(i._id));
       }
     }
 
@@ -173,7 +201,7 @@ const Menu = () => {
     }
 
     return result;
-  }, [items, activeCategory, activeDietary, searchTerm, sortBy]);
+  }, [items, activeCategory, activeDietary, searchTerm, sortBy, favorites]);
 
   const userRole = (user?.role || "").trim().toLowerCase();
   const isCustomer = !user || userRole === "user" || userRole === "customer";
@@ -421,11 +449,15 @@ const Menu = () => {
                     {item.isFeatured && (
                       <span className="badge-tag chef-badge">⭐ Special</span>
                     )}
-                    {item.tags?.includes("Spicy") && (
-                      <span className="badge-tag spicy-badge">🌶️ Spicy</span>
-                    )}
-                    {item.tags?.includes("Vegetarian") && (
+                    {item.dietaryType === "fasting" ? (
+                      <span className="badge-tag veg-badge">🌱 {t("fastingBadge") || "የፆም"}</span>
+                    ) : item.dietaryType === "non-fasting" ? (
+                      <span className="badge-tag meat-badge">🥩 {t("meatBadge") || "የፍስክ"}</span>
+                    ) : item.tags?.includes("Vegetarian") ? (
                       <span className="badge-tag veg-badge">🌱 Veg</span>
+                    ) : null}
+                    {(item.spiceLevel === "hot" || item.tags?.includes("Spicy")) && (
+                      <span className="badge-tag spicy-badge">🌶️ {t("spicyBadge") || "Spicy"}</span>
                     )}
                   </div>
 

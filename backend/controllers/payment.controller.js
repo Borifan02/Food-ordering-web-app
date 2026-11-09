@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { OrderModel } from "../models/order.model.js";
 import { PaymentModel } from "../models/payment.model.js";
 import { ethiopianGateway } from "../services/ethiopianGateway.service.js";
+import { sendInAppNotification } from "./notification.controller.js";
 import logger from "../utils/logger.js";
 
 let stripeClient = null;
@@ -879,6 +880,21 @@ export const processMockGatewayPayment = async (req, res) => {
             provider: session.provider,
             transactionId: result.transactionReference,
           });
+        }
+
+        try {
+          sendInAppNotification({
+            userId: order.userId,
+            title: "💳 Payment Verified! 🎉",
+            message: `Payment of ${Number(order.totalAmount).toFixed(2)} ETB via ${session.provider} was verified successfully. Ref: ${result.transactionReference}`,
+            type: "payment",
+            orderId: order._id,
+            link: `/orders/${order._id}`,
+            icon: "💳",
+            io,
+          }).catch((err) => logger.error("Payment notification error:", err));
+        } catch (e) {
+          // Non-blocking
         }
       }
 

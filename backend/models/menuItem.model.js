@@ -47,6 +47,16 @@ export const menuItemSchema = Schema(
       type: Boolean,
       default: false,
     },
+    dietaryType: {
+      type: String,
+      enum: ["all", "fasting", "non-fasting"],
+      default: "all",
+    },
+    spiceLevel: {
+      type: String,
+      enum: ["mild", "medium", "hot"],
+      default: "mild",
+    },
   },
   {
     timestamps: true,

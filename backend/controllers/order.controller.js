@@ -1,11 +1,20 @@
 import { OrderModel } from "../models/order.model.js";
 import { ItemModel } from "../models/menuItem.model.js";
 import { CouponModel } from "../models/coupon.model.js";
+import { sendInAppNotification } from "./notification.controller.js";
 import logger from "../utils/logger.js";
 
 export const createOrder = async (req, res) => {
     try {
-        const { items, deliveryAddress, paymentMethod, orderNotes = "", couponCode = "" } = req.body;
+        const {
+            items,
+            deliveryAddress,
+            paymentMethod,
+            orderNotes = "",
+            couponCode = "",
+            isScheduled = false,
+            scheduledDeliveryTime = null,
+        } = req.body;
         const userId = req.user.id; // JWT uses 'id' field
         const userRole = (req.user?.role || "").trim().toLowerCase();
 
@@ -76,12 +85,14 @@ export const createOrder = async (req, res) => {
                 paidAt: req.body.transactionId ? new Date() : null,
             },
             status: "pending",
-            estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes
+            isScheduled: Boolean(isScheduled),
+            scheduledDeliveryTime: scheduledDeliveryTime ? new Date(scheduledDeliveryTime) : null,
+            estimatedDeliveryTime: scheduledDeliveryTime ? new Date(scheduledDeliveryTime) : new Date(Date.now() + 45 * 60 * 1000),
             timeline: [
                 {
                     status: "pending",
                     timestamp: new Date(),
-                    note: "Order received by restaurant"
+                    note: isScheduled ? `Order scheduled for ${new Date(scheduledDeliveryTime).toLocaleString()}` : "Order received by restaurant"
                 }
             ]
         });
@@ -96,6 +107,22 @@ export const createOrder = async (req, res) => {
                 totalAmount,
                 items: items.length
             });
+        }
+
+        // Send in-app notification to customer
+        try {
+            sendInAppNotification({
+                userId,
+                title: isScheduled ? "🕒 Scheduled Order Placed!" : "🎉 Order Placed Successfully!",
+                message: `Order #${newOrder._id?.toString?.().slice(-6) || "ID"} (${totalAmount.toFixed(2)} ETB) has been received.`,
+                type: "order_placed",
+                orderId: newOrder._id,
+                link: `/orders/${newOrder._id}`,
+                icon: isScheduled ? "🕒" : "🍕",
+                io
+            }).catch(e => logger.error("In-app notification err:", e));
+        } catch (e) {
+            // Non-blocking in tests or when unmocked
         }
 
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id, order: newOrder });
@@ -179,6 +206,29 @@ export const updateOrderStatus = async (req, res) => {
                 orderId: req.params.id,
                 status
             });
+        }
+
+        // Send in-app status update notification to customer
+        try {
+            const statusIcons = {
+                confirmed: "✅",
+                preparing: "👨‍🍳",
+                on_delivery: "🚚",
+                delivered: "🎉",
+                cancelled: "❌",
+            };
+            sendInAppNotification({
+                userId: order.userId,
+                title: `Order Status: ${String(status).replace('_', ' ').toUpperCase()}`,
+                message: `Your order #${req.params.id.slice(-6)} is now ${String(status).replace('_', ' ')}.`,
+                type: "order_status",
+                orderId: req.params.id,
+                link: `/orders/${req.params.id}`,
+                icon: statusIcons[status] || "📦",
+                io
+            }).catch(e => logger.error("In-app status notification err:", e));
+        } catch (e) {
+            // Non-blocking
         }
 
         res.status(200).json(updatedOrder);

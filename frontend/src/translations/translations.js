@@ -92,6 +92,45 @@ export const translations = {
     paymentConfirmed: "Payment Verified Successfully! 🎉",
     amountToPay: "Amount to Pay",
 
+    // Notifications
+    notifications: "Notifications",
+    noNotifications: "No new notifications",
+    markAllAsRead: "Mark all as read",
+    viewOrder: "View Order",
+    newNotification: "New Notification",
+
+    // Dietary & Cultural Filtering
+    dietaryAll: "All Dishes",
+    dietaryFasting: "🌱 Fasting / Vegan (የፆም)",
+    dietaryMeat: "🥩 Meat Dishes (የፍስክ)",
+    dietarySpicy: "🌶️ Spicy",
+    dietaryFavorites: "❤️ My Favorites",
+    fastingBadge: "Fasting (የፆም)",
+    meatBadge: "Meat (የፍስክ)",
+    spicyBadge: "Spicy",
+    mildBadge: "Mild",
+
+    // Delivery Scheduling
+    deliveryTiming: "Delivery Timing",
+    asapDelivery: "⚡ ASAP Delivery",
+    asapDeliverySub: "Arrives in 30-45 minutes",
+    scheduleDelivery: "🕒 Schedule for Later",
+    scheduleDeliverySub: "Pick your preferred date & time slot",
+    deliveryDate: "Delivery Date",
+    deliveryTimeSlot: "Delivery Time Slot",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    scheduledForBadge: "Scheduled Delivery",
+
+    // Official Ethiopian Tax Invoice & Receipt
+    officialTaxInvoice: "Official Tax Invoice & Receipt",
+    officialInvoiceBtn: "📄 Official Receipt / Invoice",
+    tinNumber: "TIN No",
+    vatInclusive: "VAT (15% inclusive)",
+    printInvoice: "🖨️ Print / Save PDF",
+    closeInvoice: "Close",
+    issuedBy: "Foodie Restaurant PLC • Addis Ababa, Ethiopia",
+
     // Customer Dashboard
     welcomeGreeting: "Welcome to your Customer Hub",
     welcomeSubtitle: "Track active food deliveries, re-order favorites, and manage your account",
@@ -360,6 +399,45 @@ export const translations = {
     paymentConfirmed: "Kaffaltiin Mirkanaa'eera! 🎉",
     amountToPay: "Gatii Kaffalamu",
 
+    // Notifications
+    notifications: "Beeksisa",
+    noNotifications: "Beeksisni haaraan hin jiru",
+    markAllAsRead: "Hunda akka dubbifametti mallatteessi",
+    viewOrder: "Ajaja Ilaali",
+    newNotification: "Beeksisa Haaraa",
+
+    // Dietary & Cultural Filtering
+    dietaryAll: "Nyaata Hunda",
+    dietaryFasting: "🌱 Nyaata Soomaa (Vegan)",
+    dietaryMeat: "🥩 Nyaata Foonii",
+    dietarySpicy: "🌶️ Qulqulluu / Mi'aawaa",
+    dietaryFavorites: "❤️ Kan Jaallataman",
+    fastingBadge: "Soomaa",
+    meatBadge: "Foonii",
+    spicyBadge: "Mi'aawaa",
+    mildBadge: "Lallafaa",
+
+    // Delivery Scheduling
+    deliveryTiming: "Yeroo Geejjibaa",
+    asapDelivery: "⚡ Battalumatti",
+    asapDeliverySub: "Daqiiqaa 30-45 keessatti gaha",
+    scheduleDelivery: "🕒 Yeroo Biraaf Karoorsi",
+    scheduleDeliverySub: "Guyyaa fi sa'aatii feetan filadhaa",
+    deliveryDate: "Guyyaa Geejjibaa",
+    deliveryTimeSlot: "Sa'aatii Geejjibaa",
+    today: "Har'a",
+    tomorrow: "Boru",
+    scheduledForBadge: "Geejjiba Karoorfame",
+
+    // Official Ethiopian Tax Invoice & Receipt
+    officialTaxInvoice: "Nagahee Gibiraa Seera Qabeessa",
+    officialInvoiceBtn: "📄 Nagahee / Invooysii Seeraa",
+    tinNumber: "Lakkoofsa TIN",
+    vatInclusive: "Taaksii VAT (15% dabalatee)",
+    printInvoice: "🖨️ Maxxansi / PDF",
+    closeInvoice: "Cufi",
+    issuedBy: "Foodie Restaurant PLC • Finfinnee, Itoophiyaa",
+
     // Customer Dashboard
     welcomeGreeting: "Baga gara Giddugala Maamilaatti Nagaan Dhuftan",
     welcomeSubtitle: "Ajajoota nyaataa adeemsarra jiran hordofaa, kan jaallattan deebisaa ajajaa",
@@ -627,6 +705,45 @@ export const translations = {
     payWithBank: "በባንክ ያስተላልፉ",
     paymentConfirmed: "ክፍያዎ በተሳካ ሁኔታ ተረጋግጧል! 🎉",
     amountToPay: "የሚከፈለው ገንዘብ",
+
+    // Notifications
+    notifications: "ማሳወቂያዎች",
+    noNotifications: "ምንም አዲስ ማሳወቂያ የለም",
+    markAllAsRead: "ሁሉንም እንደተነበበ ምልክት አድርግ",
+    viewOrder: "ትዕዛዙን ይመልከቱ",
+    newNotification: "አዲስ ማሳወቂያ",
+
+    // Dietary & Cultural Filtering
+    dietaryAll: "ሁሉም ምግቦች",
+    dietaryFasting: "🌱 የፆም ምግቦች",
+    dietaryMeat: "🥩 የፍስክ ምግቦች",
+    dietarySpicy: "🌶️ የሚቃጠል (በርበሬ)",
+    dietaryFavorites: "❤️ ተወዳጅ ምግቦች",
+    fastingBadge: "የፆም",
+    meatBadge: "የፍስክ",
+    spicyBadge: "የሚቃጠል",
+    mildBadge: "ለስላሳ",
+
+    // Delivery Scheduling
+    deliveryTiming: "የማድረሻ ጊዜ",
+    asapDelivery: "⚡ አሁን በፍጥነት",
+    asapDeliverySub: "ከ30-45 ደቂቃዎች ውስጥ ይደርሳል",
+    scheduleDelivery: "🕒 ለተወሰነ ሰዓት ይዘዙ",
+    scheduleDeliverySub: "የሚመችዎትን ቀን እና ሰዓት ይምረጡ",
+    deliveryDate: "የማድረሻ ቀን",
+    deliveryTimeSlot: "የማድረሻ ሰዓት",
+    today: "ዛሬ",
+    tomorrow: "ነገ",
+    scheduledForBadge: "ቀጠሮ የተያዘለት ትዕዛዝ",
+
+    // Official Ethiopian Tax Invoice & Receipt
+    officialTaxInvoice: "ህጋዊ የታክስ ደረሰኝ እና ኢንቮይስ",
+    officialInvoiceBtn: "📄 ህጋዊ ደረሰኝ / ኢንቮይስ",
+    tinNumber: "የግብር ከፋይ መለያ (TIN)",
+    vatInclusive: "ተጨማሪ እሴት ታክስ (15% ያካተተ)",
+    printInvoice: "🖨️ አትም / በPDF አስቀምጥ",
+    closeInvoice: "ዝጋ",
+    issuedBy: "ፉዲ ሬስቶራንት ኃ/የተ/የግ/ማህበር • አዲስ አበባ፣ ኢትዮጵያ",
 
     // Customer Dashboard
     welcomeGreeting: "እንኳን ወደ ደንበኛ ማዕከልዎ በደህና መጡ",

@@ -5,6 +5,7 @@ import { CartContext } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import { useLanguage } from "../../context/LanguageContext";
 import ConfirmModal from "../Modal/ConfirmModal";
+import NotificationCenter from "../NotificationCenter/NotificationCenter";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -194,6 +195,9 @@ const Navbar = () => {
                 )}
               </Link>
             )}
+
+            {/* In-App Real-time Notification Center */}
+            {user && <NotificationCenter />}
 
             {/* User Dropdown or Guest Auth Links */}
             {user ? (
