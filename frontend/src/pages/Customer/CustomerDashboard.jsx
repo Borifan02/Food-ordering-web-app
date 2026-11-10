@@ -116,7 +116,7 @@ const CustomerDashboard = () => {
       try {
         const ordersRes = await apiClient.get("/orders");
         setOrders(ordersRes.data || []);
-      } catch {}
+      } catch { }
     };
 
     socket.on("order-status-changed", refreshOrders);
